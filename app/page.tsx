@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import LoginForm from "./components/login/LoginForm";
-import ResetPassword from "./components/login/ResetPassword";
-import LoginHeader from "./components/login/LoginHeader";
-import LoginFooter from "./components/login/LoginFooter";
+import LoginHeader from "@/app/components/login/LoginHeader";
+import LoginForm from "@/app/components/login/LoginForm";
+import ResetPassword from "@/app/components/login/ResetPassword";
+import LoginFooter from "@/app/components/login/LoginFooter";
 
 export default function Home() {
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -19,8 +19,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="h-full w-full absolute inset-0 -z-10 bg-white">
-        <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: `repeating-linear-gradient(45deg, #4f4f4f 0, #4f4f4f 2px, transparent 2px, transparent 10px)`,
+            backgroundSize: "14px 14px",
+            opacity: "0.15",
+          }}
+        ></div>
       </div>
 
       <div className="w-full max-w-md bg-[#FFFFFF]/90 rounded-xl shadow-lg overflow-hidden backdrop-blur-sm">

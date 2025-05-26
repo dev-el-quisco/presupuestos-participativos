@@ -80,7 +80,7 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
               <button
                 type="button"
                 onClick={onResetPasswordClick}
-                className="font-md text-[#6b7fbd] hover:text-[#1cbab7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A4C3C6]"
+                className="font-md text-[#2c3e4a] hover:text-[#6b7fbd] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A4C3C6]"
               >
                 Recuperar contraseña
               </button>
