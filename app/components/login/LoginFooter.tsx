@@ -2,20 +2,18 @@ import Image from "next/image";
 
 const LoginFooter = () => {
   return (
-    <div className="text-center flex flex-col items-center justify-center mt-0 space-y-0">
-      <Image
+    <div className="text-center flex flex-row items-center justify-evenly mt-4">
+      {/* <Image
         src="/presupuestos-transparente.png"
-        alt="Escudo Municipal"
-        width={80}
-        height={120}
-        className="w-[35px] h-auto sm:w-[70px] md:w-[100px]"
-      />
+        alt="Logo Presupuestos Participativos"
+        width={100}
+        height={150}
+      /> */}
       <Image
         src="/municipalidad.png"
-        alt="Escudo Municipal"
-        width={80}
-        height={120}
-        className="w-[35px] h-auto sm:w-[70px] md:w-[100px]"
+        alt="Logo Municipalidad"
+        width={120}
+        height={150}
       />
     </div>
   );

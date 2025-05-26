@@ -18,38 +18,39 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
-      <div className="w-full max-w-md flex flex-col bg-[#F5F7F9] rounded-xl shadow-lg overflow-hidden p-1 sm:p-2">
-        <div className="w-full p-2 sm:p-4 md:p-6 flex flex-col h-auto space-y-2 sm:space-y-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="h-full w-full absolute inset-0 -z-10 bg-white">
+        <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      </div>
+
+      <div className="w-full max-w-md bg-[#FFFFFF]/90 rounded-xl shadow-lg overflow-hidden backdrop-blur-sm">
+        <div className="w-full p-6 sm:p-8 flex flex-col">
           <LoginHeader />
 
-          <div className="absolute inset-0 -z-10">
-            <div className="relative h-full w-full [&>div]:absolute [&>div]:inset-0 [&>div]:bg-[radial-gradient(circle_at_center,#FF7112,transparent)] [&>div]:opacity-30 [&>div]:mix-blend-multiply">
-              <div></div>
+          <div className="flex-grow flex flex-col justify-center my-4">
+            <div className="flex items-start justify-center relative">
+              <div
+                className={`w-full transition-opacity duration-300 ease-in-out ${
+                  showResetPassword
+                    ? "opacity-0 pointer-events-none"
+                    : "opacity-100"
+                }`}
+              >
+                <LoginForm onResetPasswordClick={handleResetPasswordClick} />
+              </div>
+              <div
+                className={`absolute w-full transition-opacity duration-300 ease-in-out ${
+                  showResetPassword
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <ResetPassword onCancel={handleCancelReset} />
+              </div>
             </div>
           </div>
 
-          <div className="min-h-screen w-full p-0 sm:p-2 md:p-4 relative z-20">
-            {/* Contenedor principal existente */}
-          </div>
-          <div
-            className={`absolute w-full transition-opacity duration-300 ease-in-out ${
-              showResetPassword
-                ? "opacity-0 pointer-events-none"
-                : "opacity-100"
-            }`}
-          >
-            <LoginForm onResetPasswordClick={handleResetPasswordClick} />
-          </div>
-          <div
-            className={`absolute w-full transition-opacity duration-300 ease-in-out ${
-              showResetPassword
-                ? "opacity-100"
-                : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <ResetPassword onCancel={handleCancelReset} />
-          </div>
+          <LoginFooter />
         </div>
       </div>
     </div>

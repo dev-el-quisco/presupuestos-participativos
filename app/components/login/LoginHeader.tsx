@@ -6,16 +6,15 @@ const LoginHeader = () => {
       <div className="flex flex-row items-center text-start">
         <div className="mb-0 sm:mb-1">
           <Image
-            src="/logo-transparente.png"
+            src="/presupuestos-transparente.png"
             alt="Escudo Municipal"
-            width={40}
-            height={40}
-            className="w-[30px] h-[30px] sm:w-[40px] sm:h-[40px] lg:w-[50px] lg:h-[50px]"
+            width={120}
+            height={100}
           />
         </div>
-        <h1 className="text-xs sm:text-sm lg:text-lg font-medium text-gray-900 pl-1 sm:pl-2">
+        {/* <h1 className="text-lg font-medium text-gray-900 pl-1 sm:pl-2">
           Presupuestos Participativos
-        </h1>
+        </h1> */}
       </div>
     </div>
   );

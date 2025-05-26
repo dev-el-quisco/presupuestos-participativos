@@ -19,8 +19,8 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-md px-1 sm:px-3">
-      <h2 className="font-light text-[#393b3d] mb-4 text-sm sm:text-lg">
+    <div className="w-full max-w-md px-2 sm:px-3">
+      <h2 className="font-light text-[#2c3e4a] mb-4 text-sm sm:text-lg">
         Iniciar Sesión
       </h2>
       <form className="space-y-2 sm:space-y-3" onSubmit={handleSubmit}>
@@ -71,7 +71,7 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
         <div className="pt-2">
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#025964] hover:bg-[#2A737D] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#025964]"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#2c3e4a] hover:bg-[#31c46c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f3bd49]"
           >
             Iniciar sesión
           </button>
@@ -80,7 +80,7 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
               <button
                 type="button"
                 onClick={onResetPasswordClick}
-                className="font-medium text-[#025964] hover:text-[#2A737D]"
+                className="font-md text-[#6b7fbd] hover:text-[#1cbab7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A4C3C6]"
               >
                 Recuperar contraseña
               </button>

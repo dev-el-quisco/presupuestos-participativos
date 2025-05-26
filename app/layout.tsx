@@ -14,15 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="h-full m-0 p-0 bg-gray-50">
-        <div className="relative min-h-screen w-full">
-          {/* Eliminar el div del fondo */}
-          <div className="relative z-10 h-full w-full overflow-auto">
-            {children}
-          </div>
-          <ToasterClient />
-        </div>
+    <html lang="en">
+      <body>
+        {children}
+        <ToasterClient />
       </body>
     </html>
   );

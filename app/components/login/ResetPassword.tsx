@@ -20,11 +20,11 @@ const ResetPassword = ({ onCancel }: ResetPasswordProps) => {
   };
 
   return (
-    <div className="w-full max-w-md px-2 sm:px-4">
-      <h2 className="font-light text-[#393b3d] mb-4 text-sm sm:text-lg">
+    <div className="w-full max-w-md px-2 sm:px-3">
+      <h2 className="font-light text-[#2c3e4a] mb-4 text-sm sm:text-lg">
         Recuperar Contraseña
       </h2>
-      <p className="text-[#393b3d] mb-6 text-xs sm:text-sm">
+      <p className="text-[#122056] mb-6 text-xs sm:text-sm">
         Ingrese su correo electrónico y le enviaremos un enlace para restablecer
         su contraseña.
       </p>
@@ -75,7 +75,7 @@ const ResetPassword = ({ onCancel }: ResetPasswordProps) => {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 px-2 sm:px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#025964] hover:bg-[#2A737D] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#538D97]"
+              className="flex-1 py-2 px-2 sm:px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#2c3e4a] hover:bg-[#31c46c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f3bd49]"
             >
               Enviar
             </button>
