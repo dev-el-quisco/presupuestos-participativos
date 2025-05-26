@@ -19,7 +19,7 @@ export default function Home() {
           }}
         ></div>
       </div>
-      
+
       <Navbar />
       <div className="flex-grow flex justify-center items-center p-4">
         <Content />
