@@ -10,6 +10,10 @@ interface NavbarProps {
 }
 
 const Navbar = ({ userName = "Usuario", onLogout = () => {} }: NavbarProps) => {
+  const router = useRouter();
+  const handleLogout = () => {
+    router.push("/");
+  };
   return (
     <nav className="w-full py-2 px-4 sm:px-6 lg:px-8 relative">
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
@@ -48,7 +52,8 @@ const Navbar = ({ userName = "Usuario", onLogout = () => {} }: NavbarProps) => {
           </div>
 
           <button
-            onClick={onLogout}
+            // onClick={onLogout}
+            onClick={handleLogout}
             className="flex items-center space-x-1 bg-[#eceef0] hover:bg-[#ef5e6a] text-[#2c3e4a] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
           >
             <span className="hidden sm:block">Cerrar sesión</span>
