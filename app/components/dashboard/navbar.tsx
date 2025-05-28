@@ -54,7 +54,7 @@ const Navbar = ({ userName = "Usuario", onLogout = () => {} }: NavbarProps) => {
           <button
             // onClick={onLogout}
             onClick={handleLogout}
-            className="flex items-center space-x-1 bg-[#eceef0] hover:bg-[#ef5e6a] text-[#2c3e4a] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+            className="flex items-center space-x-1 bg-[#eceef0] hover:bg-[#ef5e6a] text-[#2c3e4a] hover:text-[#eceef0] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
           >
             <span className="hidden sm:block">Cerrar sesión</span>
             <IconLogout size={20} stroke={1.5} />
