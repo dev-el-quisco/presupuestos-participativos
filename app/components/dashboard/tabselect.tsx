@@ -1,36 +1,23 @@
-// import Link from "next/link";
-
-// const Tabselect = () => {
-//   return (
-//     <div className="w-full max-w-4xl bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden p-6 relative">
-//       {/* Fondo invertido para el content */}
-//       <div className="absolute inset-0 bg-white -z-10">
-//         <div
-//           className="absolute inset-0 w-full h-full"
-//           style={{
-//             backgroundImage: `repeating-linear-gradient(45deg, #2c3e4a 0, #2c3e4a 2px, transparent 2px, transparent 10px)`,
-//             backgroundSize: "14px 14px",
-//             opacity: "0.05",
-//           }}
-//         ></div>
-//       </div>
-
-//       <div className="flex flex-row justify-center space-x-5">
-//         <Link href={"/dashboard/votaciones"}>Votaciones</Link>
-//         <Link href={"/dashboard/estadisticas"}>Estadisticas</Link>
-//         <Link href={"/dashboard/panel-administrador"}>Panel Administrador</Link>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Tabselect;
+"use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const Tabselect = () => {
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    return pathname.includes(path);
+  };
+
+  const getLinkClasses = (path: string) => {
+    return isActive(path)
+      ? "bg-[#31c46c] text-[#eceef0] px-2 py-2 rounded-lg transition-all duration-200"
+      : "bg-[#eceef0] text-[#2c3e4a] hover:text-[#eceef0] hover:bg-[#31c46c] px-2 py-2 rounded-lg transition-all duration-200";
+  };
+
   return (
-    <div className="w-full max-w-4xl bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden p-6 relative">
+    <div className="min-w-full w-full max-w-full bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden p-6 relative">
       {/* Fondo invertido para el content */}
 
       <div className="flex flex-row justify-center">
@@ -44,24 +31,25 @@ const Tabselect = () => {
             }}
           ></div>
         </div>
-        <div className="text-white flex flex-row justify-center items-center">
+        <div className="text-white flex flex-row justify-center md:justify-start gap-2 md:gap-4 lg:gap-6">
           <Link
             href={"/dashboard/votaciones"}
-            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
+            className={getLinkClasses("/dashboard/votaciones")}
           >
             Votaciones
           </Link>
           <Link
             href={"/dashboard/estadisticas"}
-            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
+            className={getLinkClasses("/dashboard/estadisticas")}
           >
             Estadisticas
           </Link>
           <Link
             href={"/dashboard/panel-administrador"}
-            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
+            className={getLinkClasses("/dashboard/panel-administrador")}
           >
-            Panel Administrador
+            <span className="block md:hidden">Administración</span>
+            <span className="hidden md:block">Portal Administrador</span>
           </Link>
         </div>
       </div>
