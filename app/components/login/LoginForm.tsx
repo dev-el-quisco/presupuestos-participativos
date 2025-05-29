@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { IconMail } from "@tabler/icons-react";
+import { IconLockPassword } from "@tabler/icons-react";
+import { IconEye } from "@tabler/icons-react";
+import { IconEyeX } from "@tabler/icons-react";
 
 interface LoginFormProps {
   onResetPasswordClick: () => void;
@@ -71,7 +75,7 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
         <div className="pt-2">
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#2c3e4a] hover:bg-[#31c46c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#f3bd49]"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-[#2c3e4a] hover:bg-[#31c46c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#31c46c]"
           >
             Iniciar sesión
           </button>

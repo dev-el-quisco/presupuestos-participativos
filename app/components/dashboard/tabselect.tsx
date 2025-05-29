@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { IconGraph } from "@tabler/icons-react";
+import { IconTool } from "@tabler/icons-react";
+import { IconAbacus } from "@tabler/icons-react";
 
 const Tabselect = () => {
   const pathname = usePathname();
@@ -36,20 +39,29 @@ const Tabselect = () => {
             href={"/dashboard/votaciones"}
             className={getLinkClasses("/dashboard/votaciones")}
           >
-            Votaciones
+            <div className="flex items-center gap-2">
+              <IconAbacus size={20} className="hidden md:block" />
+              <span>Votaciones</span>
+            </div>
           </Link>
           <Link
             href={"/dashboard/estadisticas"}
             className={getLinkClasses("/dashboard/estadisticas")}
           >
-            Estadisticas
+            <div className="flex items-center gap-2">
+              <IconGraph size={20} className="hidden md:block" />
+              <span>Estadisticas</span>
+            </div>
           </Link>
           <Link
             href={"/dashboard/panel-administrador"}
             className={getLinkClasses("/dashboard/panel-administrador")}
           >
-            <span className="block md:hidden">Administración</span>
-            <span className="hidden md:block">Portal Administrador</span>
+            <div className="flex items-center gap-2">
+              <IconTool size={20} className="hidden md:block" />
+              <span className="block md:hidden">Administración</span>
+              <span className="hidden md:block">Portal Administrador</span>
+            </div>
           </Link>
         </div>
       </div>

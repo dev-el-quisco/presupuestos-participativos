@@ -8,9 +8,9 @@ const Footer = () => {
           <Image
             src="/municipalidad-blanco.png"
             alt="Logo Municipalidad"
-            width={120}
-            height={120}
-            className="w-[80px] h-[80px] sm:w-[120px] sm:h-[120px] md:w-[150px] md:h-[150px] object-contain"
+            width={1000}
+            height={1000}
+            className="w-[120px] h-[80px] md:w-[150px] md:h-[150px] object-contain"
           />
         </div>
       </div>
