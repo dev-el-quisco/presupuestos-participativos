@@ -33,7 +33,7 @@ const Tabselect = () => {
     <div className="w-full max-w-4xl bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden p-6 relative">
       {/* Fondo invertido para el content */}
 
-      <div className="flex flex-row justify-center space-x-5">
+      <div className="flex flex-row justify-center">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
           <div
             className="absolute inset-0 w-full h-full"
@@ -44,19 +44,22 @@ const Tabselect = () => {
             }}
           ></div>
         </div>
-        <div className="text-white flex flex-row justify-center items-center space-x-10">
-          <Link href={"/dashboard/votaciones"} className="hover:bg-[#31c46c] ">
+        <div className="text-white flex flex-row justify-center items-center">
+          <Link
+            href={"/dashboard/votaciones"}
+            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
+          >
             Votaciones
           </Link>
           <Link
             href={"/dashboard/estadisticas"}
-            className="hover:bg-[#31c46c] "
+            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
           >
             Estadisticas
           </Link>
           <Link
             href={"/dashboard/panel-administrador"}
-            className="hover:bg-[#31c46c] "
+            className="hover:bg-[#31c46c] px-4 py-2 rounded-lg transition-all duration-200"
           >
             Panel Administrador
           </Link>
