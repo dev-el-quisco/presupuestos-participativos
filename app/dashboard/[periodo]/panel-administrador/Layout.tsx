@@ -8,10 +8,9 @@ interface AdminPanelLayoutProps {
 
 export default function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
   const adminTabs = [
-    { name: "General", path: "" },
     { name: "Usuarios", path: "/usuarios" },
     { name: "Sedes", path: "/sedes" },
-    { name: "Mesas", path: "/mesas" }
+    { name: "Mesas", path: "/mesas" },
   ];
 
   return (
