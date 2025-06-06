@@ -15,9 +15,9 @@ const Tabselect = () => {
 
   const getLinkClasses = (path: string) => {
     if (isActive(path)) {
-      return "bg-[#31c46c] text-[#eceef0] px-4 py-3 rounded-t-lg transition-all duration-200 font-medium";
+      return "bg-[#31c46c] text-[#eceef0] px-4 py-3 rounded-lg transition-all duration-200 font-medium";
     } else {
-      return "text-[#eceef0]/80 hover:text-[#eceef0] hover:bg-[#31c46c]/20 px-4 py-3 rounded-t-lg transition-all duration-200";
+      return "text-[#eceef0]/80 hover:text-[#eceef0] hover:bg-[#31c46c]/20 px-4 py-3 rounded-lg transition-all duration-200";
     }
   };
 

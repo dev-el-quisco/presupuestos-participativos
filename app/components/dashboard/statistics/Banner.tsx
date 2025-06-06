@@ -27,7 +27,7 @@ const Banner = () => {
         <select
           value={periodo}
           onChange={(e) => setPeriodo(e.target.value)}
-          className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
+          className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 hover:bg-[#d4f3e4] focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
         >
           <option value="2025">Periodo: 2025</option>
           <option value="2024">Periodo: 2024</option>

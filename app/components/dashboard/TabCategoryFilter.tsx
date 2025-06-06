@@ -86,7 +86,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
               className={`flex-1 py-3 px-4 text-center transition-colors ${
                 activeTab === tab.path
                   ? "bg-white text-gray-800 font-medium border-b-2 border-[#31c46c]"
-                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                  : "bg-gray-50 text-gray-600 hover:bg-[#31c46c]/20"
               }`}
             >
               <div className="flex items-center justify-center gap-2">
