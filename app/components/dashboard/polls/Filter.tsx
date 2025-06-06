@@ -3,19 +3,21 @@
 import { IconFilter } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
+import { useRouter, usePathname } from "next/navigation";
 
 const Filter = () => {
   const [years, setYears] = useState<number[]>([]);
   const [sede, setSede] = useState("");
-  
-  // Usar el contexto global de año
+
   const { selectedYear, setSelectedYear } = useYear();
 
+  const router = useRouter();
+  const pathname = usePathname();
+
   useEffect(() => {
-    // Calcular años disponibles
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 1;
-    const yearsArray = [];
+    const yearsArray: number[] = [];
 
     for (let year = 2025; year <= maxYear; year++) {
       yearsArray.push(year);
@@ -25,8 +27,35 @@ const Filter = () => {
   }, []);
 
   const handleFilter = () => {
-    // Placeholder para futura implementación
     console.log("Filtrando por:", { year: selectedYear, sede });
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = e.target.value;
+    setSelectedYear(newYear);
+
+    const pathSegments = pathname.split("/").filter(Boolean);
+    const yearIndex = pathSegments.indexOf(selectedYear);
+
+    let newPath = pathname;
+
+    if (yearIndex !== -1) {
+      const updatedPathSegments = [...pathSegments];
+      updatedPathSegments[yearIndex] = newYear;
+      newPath = "/" + updatedPathSegments.join("/");
+    } else {
+      const parts = pathname.split("/");
+      if (parts[1] === "dashboard" && parts.length > 2) {
+        parts[2] = newYear; // Reemplaza el año
+        newPath = parts.join("/");
+      } else {
+        console.warn(
+          "Año no encontrado en la ruta actual para reemplazar. Manteniendo la ruta original con el año actualizado en contexto."
+        );
+      }
+    }
+
+    router.push(newPath);
   };
 
   return (
@@ -44,7 +73,7 @@ const Filter = () => {
               id="periodo"
               className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={handleYearChange}
             >
               {years.map((y) => (
                 <option key={y} value={y.toString()}>

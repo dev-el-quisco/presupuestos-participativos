@@ -3,20 +3,22 @@
 import { IconFileExport } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
+import { useRouter, usePathname } from "next/navigation";
 
 const Banner = () => {
   const [years, setYears] = useState<number[]>([]);
 
-  // Usar el contexto global de año
   const { selectedYear, setSelectedYear } = useYear();
+
+  const router = useRouter();
+  const pathname = usePathname();
 
   const totalVotos = 5850;
 
   useEffect(() => {
-    // Calcular años disponibles
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 1;
-    const yearsArray = [];
+    const yearsArray: number[] = [];
 
     for (let year = 2025; year <= maxYear; year++) {
       yearsArray.push(year);
@@ -26,7 +28,34 @@ const Banner = () => {
   }, []);
 
   const handleExport = () => {
-    console.log("Exportando datos...");
+    console.log("Exportando datos para el año:", selectedYear);
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = e.target.value;
+    setSelectedYear(newYear);
+
+    const pathSegments = pathname.split("/").filter(Boolean);
+
+    let currentCategory = "general";
+
+    const estadisticasIndex = pathSegments.indexOf("estadisticas");
+
+    if (
+      estadisticasIndex !== -1 &&
+      estadisticasIndex + 1 < pathSegments.length
+    ) {
+      currentCategory = pathSegments[estadisticasIndex + 1];
+    } else if (
+      estadisticasIndex !== -1 &&
+      estadisticasIndex + 1 === pathSegments.length
+    ) {
+      currentCategory = "general";
+    }
+
+    const newUrl = `/dashboard/${newYear}/estadisticas/${currentCategory}`;
+
+    router.push(newUrl);
   };
 
   return (
@@ -44,7 +73,7 @@ const Banner = () => {
         <div className="relative">
           <select
             value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+            onChange={handleYearChange}
             className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 hover:bg-[#d4f3e4] focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
           >
             {years.map((year) => (
