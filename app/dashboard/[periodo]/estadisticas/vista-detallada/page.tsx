@@ -6,7 +6,8 @@ export default function DetailedView() {
   return (
     <Layout>
       <div className="p-6 w-full flex flex-col justify-start">
-        <h1 className="text-2xl">Vista Detallada</h1>
+        <h1 className="text-2xl">Información Extra</h1>
+        <p>Métricas extra en base a los resultados obtenidos</p>
         <GeneralInfo />
         <Ranking />
       </div>
