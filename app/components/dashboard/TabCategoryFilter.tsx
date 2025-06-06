@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
+import { useYear } from "@/app/context/YearContext";
 
 interface Tab {
   name: string;
@@ -18,6 +19,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("");
+  const { selectedYear } = useYear();
 
   // Si no se proporcionan tabs, usar las pestañas predeterminadas para estadísticas
   const defaultTabs: Tab[] = [
@@ -48,17 +50,13 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   }, [pathname, tabsToRender]);
 
   const handleTabClick = (tabPath: string) => {
-    // Extraer el periodo de la URL actual
-    const periodMatch = pathname.match(/\/([^\/]+)\//);
-    const period = periodMatch ? periodMatch[1] : "";
-
     // Construir la nueva ruta
     let newPath = "";
     if (basePath) {
       // Si se proporciona una ruta base, usarla
       newPath = `${basePath}${tabPath}`;
     } else {
-      // De lo contrario, construir la ruta basada en el periodo y la sección actual
+      // De lo contrario, construir la ruta basada en el año del contexto y la sección actual
       const section =
         pathname.includes("/estadisticas/") ||
         pathname.endsWith("/estadisticas")
@@ -68,7 +66,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
           ? "panel-administrador"
           : "estadisticas";
 
-      newPath = `/${period}/${section}${tabPath}`;
+      newPath = `/dashboard/${selectedYear}/${section}${tabPath}`;
     }
 
     router.push(newPath);

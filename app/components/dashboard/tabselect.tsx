@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { IconGraph } from "@tabler/icons-react";
 import { IconTool } from "@tabler/icons-react";
 import { IconAbacus } from "@tabler/icons-react";
+import { useYear } from "@/app/context/YearContext";
 
 const Tabselect = () => {
   const pathname = usePathname();
+  const { selectedYear } = useYear();
 
   const isActive = (path: string) => {
     return pathname.includes(path);
@@ -20,6 +22,11 @@ const Tabselect = () => {
       return "text-[#eceef0]/80 hover:text-[#eceef0] hover:bg-[#31c46c]/20 px-4 py-3 rounded-lg transition-all duration-200";
     }
   };
+
+  // Construir las rutas con el año del contexto
+  const votacionesPath = `/dashboard/${selectedYear}/votaciones`;
+  const estadisticasPath = `/dashboard/${selectedYear}/estadisticas`;
+  const adminPath = `/dashboard/${selectedYear}/panel-administrador`;
 
   return (
     <div className="min-w-full w-full max-w-full bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden relative">
@@ -34,13 +41,13 @@ const Tabselect = () => {
           }}
         ></div>
       </div>
-
+      
       {/* Contenedor de tabs con borde inferior */}
       <div className="border-b border-[#eceef0]/20 py-2">
         <div className="flex flex-row justify-center md:justify-start px-4">
           <Link
-            href={"/dashboard/2025/votaciones"}
-            className={getLinkClasses("/dashboard/2025/votaciones")}
+            href={votacionesPath}
+            className={getLinkClasses(votacionesPath)}
           >
             <div className="flex items-center gap-2">
               <IconAbacus size={20} className="hidden md:block" />
@@ -48,8 +55,8 @@ const Tabselect = () => {
             </div>
           </Link>
           <Link
-            href={"/dashboard/2025/estadisticas"}
-            className={getLinkClasses("/dashboard/2025/estadisticas")}
+            href={estadisticasPath}
+            className={getLinkClasses(estadisticasPath)}
           >
             <div className="flex items-center gap-2">
               <IconGraph size={20} className="hidden md:block" />
@@ -57,8 +64,8 @@ const Tabselect = () => {
             </div>
           </Link>
           <Link
-            href={"/dashboard/2025/panel-administrador"}
-            className={getLinkClasses("/dashboard/2025/panel-administrador")}
+            href={adminPath}
+            className={getLinkClasses(adminPath)}
           >
             <div className="flex items-center gap-2">
               <IconTool size={20} className="hidden md:block" />

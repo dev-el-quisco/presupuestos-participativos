@@ -1,15 +1,32 @@
 "use client";
 
 import { IconFilter } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useYear } from "@/app/context/YearContext";
 
 const Filter = () => {
-  const [year, setYear] = useState("2025");
+  const [years, setYears] = useState<number[]>([]);
   const [sede, setSede] = useState("");
+  
+  // Usar el contexto global de año
+  const { selectedYear, setSelectedYear } = useYear();
+
+  useEffect(() => {
+    // Calcular años disponibles
+    const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 1;
+    const yearsArray = [];
+
+    for (let year = 2025; year <= maxYear; year++) {
+      yearsArray.push(year);
+    }
+
+    setYears(yearsArray);
+  }, []);
 
   const handleFilter = () => {
     // Placeholder para futura implementación
-    console.log("Filtrando por:", { year, sede });
+    console.log("Filtrando por:", { year: selectedYear, sede });
   };
 
   return (
@@ -22,16 +39,22 @@ const Filter = () => {
           >
             Periodo de Votación
           </label>
-          <select
-            id="periodo"
-            className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-          >
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-          </select>
+          {years.length > 0 ? (
+            <select
+              id="periodo"
+              className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {years.map((y) => (
+                <option key={y} value={y.toString()}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="border border-gray-300 rounded-md p-2 animate-pulse bg-gray-100 h-10" />
+          )}
         </div>
 
         <div className="flex flex-col">

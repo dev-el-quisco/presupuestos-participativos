@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import Navbar from "@/app/components/dashboard/navbar";
 import Footer from "@/app/components/dashboard/footer";
 import Tabselect from "@/app/components/dashboard/tabselect";
+import DashboardYearDetector from "@/app/components/dashboard/DashboardYearDetector";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,6 +11,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
+      <DashboardYearDetector />
       <div className="h-full w-full fixed inset-0 -z-10 bg-[#2c3e4a]">
         <div
           className="absolute inset-0 w-full h-full"
