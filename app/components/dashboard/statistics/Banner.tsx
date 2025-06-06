@@ -1,18 +1,9 @@
-// import { IconFilter } from "@tabler/icons-react";
-// import { IconFileExport } from "@tabler/icons-react";
-
-// const YearFilter = () => {
-//   return <div>hola</div>;
-// };
-
-// export default YearFilter;
-
 "use client";
 
 import { IconFileExport } from "@tabler/icons-react";
 import { useState } from "react";
 
-const YearFilter = () => {
+const Banner = () => {
   const [periodo, setPeriodo] = useState("2025");
 
   const totalVotos = 5850;
@@ -65,4 +56,4 @@ const YearFilter = () => {
   );
 };
 
-export default YearFilter;
+export default Banner;
