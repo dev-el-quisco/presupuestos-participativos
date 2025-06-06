@@ -1,5 +1,5 @@
 const PollingPlaces = () => {
-  return <div>Sedes</div>;
+  return <div>Listado de sedes</div>;
 };
 
 export default PollingPlaces;

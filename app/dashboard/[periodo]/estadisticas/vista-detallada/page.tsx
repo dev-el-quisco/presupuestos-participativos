@@ -1,9 +1,14 @@
 import Layout from "@/app/dashboard/[periodo]/estadisticas/Layout";
+import GeneralInfo from "@/app/components/dashboard/statistics/DetailedView/GeneralInfo";
+import Ranking from "@/app/components/dashboard/statistics/DetailedView/Ranking";
+
 export default function DetailedView() {
   return (
     <Layout>
       <div className="p-6 w-full flex flex-col justify-start">
         <h1 className="text-2xl">Vista Detallada</h1>
+        <GeneralInfo />
+        <Ranking />
       </div>
     </Layout>
   );
