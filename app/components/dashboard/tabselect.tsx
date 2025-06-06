@@ -36,8 +36,8 @@ const Tabselect = () => {
         </div>
         <div className="text-white flex flex-row justify-center md:justify-start gap-2 md:gap-4 lg:gap-6">
           <Link
-            href={"/dashboard/votaciones"}
-            className={getLinkClasses("/dashboard/votaciones")}
+            href={"/dashboard/2025/votaciones"}
+            className={getLinkClasses("/dashboard/2025/votaciones")}
           >
             <div className="flex items-center gap-2">
               <IconAbacus size={20} className="hidden md:block" />
@@ -45,8 +45,8 @@ const Tabselect = () => {
             </div>
           </Link>
           <Link
-            href={"/dashboard/estadisticas"}
-            className={getLinkClasses("/dashboard/estadisticas")}
+            href={"/dashboard/2025/estadisticas"}
+            className={getLinkClasses("/dashboard/2025/estadisticas")}
           >
             <div className="flex items-center gap-2">
               <IconGraph size={20} className="hidden md:block" />
@@ -54,8 +54,8 @@ const Tabselect = () => {
             </div>
           </Link>
           <Link
-            href={"/dashboard/panel-administrador"}
-            className={getLinkClasses("/dashboard/panel-administrador")}
+            href={"/dashboard/2025/panel-administrador"}
+            className={getLinkClasses("/dashboard/2025/panel-administrador")}
           >
             <div className="flex items-center gap-2">
               <IconTool size={20} className="hidden md:block" />

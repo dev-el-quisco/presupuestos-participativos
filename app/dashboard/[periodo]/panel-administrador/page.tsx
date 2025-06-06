@@ -1,4 +1,5 @@
-import Layout from "@/app/dashboard/Layout";
+import React from "react";
+import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
 import { IconUsers } from "@tabler/icons-react";
 import { IconMapPin } from "@tabler/icons-react";
 import { IconCategory } from "@tabler/icons-react";
@@ -11,12 +12,7 @@ import { IconTrash } from "@tabler/icons-react";
 export default function PanelAdministrador() {
   return (
     <Layout>
-      <div className="p-6 w-full flex flex-col justify-start">
-        <h1 className="text-2xl">
-          Panel de Administrador de Presupuestos Participativos
-        </h1>
-        <p>Gestione usuarios, sedes, mesas y más.</p>
-      </div>
+      <h1>Seleccione una tab</h1>
     </Layout>
   );
 }
