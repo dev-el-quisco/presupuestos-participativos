@@ -93,7 +93,8 @@ const MostVoted = () => {
   };
 
   return (
-    <div className="w-full md:w-1/2 p-4">
+    // <div className="w-full md:w-1/2 p-4">
+    <div className="w-full p-4">
       <div className="bg-white rounded-lg shadow-sm p-6 h-full border border-gray-200">
         <h2 className="text-xl font-semibold">{getCategoryTitle()}</h2>
         <p className="mb-6 font-light">Top 5 con más votos</p>

@@ -12,28 +12,28 @@ const DistributionByCategory = () => {
   // Datos para el gráfico de distribución por categoría
   const categoryData = [
     {
-      name: "Proyectos Comunales",
+      name: "Comunales",
       value: 41.9,
       color: "#10B981", // verde
       colorClass: "bg-green-500",
       key: "comunales",
     },
     {
-      name: "Proyectos Infantiles",
+      name: "Infantiles",
       value: 32.1,
       color: "#3B82F6", // azul
       colorClass: "bg-blue-500",
       key: "infantiles",
     },
     {
-      name: "Proyectos Deportivos",
+      name: "Deportivos",
       value: 16.9,
       color: "#F59E0B", // amarillo
       colorClass: "bg-yellow-500",
       key: "deportivos",
     },
     {
-      name: "Proyectos Culturales",
+      name: "Culturales",
       value: 9.1,
       color: "#EF4444", // rojo
       colorClass: "bg-red-500",
@@ -90,7 +90,8 @@ const DistributionByCategory = () => {
   });
 
   return (
-    <div className="w-full md:w-1/2 p-4">
+    // <div className="w-full md:w-1/2 p-4">
+    <div className="w-full p-4">
       <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">
           Distribución por Categoría

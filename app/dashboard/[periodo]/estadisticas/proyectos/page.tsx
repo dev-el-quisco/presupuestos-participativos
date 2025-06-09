@@ -16,10 +16,12 @@ export default function Projects() {
         </p>
         <FilterProvider>
           <Filter />
-          <ProjectsList />
-          <div className="flex flex-row items-start justify-evenly">
-            <MostVoted />
-            <DistributionByCategory />
+          <div className="flex flex-row justify-between">
+            <ProjectsList />
+            <div className="flex flex-col w-full">
+              <DistributionByCategory />
+              <MostVoted />
+            </div>
           </div>
         </FilterProvider>
       </div>

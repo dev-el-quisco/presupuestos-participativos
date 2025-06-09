@@ -72,6 +72,7 @@ const Filter = () => {
     <div className="w-full my-6">
       <div className="flex flex-wrap gap-2">
         {Object.entries(filterData).map(([key, data]) => {
+          // Solo marcar como seleccionada la categoría específica, no todas cuando es "todos"
           const isSelected = selectedCategory === key;
 
           const selectedClass = isSelected
@@ -86,6 +87,10 @@ const Filter = () => {
               key={key}
               className={`flex-1 min-w-[180px] ${data.color} rounded-lg shadow-sm overflow-hidden cursor-pointer transition-all ${selectedClass}`}
               onClick={() => handleCategorySelect(key)}
+              style={{
+                opacity: isSelected ? 1 : 0.6,
+                transition: "opacity 300ms",
+              }}
             >
               <div className={`p-4 ${selectedBottomBorder}`}>
                 <h3 className={`font-medium ${data.textColor}`}>
@@ -96,20 +101,29 @@ const Filter = () => {
                     {typeof window !== "undefined"
                       ? data.count.toLocaleString()
                       : data.count}
+                    <span className="text-sm font-light"> votos</span>
                   </span>
-                  <span className="ml-auto text-lg">{data.percentage}%</span>
+                  <span className="ml-auto text-md text-gray-700">
+                    {data.percentage}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                   <div
-                    className={`h-2 rounded-full ${
-                      key === "todos"
-                        ? "bg-gray-500"
-                        : data.textColor.replace("text", "bg")
-                    }`}
-                    style={{ width: `${data.percentage}%` }}
+                    className={`h-2 rounded-full`}
+                    style={{
+                      width: `${data.percentage}%`,
+                      backgroundColor:
+                        key === "todos"
+                          ? "#6B7280"
+                          : getColorFromTextColor(data.textColor),
+                      opacity: isSelected ? 1 : 0.6,
+                      transition: "opacity 300ms, width 500ms ease-in-out",
+                    }}
                   ></div>
                 </div>
-                <p className="text-sm mt-2">{data.projects} proyectos</p>
+                {/* <p className="text-sm mt-2 text-gray-500">
+                  {data.projects} proyectos
+                </p> */}
               </div>
             </div>
           );
@@ -118,5 +132,17 @@ const Filter = () => {
     </div>
   );
 };
+
+function getColorFromTextColor(textColor: string) {
+  const colorMap: Record<string, string> = {
+    "text-gray-800": "#1F2937",
+    "text-green-800": "#065F46",
+    "text-blue-800": "#1E40AF",
+    "text-yellow-800": "#92400E",
+    "text-red-800": "#991B1B",
+  };
+
+  return colorMap[textColor] || "#6B7280";
+}
 
 export default Filter;
