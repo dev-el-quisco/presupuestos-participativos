@@ -177,7 +177,7 @@ const ProjectsList = () => {
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className="border rounded-lg overflow-hidden shadow-sm"
+            className="border rounded-lg overflow-hidden shadow-sm border-gray-300"
           >
             <div className="flex items-center">
               <div className={`${project.color} w-2 h-full self-stretch`}></div>
