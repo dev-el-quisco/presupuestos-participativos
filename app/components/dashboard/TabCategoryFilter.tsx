@@ -18,9 +18,6 @@ interface TabCategoryFilterProps {
 const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState("");
-  const { selectedYear } = useYear();
-
   // Si no se proporcionan tabs, usar las pestañas predeterminadas para estadísticas
   const defaultTabs: Tab[] = [
     { name: "Proyectos", path: "/proyectos" },
@@ -29,6 +26,10 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   ];
 
   const tabsToRender = tabs || defaultTabs;
+
+  // Inicializar activeTab con la primera pestaña por defecto
+  const [activeTab, setActiveTab] = useState(tabsToRender[0]?.path || "");
+  const { selectedYear } = useYear();
 
   useEffect(() => {
     // Determinar la pestaña activa basada en la ruta actual
@@ -47,7 +48,23 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
       // Si no hay coincidencia, establecer la primera pestaña como activa
       setActiveTab(tabsToRender[0]?.path || "");
     }
-  }, [pathname, tabsToRender]);
+
+    // Redirección automática si estamos en la ruta base de estadísticas
+    if (currentPath.endsWith("/estadisticas") && tabsToRender.length > 0) {
+      const firstTabPath = tabsToRender[0].path;
+      const section = "estadisticas";
+      const newPath = `/dashboard/${selectedYear}/${section}${firstTabPath}`;
+      router.push(newPath);
+    } else if (
+      currentPath.endsWith("/panel-administrador") &&
+      tabsToRender.length > 0
+    ) {
+      const firstTabPath = tabsToRender[0].path;
+      const section = "panel-administrador";
+      const newPath = `/dashboard/${selectedYear}/${section}${firstTabPath}`;
+      router.push(newPath);
+    }
+  }, [pathname, tabsToRender, router, selectedYear]);
 
   const handleTabClick = (tabPath: string) => {
     // Construir la nueva ruta

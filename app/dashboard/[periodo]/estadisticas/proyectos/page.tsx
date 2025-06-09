@@ -7,7 +7,7 @@ import Filter from "@/app/components/dashboard/statistics/Projects/Filter";
 export default function Projects() {
   return (
     <Layout>
-      <div className="p-6 w-full flex flex-col justify-center">
+      <div className="p-6 w-full flex flex-col justify-center bg-white shadow-sm border border-gray-200 rounded-lg">
         <h1 className="text-2xl">Resultados por Proyecto</h1>
         <p>
           Votos recibidos por cada proyecto entre todas las sedes y mesas de

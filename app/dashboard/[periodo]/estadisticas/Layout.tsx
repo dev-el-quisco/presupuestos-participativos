@@ -11,7 +11,7 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   const statisticsTabs = [
     { name: "Proyectos", path: "/proyectos" },
     { name: "Por Sedes", path: "/sedes" },
-    { name: "Vista Detallada", path: "/vista-detallada" }
+    { name: "Vista Detallada", path: "/vista-detallada" },
   ];
 
   return (
