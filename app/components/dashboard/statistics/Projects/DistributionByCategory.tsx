@@ -1,10 +1,12 @@
 "use client";
 
 import { useYear } from "@/app/context/YearContext";
+import { useFilter } from "@/app/context/FilterContext";
 import { useState, useEffect } from "react";
 
 const DistributionByCategory = () => {
   const { selectedYear } = useYear();
+  const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
 
   // Datos para el gráfico de distribución por categoría
@@ -14,24 +16,28 @@ const DistributionByCategory = () => {
       value: 41.9,
       color: "#10B981", // verde
       colorClass: "bg-green-500",
+      key: "comunales",
     },
     {
       name: "Proyectos Infantiles",
       value: 32.1,
       color: "#3B82F6", // azul
       colorClass: "bg-blue-500",
+      key: "infantiles",
     },
     {
       name: "Proyectos Deportivos",
       value: 16.9,
       color: "#F59E0B", // amarillo
       colorClass: "bg-yellow-500",
+      key: "deportivos",
     },
     {
       name: "Proyectos Culturales",
       value: 9.1,
       color: "#EF4444", // rojo
       colorClass: "bg-red-500",
+      key: "culturales",
     },
   ];
 
@@ -74,7 +80,13 @@ const DistributionByCategory = () => {
     // Actualizar el ángulo de inicio para el siguiente sector
     startAngle = endAngle;
 
-    return { ...category, path };
+    // Determinar si esta categoría está seleccionada
+    const isSelected =
+      selectedCategory === category.key ||
+      selectedCategory === "todos" ||
+      selectedCategory === null;
+
+    return { ...category, path, isSelected };
   });
 
   return (
@@ -95,6 +107,8 @@ const DistributionByCategory = () => {
                   fill={item.color}
                   stroke="white"
                   strokeWidth="1"
+                  opacity={item.isSelected ? 1 : 0.3}
+                  className="transition-opacity duration-300"
                 />
               ))}
               {/* Círculo central para efecto de dona */}
@@ -113,16 +127,26 @@ const DistributionByCategory = () => {
 
           {/* Leyenda */}
           <div className="mt-4 md:mt-0 md:ml-6 flex flex-col space-y-2">
-            {categoryData.map((item, index) => (
-              <div key={index} className="flex items-center">
-                <div
-                  className={`w-4 h-4 ${item.colorClass} rounded-sm mr-2`}
-                ></div>
-                <span className="text-sm">
-                  {item.name} ({item.value}%)
-                </span>
-              </div>
-            ))}
+            {categoryData.map((item, index) => {
+              const isSelected =
+                selectedCategory === item.key ||
+                selectedCategory === "todos" ||
+                selectedCategory === null;
+              return (
+                <div key={index} className="flex items-center">
+                  <div
+                    className={`w-4 h-4 ${item.colorClass} rounded-sm mr-2 transition-opacity duration-300`}
+                    style={{ opacity: isSelected ? 1 : 0.3 }}
+                  ></div>
+                  <span
+                    className={`text-sm transition-opacity duration-300`}
+                    style={{ opacity: isSelected ? 1 : 0.5 }}
+                  >
+                    {item.name} ({item.value}%)
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

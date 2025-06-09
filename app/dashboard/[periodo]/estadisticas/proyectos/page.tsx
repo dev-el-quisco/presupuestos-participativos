@@ -1,8 +1,9 @@
 import Layout from "@/app/dashboard/[periodo]/estadisticas/Layout";
 import ProjectsList from "@/app/components/dashboard/statistics/Projects/ProjectsList";
 import MostVoted from "@/app/components/dashboard/statistics/Projects/MostVoted";
-import DistributionByCaegory from "@/app/components/dashboard/statistics/Projects/DistributionByCategory";
+import DistributionByCategory from "@/app/components/dashboard/statistics/Projects/DistributionByCategory";
 import Filter from "@/app/components/dashboard/statistics/Projects/Filter";
+import { FilterProvider } from "@/app/context/FilterContext";
 
 export default function Projects() {
   return (
@@ -13,12 +14,14 @@ export default function Projects() {
           Votos recibidos por cada proyecto entre todas las sedes y mesas de
           votación
         </p>
-        <Filter />
-        <ProjectsList />
-        <div className="flex flex-row items-start justify-evenly">
-          <MostVoted />
-          <DistributionByCaegory />
-        </div>
+        <FilterProvider>
+          <Filter />
+          <ProjectsList />
+          <div className="flex flex-row items-start justify-evenly">
+            <MostVoted />
+            <DistributionByCategory />
+          </div>
+        </FilterProvider>
       </div>
     </Layout>
   );

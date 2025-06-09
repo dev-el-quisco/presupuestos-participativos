@@ -1,14 +1,11 @@
 "use client";
 
 import { useYear } from "@/app/context/YearContext";
-import { useState } from "react";
+import { useFilter } from "@/app/context/FilterContext";
 
 const Filter = () => {
   const { selectedYear } = useYear();
-  // Inicializar selectedCategory con 'todos' para que esté seleccionado por defecto
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    "todos"
-  );
+  const { selectedCategory, setSelectedCategory } = useFilter();
 
   const filterData = {
     todos: {
@@ -65,7 +62,7 @@ const Filter = () => {
 
   const handleCategorySelect = (category: string) => {
     if (selectedCategory === category) {
-      setSelectedCategory(null);
+      setSelectedCategory("todos"); // Cambiado de null a "todos" para siempre tener una selección
     } else {
       setSelectedCategory(category);
     }
@@ -96,7 +93,9 @@ const Filter = () => {
                 </h3>
                 <div className="flex items-baseline mt-2">
                   <span className="text-3xl font-bold">
-                    {data.count.toLocaleString()}
+                    {typeof window !== "undefined"
+                      ? data.count.toLocaleString()
+                      : data.count}
                   </span>
                   <span className="ml-auto text-lg">{data.percentage}%</span>
                 </div>
