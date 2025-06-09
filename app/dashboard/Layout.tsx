@@ -23,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
         ></div>
       </div>
       <Navbar />
-      <div className="flex-grow flex justify-center items-center p-4 sm:p-6 lg:p-8">
+      <div className="flex-grow flex justify-center items-start p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-7xl bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-2xl overflow-hidden p-1 relative flex flex-col items-center">
           <div className="absolute inset-0 bg-white -z-10 rounded-xl">
             <div
