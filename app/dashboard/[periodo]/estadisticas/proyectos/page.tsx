@@ -15,7 +15,7 @@ export default function Projects() {
         </p>
         <Filter />
         <ProjectsList />
-        <div className="flex flex-row items-center justify-evenly">
+        <div className="flex flex-row items-start justify-evenly">
           <MostVoted />
           <DistributionByCaegory />
         </div>

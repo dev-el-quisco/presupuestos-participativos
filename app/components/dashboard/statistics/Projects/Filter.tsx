@@ -5,9 +5,11 @@ import { useState } from "react";
 
 const Filter = () => {
   const { selectedYear } = useYear();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Inicializar selectedCategory con 'todos' para que esté seleccionado por defecto
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    "todos"
+  );
 
-  // Datos de ejemplo para los filtros
   const filterData = {
     todos: {
       title: "Todos los Proyectos",
@@ -16,6 +18,8 @@ const Filter = () => {
       projects: 14,
       color: "bg-gray-200",
       textColor: "text-gray-800",
+      borderColor: "ring-gray-500",
+      bottomBorderColor: "border-gray-500",
     },
     comunales: {
       title: "Proyectos Comunales",
@@ -24,6 +28,8 @@ const Filter = () => {
       projects: 4,
       color: "bg-green-100",
       textColor: "text-green-800",
+      borderColor: "ring-green-500",
+      bottomBorderColor: "border-green-500",
     },
     infantiles: {
       title: "Proyectos Infantiles",
@@ -32,6 +38,8 @@ const Filter = () => {
       projects: 4,
       color: "bg-blue-100",
       textColor: "text-blue-800",
+      borderColor: "ring-blue-500",
+      bottomBorderColor: "border-blue-500",
     },
     deportivos: {
       title: "Proyectos Deportivos",
@@ -40,6 +48,8 @@ const Filter = () => {
       projects: 3,
       color: "bg-yellow-100",
       textColor: "text-yellow-800",
+      borderColor: "ring-yellow-500",
+      bottomBorderColor: "border-yellow-500",
     },
     culturales: {
       title: "Proyectos Culturales",
@@ -48,18 +58,17 @@ const Filter = () => {
       projects: 3,
       color: "bg-red-100",
       textColor: "text-red-800",
+      borderColor: "ring-red-500",
+      bottomBorderColor: "border-red-500",
     },
   };
 
-  // Función para manejar la selección de categoría
   const handleCategorySelect = (category: string) => {
     if (selectedCategory === category) {
-      setSelectedCategory(null); // Deseleccionar si ya está seleccionado
+      setSelectedCategory(null);
     } else {
       setSelectedCategory(category);
     }
-
-    // Aquí se podría emitir un evento o usar un contexto para comunicarse con ProjectsList
   };
 
   return (
@@ -67,11 +76,12 @@ const Filter = () => {
       <div className="flex flex-wrap gap-2">
         {Object.entries(filterData).map(([key, data]) => {
           const isSelected = selectedCategory === key;
+
           const selectedClass = isSelected
-            ? "ring-2 ring-offset-2 ring-blue-500"
+            ? `ring-2 ring-offset-2 ${data.borderColor}`
             : "";
           const selectedBottomBorder = isSelected
-            ? "border-b-4 border-blue-500"
+            ? `border-b-4 ${data.bottomBorderColor}`
             : "";
 
           return (
@@ -101,11 +111,6 @@ const Filter = () => {
                   ></div>
                 </div>
                 <p className="text-sm mt-2">{data.projects} proyectos</p>
-                {isSelected && (
-                  <div className="text-xs mt-1 font-medium text-center py-1 bg-white bg-opacity-50 rounded">
-                    Seleccionado
-                  </div>
-                )}
               </div>
             </div>
           );
