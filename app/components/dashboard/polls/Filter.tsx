@@ -53,9 +53,9 @@ const Filter = () => {
   };
 
   return (
-    <div className=" bg-white rounded-lg border border-gray-200">
+    <div className=" bg-white rounded-lg border border-gray-200 mt-3">
       <div className="m-3">
-        <div className="flex flex-col">
+        <div className="flex flex-row space-x-2 items-center">
           <label
             htmlFor="periodo"
             className="text-sm font-medium text-gray-700 mb-1"
