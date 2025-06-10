@@ -1,4 +1,4 @@
-import Layout from "@/app/dashboard/panel-administrador/Layout";
+import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
 import Banner from "@/app/components/dashboard/administrator/pollingplaces/Banner";
 import PollingPlacesList from "@/app/components/dashboard/administrator/pollingplaces/PollingPlaces";
 
