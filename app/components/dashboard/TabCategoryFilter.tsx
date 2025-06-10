@@ -61,7 +61,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
     ) {
       const firstTabPath = tabsToRender[0].path;
       const section = "panel-administrador";
-      const newPath = `/dashboard/${selectedYear}/${section}${firstTabPath}`;
+      const newPath = `/dashboard/${section}${firstTabPath}`;
       router.replace(newPath); // Usar replace en lugar de push
     }
   }, [pathname, tabsToRender, router, selectedYear]);
@@ -82,8 +82,14 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
             pathname.endsWith("/panel-administrador")
           ? "panel-administrador"
           : "estadisticas";
-
-      newPath = `/dashboard/${selectedYear}/${section}${tabPath}`;
+      if (
+        pathname.includes("/panel-administrador/") ||
+        pathname.endsWith("/panel-administrador")
+      ) {
+        newPath = `/dashboard/${section}${tabPath}`;
+      } else {
+        newPath = `/dashboard/${selectedYear}/${section}${tabPath}`;
+      }
     }
 
     router.push(newPath);

@@ -26,7 +26,7 @@ const Tabselect = () => {
   // Construir las rutas con el año del contexto
   const votacionesPath = `/dashboard/${selectedYear}/votaciones`;
   const estadisticasPath = `/dashboard/${selectedYear}/estadisticas`;
-  const adminPath = `/dashboard/${selectedYear}/panel-administrador`;
+  const adminPath = `/dashboard/panel-administrador`;
 
   return (
     <div className="min-w-full w-full max-w-full bg-[#FFFFFF]/90 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden relative">

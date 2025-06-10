@@ -1,5 +1,5 @@
 import React from "react";
-import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
+import Layout from "@/app/dashboard/panel-administrador/Layout";
 import { IconUsers } from "@tabler/icons-react";
 import { IconMapPin } from "@tabler/icons-react";
 import { IconCategory } from "@tabler/icons-react";
