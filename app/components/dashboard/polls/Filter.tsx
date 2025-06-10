@@ -53,7 +53,7 @@ const Filter = () => {
   };
 
   return (
-    <div className=" bg-white rounded-lg border-1 border-dashed">
+    <div className=" bg-white rounded-lg border border-gray-200">
       <div className="m-3">
         <div className="flex flex-col">
           <label
