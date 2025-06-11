@@ -6,7 +6,7 @@ export default function PollingPlaces() {
   return (
     <Layout>
       <div className="p-6 w-full flex flex-col justify-start bg-white shadow-sm border border-gray-200 rounded-lg space-y-3">
-        <div className="flex flex-row items-end justify-between">
+        <div className="flex flex-row items-center justify-between">
           <h1 className="text-2xl">Asignaciones</h1>
           <button
             type="button"
