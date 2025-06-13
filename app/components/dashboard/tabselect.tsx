@@ -44,7 +44,7 @@ const Tabselect = () => {
 
       {/* Contenedor de tabs con borde inferior */}
       <div className="border-b border-[#eceef0]/20 py-2">
-        <div className="flex flex-row md:justify-start mx-1 md:mx-2">
+        <div className="flex flex-row justify-center md:justify-start mx-1 md:mx-2">
           <Link
             href={votacionesPath}
             className={getLinkClasses(votacionesPath)}
@@ -66,8 +66,9 @@ const Tabselect = () => {
           <Link href={adminPath} className={getLinkClasses(adminPath)}>
             <div className="flex items-center gap-2">
               <IconTool size={20} className="hidden md:block" />
-              <span className="block md:hidden">Administración</span>
-              <span className="hidden md:block">Portal Administrador</span>
+              <span className="block md:hidden">Admin</span>
+              <span className="hidden md:block lg:hidden">Administración</span>
+              <span className="hidden lg:block">Portal Administrador</span>
             </div>
           </Link>
         </div>
