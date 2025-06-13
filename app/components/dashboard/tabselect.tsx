@@ -44,7 +44,7 @@ const Tabselect = () => {
 
       {/* Contenedor de tabs con borde inferior */}
       <div className="border-b border-[#eceef0]/20 py-2">
-        <div className="flex flex-row justify-center md:justify-start px-4">
+        <div className="flex flex-row md:justify-start mx-1 md:mx-2">
           <Link
             href={votacionesPath}
             className={getLinkClasses(votacionesPath)}

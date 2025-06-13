@@ -90,16 +90,6 @@ const Content = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleRegistrarVotos(mesa)}
-                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
-                      title="Registrar Votos"
-                    >
-                      <IconClipboardText size={18} />
-                      <span className="ml-1 hidden sm:inline">
-                        Registrar Votos
-                      </span>
-                    </button>
-                    <button
                       onClick={() => handleRegistrarVotante(mesa)}
                       className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-md transition-colors flex items-center"
                       title="Registrar Votante"
@@ -107,6 +97,16 @@ const Content = () => {
                       <IconUserPlus size={18} />
                       <span className="ml-1 hidden sm:inline">
                         Registrar Votante
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleRegistrarVotos(mesa)}
+                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
+                      title="Registrar Votos"
+                    >
+                      <IconClipboardText size={18} />
+                      <span className="ml-1 hidden sm:inline">
+                        Registrar Votos
                       </span>
                     </button>
                     <button
