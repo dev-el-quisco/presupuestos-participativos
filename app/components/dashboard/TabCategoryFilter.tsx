@@ -91,7 +91,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   };
 
   return (
-    <div className="w-full mt-6 mb-6">
+    <div className="w-full pb-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex">
           {tabsToRender.map((tab) => (

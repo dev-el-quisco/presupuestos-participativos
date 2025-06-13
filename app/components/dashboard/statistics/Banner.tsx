@@ -63,7 +63,10 @@ const Banner = () => {
       {/* Total de votos */}
       <div className="bg-gray-100 rounded-lg px-4 py-2">
         <div className="flex flex-row items-center justify-center space-x-1">
-          <span className="text-sm text-gray-600">Total de votos:</span>
+          <span className="text-sm text-gray-600 hidden md:block">
+            Total de votos:{" "}
+          </span>
+          <span className="text-sm text-gray-600 block md:hidden">Votos: </span>
           <span className="text-xl font-bold">{totalVotos}</span>
         </div>
       </div>

@@ -55,17 +55,17 @@ const Filter = () => {
   return (
     <div className=" bg-white rounded-lg border border-gray-200 mt-3">
       <div className="m-3">
-        <div className="flex flex-row space-x-2 items-center">
+        <div className="flex flex-row items-center justify-evenly">
           <label
             htmlFor="periodo"
-            className="text-sm font-medium text-gray-700 mb-1"
+            className="text-sm font-medium text-gray-700 p-2"
           >
             Periodo de Votación
           </label>
           {years.length > 0 ? (
             <select
               id="periodo"
-              className="border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
+              className="text-sm font-medium border border-gray-300 rounded-md p-1 focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
               value={selectedYear}
               onChange={handleYearChange}
             >
