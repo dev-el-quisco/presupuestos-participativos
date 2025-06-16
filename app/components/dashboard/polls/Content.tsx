@@ -19,12 +19,21 @@ const Content = () => {
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
 
-  // Datos de ejemplo para la tabla
-  const mesas: Mesa[] = [
+  const [mesas, setMesas] = useState<Mesa[]>([
     { id: 1, sede: "Escuela Central", estado: "Abierta", votos: 45 },
     { id: 2, sede: "Escuela Central", estado: "Cerrada", votos: 120 },
     { id: 1, sede: "Centro Comunitario", estado: "Abierta", votos: 78 },
-  ];
+  ]);
+
+  const handleCambiarEstado = (mesa: Mesa): void => {
+    setMesas(prevMesas => 
+      prevMesas.map(m => 
+        m.id === mesa.id && m.sede === mesa.sede
+          ? { ...m, estado: m.estado === "Abierta" ? "Cerrada" : "Abierta" }
+          : m
+      )
+    );
+  };
 
   const handleRegistrarVotos = (mesa: Mesa): void => {
     setSelectedMesa(mesa);
@@ -34,11 +43,6 @@ const Content = () => {
   const handleRegistrarVotante = (mesa: Mesa): void => {
     setSelectedMesa(mesa);
     setShowVotanteModal(true);
-  };
-
-  const handleCambiarEstado = (mesa: Mesa): void => {
-    // Placeholder para futura implementación
-    console.log("Cambiando estado de mesa:", mesa);
   };
 
   return (
