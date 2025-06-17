@@ -16,7 +16,7 @@ export default function Projects() {
         </p>
         <FilterProvider>
           <Filter />
-          <div className="flex flex-row justify-between">
+          <div className="flex flex-col lg:flex-row justify-between">
             <ProjectsList />
             <div className="flex flex-col w-full">
               <DistributionByCategory />

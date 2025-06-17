@@ -92,7 +92,9 @@ const Filter = () => {
                 transition: "opacity 300ms",
               }}
             >
-              <div className={`p-4 ${selectedBottomBorder}`}>
+              <div
+                className={`p-4 ${selectedBottomBorder} flex flex-col justify-between`}
+              >
                 <h3 className={`font-medium ${data.textColor}`}>
                   {data.title}
                 </h3>

@@ -17,7 +17,7 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   return (
     <Layout>
       <div className="p-6 w-full flex flex-col justify-start">
-        <div className="flex flex-col md:flex-row items-start justify-between pb-4">
+        <div className="flex flex-col lg:flex-row items-start justify-between pb-4">
           <div className="pb-4 md:pb-0">
             <h1 className="text-2xl">
               Estadísticas de Presupuestos Participativos
