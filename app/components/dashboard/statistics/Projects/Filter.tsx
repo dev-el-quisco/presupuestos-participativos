@@ -107,7 +107,7 @@ const Filter = () => {
                     {data.percentage}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div className="hidden md:block w-full bg-gray-200 rounded-full h-2 mt-2">
                   <div
                     className={`h-2 rounded-full`}
                     style={{
