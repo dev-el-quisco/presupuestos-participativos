@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 import { useYear } from "@/app/context/YearContext";
+import Link from "next/link";
 
 interface Tab {
   name: string;
@@ -55,14 +56,11 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
     // No hay redirección automática
   }, [pathname, tabsToRender, selectedYear]);
 
-  const handleTabClick = (tabPath: string) => {
-    // Construir la nueva ruta
-    let newPath = "";
+  // Construir la ruta para cada tab
+  const getTabPath = (tabPath: string) => {
     if (basePath) {
-      // Si se proporciona una ruta base, usarla
-      newPath = `${basePath}${tabPath}`;
+      return `${basePath}${tabPath}`;
     } else {
-      // De lo contrario, construir la ruta basada en el año del contexto y la sección actual
       const section =
         pathname.includes("/estadisticas/") ||
         pathname.endsWith("/estadisticas")
@@ -72,10 +70,12 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
           ? "panel-administrador"
           : "estadisticas";
 
-      newPath = `/dashboard/${selectedYear}/${section}${tabPath}`;
+      return `/dashboard/${selectedYear}/${section}${tabPath}`;
     }
+  };
 
-    router.push(newPath);
+  // Reemplazar la función handleTabClick con un manejador para actualizar el estado local
+  const handleTabClick = (tabPath: string) => {
     setActiveTab(tabPath);
   };
 
@@ -84,8 +84,9 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="flex">
           {tabsToRender.map((tab) => (
-            <button
+            <Link
               key={tab.path}
+              href={getTabPath(tab.path)}
               onClick={() => handleTabClick(tab.path)}
               className={`flex-1 py-3 px-4 text-center transition-colors ${
                 activeTab === tab.path
@@ -97,7 +98,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
                 {tab.icon && <span>{tab.icon}</span>}
                 <span>{tab.name}</span>
               </div>
-            </button>
+            </Link>
           ))}
         </div>
       </div>

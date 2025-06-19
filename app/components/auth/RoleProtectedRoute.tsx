@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/hooks/useAuth";
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
@@ -10,29 +10,34 @@ interface RoleProtectedRouteProps {
   redirectTo?: string;
 }
 
-const RoleProtectedRoute = ({ 
-  children, 
-  allowedRoles, 
-  redirectTo = '/dashboard' 
+const RoleProtectedRoute = ({
+  children,
+  allowedRoles,
+  redirectTo = "/dashboard",
 }: RoleProtectedRouteProps) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
+    // Solo realizar la redirección en la carga inicial, no en navegaciones posteriores
+    if (!initialCheckDone && !isLoading) {
       if (!isAuthenticated) {
-        router.push('/');
+        router.push("/");
         return;
       }
-      
+
       if (!user?.rol || !allowedRoles.includes(user.rol)) {
         router.push(redirectTo);
         return;
       }
+      
+      setInitialCheckDone(true);
     }
-  }, [isAuthenticated, isLoading, user, allowedRoles, redirectTo, router]);
+  }, [isAuthenticated, isLoading, user, allowedRoles, redirectTo, router, initialCheckDone]);
 
-  if (isLoading) {
+  // Mostrar spinner solo durante la carga inicial
+  if (isLoading && !initialCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
@@ -50,8 +55,8 @@ const RoleProtectedRoute = ({
     );
   }
 
-  // Mostrar un mensaje o pantalla de carga mientras se realiza la redirección
-  if (!isAuthenticated || !user?.rol || !allowedRoles.includes(user.rol)) {
+  // No mostrar mensaje de redirección en navegaciones posteriores
+  if (!initialCheckDone && (!isAuthenticated || !user?.rol || !allowedRoles.includes(user.rol))) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">

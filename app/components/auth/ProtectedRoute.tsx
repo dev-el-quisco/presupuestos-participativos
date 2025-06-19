@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
 
@@ -12,9 +12,11 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
+    // Solo realizar la redirección en la carga inicial, no en navegaciones posteriores
+    if (!initialCheckDone && !isLoading) {
       if (!isAuthenticated) {
         router.push("/");
         return;
@@ -24,10 +26,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         router.push("/unauthorized");
         return;
       }
+      
+      setInitialCheckDone(true);
     }
-  }, [isAuthenticated, isLoading, user, requiredRole, router]);
+  }, [isAuthenticated, isLoading, user, requiredRole, router, initialCheckDone]);
 
-  if (isLoading) {
+  // Mostrar spinner solo durante la carga inicial
+  if (isLoading && !initialCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
@@ -43,14 +48,6 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  if (requiredRole && user?.rol !== requiredRole) {
-    return null;
   }
 
   return <>{children}</>;

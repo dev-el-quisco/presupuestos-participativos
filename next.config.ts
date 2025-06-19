@@ -23,6 +23,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Añadir esta configuración para optimizar la navegación del lado del cliente
+  swcMinify: true,
+
   async headers() {
     return [
       {
