@@ -18,7 +18,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="h-dvh flex flex-col items-center justify-center p-4">
       <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
         <div
           className="absolute inset-0 w-full h-full"
