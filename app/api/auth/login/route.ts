@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const user = users[0];
 
-    if (user.estado !== "activo") {
+    if (user.estado !== "Activa") {
       return NextResponse.json(
         { error: "Usuario inactivo. Contacte al administrador." },
         { status: 401 }
