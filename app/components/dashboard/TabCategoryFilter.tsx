@@ -27,8 +27,8 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
 
   const tabsToRender = tabs || defaultTabs;
 
-  // Inicializar activeTab con la primera pestaña por defecto
-  const [activeTab, setActiveTab] = useState(tabsToRender[0]?.path || "");
+  // Inicializar activeTab como null para evitar selección automática
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const { selectedYear } = useYear();
 
   useEffect(() => {
@@ -44,13 +44,15 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
 
     if (matchingTab) {
       setActiveTab(matchingTab.path);
-    } else {
-      // Si no hay coincidencia, establecer la primera pestaña como activa
+    } else if (
+      // No seleccionar automáticamente si estamos en la ruta base de estadísticas o panel-administrador
+      !currentPath.endsWith("/estadisticas") && 
+      !currentPath.endsWith("/panel-administrador")
+    ) {
+      // Solo establecer la primera pestaña como activa si no estamos en las rutas base
       setActiveTab(tabsToRender[0]?.path || "");
     }
-
-    // LÓGICA DE REDIRECCIÓN AUTOMÁTICA REMOVIDA
-    // Ya no redirige automáticamente al primer tab
+    // No hay redirección automática
   }, [pathname, tabsToRender, selectedYear]);
 
   const handleTabClick = (tabPath: string) => {
