@@ -9,7 +9,12 @@ export default function PanelAdministrador() {
   return (
     <RoleProtectedRoute allowedRoles={["Administrador"]}>
       <Layout>
-        <h1>Seleccione una tab</h1>
+        <div className="my-8 text-center text-gray-700">
+          <h1 className="text-2xl font-semibold">Seleccione una pestaña</h1>
+          <p className="mt-2 text-lg">
+            Haz clic en una de las pestañas de arriba para administrar el sistema.
+          </p>
+        </div>
       </Layout>
     </RoleProtectedRoute>
   );
