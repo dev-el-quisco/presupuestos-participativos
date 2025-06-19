@@ -3,17 +3,33 @@ import { IconLogout } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/hooks/useAuth";
 
 interface NavbarProps {
   userName?: string;
   onLogout?: () => void;
 }
 
-const Navbar = ({ userName = "Usuario", onLogout = () => {} }: NavbarProps) => {
+const Navbar = ({ userName, onLogout }: NavbarProps) => {
   const router = useRouter();
+  const { user, logout } = useAuth();
+
+  // Usar el nombre del usuario desde el JWT, o el prop userName como fallback
+  const displayName = user?.nombre || userName || "Usuario";
+
   const handleLogout = () => {
+    // Llamar al logout del hook para limpiar el JWT
+    logout();
+
+    // Llamar al onLogout prop si existe
+    if (onLogout) {
+      onLogout();
+    }
+
+    // Redirigir al login
     router.push("/");
   };
+
   return (
     <nav className="w-full py-2 px-4 sm:px-6 lg:px-8 relative">
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
@@ -48,11 +64,13 @@ const Navbar = ({ userName = "Usuario", onLogout = () => {} }: NavbarProps) => {
         <div className="flex items-center space-x-4">
           <div className="text-sm text-white">
             <span>Bienvenid@, </span>
-            <span className="font-medium">{userName}</span>
+            <span className="font-medium">{displayName}</span>
+            {user?.rol && (
+              <span className="text-xs text-gray-300 ml-2">({user.rol})</span>
+            )}
           </div>
 
           <button
-            // onClick={onLogout}
             onClick={handleLogout}
             className="flex items-center space-x-1 bg-[#eceef0] hover:bg-[#ef5e6a] text-[#2c3e4a] hover:text-[#eceef0] px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
           >

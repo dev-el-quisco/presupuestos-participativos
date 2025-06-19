@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/hooks/useAuth";
 import LoginHeader from "@/app/components/login/LoginHeader";
 import LoginForm from "@/app/components/login/LoginForm";
 import ResetPassword from "@/app/components/login/ResetPassword";
@@ -8,6 +10,14 @@ import LoginFooter from "@/app/components/login/LoginFooter";
 
 export default function Home() {
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleResetPasswordClick = () => {
     setShowResetPassword(true);
@@ -16,6 +26,18 @@ export default function Home() {
   const handleCancelReset = () => {
     setShowResetPassword(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-[#2c3e4a]">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null; // Se redirigirá al dashboard
+  }
 
   return (
     <div className="h-dvh flex flex-col items-center justify-center p-4">
