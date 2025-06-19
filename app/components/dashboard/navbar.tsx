@@ -62,11 +62,15 @@ const Navbar = ({ userName, onLogout }: NavbarProps) => {
 
         {/* Información del usuario y botón de cerrar sesión */}
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-white">
-            <span>Bienvenid@, </span>
-            <span className="font-medium">{displayName}</span>
+          <div className="text-sm text-white flex flex-col lg:flex-row items-start justify-center lg:items-center">
+            <span>
+              Hola, <span className="font-medium">{displayName}</span>
+            </span>
+
             {user?.rol && (
-              <span className="text-xs text-gray-300 ml-2">({user.rol})</span>
+              <span className="text-xs text-gray-300 lg:ml-2">
+                ({user.rol})
+              </span>
             )}
           </div>
 
