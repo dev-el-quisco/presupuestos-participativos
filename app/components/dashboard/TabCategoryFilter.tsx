@@ -49,22 +49,9 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
       setActiveTab(tabsToRender[0]?.path || "");
     }
 
-    // Redirección automática si estamos en la ruta base de estadísticas
-    if (currentPath.endsWith("/estadisticas") && tabsToRender.length > 0) {
-      const firstTabPath = tabsToRender[0].path;
-      const section = "estadisticas";
-      const newPath = `/dashboard/${selectedYear}/${section}${firstTabPath}`;
-      router.replace(newPath); // Usar replace en lugar de push
-    } else if (
-      currentPath.endsWith("/panel-administrador") &&
-      tabsToRender.length > 0
-    ) {
-      const firstTabPath = tabsToRender[0].path;
-      const section = "panel-administrador";
-      const newPath = `/dashboard/${selectedYear}/${section}${firstTabPath}`;
-      router.replace(newPath); // Usar replace en lugar de push
-    }
-  }, [pathname, tabsToRender, router, selectedYear]);
+    // LÓGICA DE REDIRECCIÓN AUTOMÁTICA REMOVIDA
+    // Ya no redirige automáticamente al primer tab
+  }, [pathname, tabsToRender, selectedYear]);
 
   const handleTabClick = (tabPath: string) => {
     // Construir la nueva ruta
