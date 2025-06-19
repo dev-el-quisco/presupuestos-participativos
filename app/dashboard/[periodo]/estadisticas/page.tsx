@@ -4,7 +4,9 @@ import RoleProtectedRoute from "@/app/components/auth/RoleProtectedRoute";
 
 export default function Statistics() {
   return (
-    <RoleProtectedRoute allowedRoles={["Administrador", "Digitador"]}>
+    <RoleProtectedRoute
+      allowedRoles={["Administrador", "Digitador", "Encargado de Local"]}
+    >
       <Layout>
         <h1>Seleccione una pestaña</h1>
       </Layout>
