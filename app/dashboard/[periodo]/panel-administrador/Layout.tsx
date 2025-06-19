@@ -11,7 +11,7 @@ export default function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
   const adminTabs = [
     { name: "Usuarios", path: "/usuarios" },
     { name: "Proyectos", path: "/proyectos" },
-    { name: "Sedes y Mesas", path: "/sedes" },
+    { name: "Sedes", path: "/sedes" },
     { name: "Asignaciones", path: "/asignaciones" },
   ];
 
