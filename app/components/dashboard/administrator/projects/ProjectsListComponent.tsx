@@ -74,12 +74,15 @@ const ProjectsListComponent = () => {
       if (data.success) {
         setProjects(data.projects);
         // Aplicar filtro actual después de cargar
-        const currentCategory = (window as any).getCurrentCategory ? (window as any).getCurrentCategory() : "todos";
+        const currentCategory = (window as any).getCurrentCategory
+          ? (window as any).getCurrentCategory()
+          : "todos";
         if (currentCategory === "todos") {
           setFilteredProjects(data.projects);
         } else {
           const filtered = data.projects.filter(
-            (project: Project) => project.tipo_proyecto_nombre === currentCategory
+            (project: Project) =>
+              project.tipo_proyecto_nombre === currentCategory
           );
           setFilteredProjects(filtered);
         }
@@ -207,7 +210,7 @@ const ProjectsListComponent = () => {
           (window as any).updateCategories();
         }
         // Disparar evento personalizado
-        window.dispatchEvent(new CustomEvent('projectCreated'));
+        window.dispatchEvent(new CustomEvent("projectCreated"));
       } else {
         toast.error(data.error || "Error al crear proyecto");
       }
@@ -259,7 +262,7 @@ const ProjectsListComponent = () => {
           (window as any).updateCategories();
         }
         // Disparar evento personalizado
-        window.dispatchEvent(new CustomEvent('projectUpdated'));
+        window.dispatchEvent(new CustomEvent("projectUpdated"));
       } else {
         toast.error(data.error || "Error al actualizar proyecto");
       }
@@ -302,7 +305,7 @@ const ProjectsListComponent = () => {
           (window as any).updateCategories();
         }
         // Disparar evento personalizado
-        window.dispatchEvent(new CustomEvent('projectDeleted'));
+        window.dispatchEvent(new CustomEvent("projectDeleted"));
       } else {
         toast.error(data.error || "Error al eliminar proyecto");
       }
@@ -380,10 +383,9 @@ const ProjectsListComponent = () => {
                     colSpan={5}
                     className="px-6 py-8 text-center text-gray-500"
                   >
-                    {currentFilter === "todos" 
+                    {currentFilter === "todos"
                       ? `No hay proyectos registrados para el año ${selectedYear}`
-                      : `No hay proyectos de tipo "${currentFilter}" para el año ${selectedYear}`
-                    }
+                      : `No hay proyectos de tipo "${currentFilter}" para el año ${selectedYear}`}
                   </td>
                 </tr>
               ) : (
