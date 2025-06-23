@@ -9,25 +9,106 @@ import {
   IconDotsVertical,
 } from "@tabler/icons-react";
 import Portal from "@/app/components/ui/Portal";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useYear } from "@/app/context/YearContext";
+import toast from "react-hot-toast";
 
 interface Mesa {
-  id: number;
-  sede: string;
-  estado: "Abierta" | "Cerrada";
-  votos: number;
+  id: string;
+  nombre: string;
+  estado_mesa: boolean;
+  sede_id: string;
+  periodo: number;
+  sede_nombre: string;
+  votos_count: number;
+}
+
+interface Proyecto {
+  id_proyecto: string;
+  nombre: string;
+}
+
+interface VotanteForm {
+  nombre: string;
+  direccion: string;
+  fecha_nacimiento: string;
+  rut: string;
+  extranjero: boolean;
+}
+
+interface VotoForm {
+  [key: string]: number;
 }
 
 const Content = () => {
+  const { user } = useAuth();
+  const { selectedYear } = useYear();
   const [showVotosModal, setShowVotosModal] = useState<boolean>(false);
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
+  const [mesas, setMesas] = useState<Mesa[]>([]);
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [mesas, setMesas] = useState<Mesa[]>([
-    { id: 1, sede: "Escuela Central", estado: "Abierta", votos: 45 },
-    { id: 2, sede: "Escuela Central", estado: "Cerrada", votos: 120 },
-    { id: 1, sede: "Centro Comunitario", estado: "Abierta", votos: 78 },
-  ]);
+  // Formularios
+  const [votanteForm, setVotanteForm] = useState<VotanteForm>({
+    nombre: "",
+    direccion: "",
+    fecha_nacimiento: "",
+    rut: "",
+    extranjero: false,
+  });
+
+  const [votoForm, setVotoForm] = useState<VotoForm>({});
+
+  // Cargar mesas según permisos del usuario
+  const fetchMesas = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(
+        `/api/mesas/user-permissions?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMesas(data.data);
+      } else {
+        toast.error("Error al cargar las mesas");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al cargar las mesas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar proyectos del año seleccionado
+  const fetchProyectos = async () => {
+    try {
+      const response = await fetch(`/api/projects?periodo=${selectedYear}`);
+      if (response.ok) {
+        const data = await response.json();
+        setProyectos(data.projects); // Cambiar de data.data a data.projects
+      }
+    } catch (error) {
+      console.error("Error al cargar proyectos:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedYear && user) {
+      fetchMesas();
+      fetchProyectos();
+    }
+  }, [selectedYear, user]);
 
   // Controlar el overflow del body cuando los modales están abiertos
   useEffect(() => {
@@ -46,28 +127,179 @@ const Content = () => {
     setActiveDropdown(activeDropdown === index ? null : index);
   };
 
-  const handleCambiarEstado = (mesa: Mesa): void => {
-    setMesas((prevMesas) =>
-      prevMesas.map((m) =>
-        m.id === mesa.id && m.sede === mesa.sede
-          ? { ...m, estado: m.estado === "Abierta" ? "Cerrada" : "Abierta" }
-          : m
-      )
-    );
+  // Cambiar estado de mesa (solo Encargado de Local y Administrador)
+  const handleCambiarEstado = async (mesa: Mesa): Promise<void> => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/mesas?id=${mesa.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre: mesa.nombre,
+          estado_mesa: !mesa.estado_mesa,
+        }),
+      });
+
+      if (response.ok) {
+        setMesas((prevMesas) =>
+          prevMesas.map((m) =>
+            m.id === mesa.id ? { ...m, estado_mesa: !m.estado_mesa } : m
+          )
+        );
+        toast.success(
+          `Mesa ${!mesa.estado_mesa ? "abierta" : "cerrada"} exitosamente`
+        );
+      } else {
+        toast.error("Error al cambiar el estado de la mesa");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al cambiar el estado de la mesa");
+    }
     setActiveDropdown(null);
   };
 
   const handleRegistrarVotos = (mesa: Mesa): void => {
     setSelectedMesa(mesa);
+    // Inicializar formulario de votos
+    const initialForm: VotoForm = {};
+    proyectos.forEach((proyecto) => {
+      initialForm[proyecto.id_proyecto] = 0;
+    });
+    initialForm["Blanco"] = 0;
+    initialForm["Nulo"] = 0;
+    setVotoForm(initialForm);
     setShowVotosModal(true);
     setActiveDropdown(null);
   };
 
   const handleRegistrarVotante = (mesa: Mesa): void => {
     setSelectedMesa(mesa);
+    setVotanteForm({
+      nombre: "",
+      direccion: "",
+      fecha_nacimiento: "",
+      rut: "",
+      extranjero: false,
+    });
     setShowVotanteModal(true);
     setActiveDropdown(null);
   };
+
+  // Guardar votante
+  const handleSaveVotante = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/votantes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...votanteForm,
+          id_mesa: selectedMesa?.id,
+          periodo: parseInt(selectedYear),
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Votante registrado exitosamente");
+        setShowVotanteModal(false);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Error al registrar votante");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al registrar votante");
+    }
+  };
+
+  // Guardar votos
+  const handleSaveVotos = async () => {
+    try {
+      const votos = [];
+
+      // Procesar votos de proyectos
+      proyectos.forEach((proyecto) => {
+        const cantidad = votoForm[proyecto.id_proyecto] || 0;
+        if (cantidad > 0) {
+          votos.push({
+            id_proyecto: proyecto.id_proyecto,
+            tipo_voto: "Normal",
+            cantidad,
+          });
+        }
+      });
+
+      // Procesar votos en blanco y nulos
+      if (votoForm["Blanco"] > 0) {
+        votos.push({
+          tipo_voto: "Blanco",
+          cantidad: votoForm["Blanco"],
+        });
+      }
+
+      if (votoForm["Nulo"] > 0) {
+        votos.push({
+          tipo_voto: "Nulo",
+          cantidad: votoForm["Nulo"],
+        });
+      }
+
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/votos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          periodo: parseInt(selectedYear),
+          id_mesa: selectedMesa?.id,
+          votos,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Votos registrados exitosamente");
+        setShowVotosModal(false);
+        fetchMesas(); // Recargar para actualizar conteo
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Error al registrar votos");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al registrar votos");
+    }
+  };
+
+  // Verificar permisos según rol
+  const canChangeState =
+    user?.rol === "Encargado de Local" || user?.rol === "Administrador";
+  const canRegisterVotes = user?.rol !== "Ministro de Fe";
+  const canRegisterVoters = user?.rol !== "Ministro de Fe";
+  
+  // Función para verificar si se pueden realizar acciones en una mesa específica
+  const canPerformAction = (mesa: Mesa, action: 'vote' | 'voter') => {
+    if (!mesa.estado_mesa) return false; // Mesa cerrada
+    if (action === 'vote') return canRegisterVotes;
+    if (action === 'voter') return canRegisterVoters;
+    return false;
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full bg-white rounded-lg shadow-md overflow-hidden p-8">
+        <div className="text-center">Cargando mesas...</div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -99,26 +331,26 @@ const Content = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {mesas.map((mesa, index) => (
-                <tr key={`${mesa.id}-${mesa.sede}-${index}`}>
+                <tr key={mesa.id}>
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {mesa.id}
+                    {mesa.nombre}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                    {mesa.sede}
+                    {mesa.sede_nombre}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        mesa.estado === "Abierta"
+                        mesa.estado_mesa
                           ? "bg-[#dcfce7] text-[#166534]"
                           : "bg-[#fee2e2] text-[#991b1b]"
                       }`}
                     >
-                      {mesa.estado}
+                      {mesa.estado_mesa ? "Abierta" : "Cerrada"}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {mesa.votos}
+                    {mesa.votos_count}
                   </td>
 
                   {/* Acciones para dispositivos móviles */}
@@ -133,37 +365,41 @@ const Content = () => {
                     {activeDropdown === index && (
                       <div className="absolute right-4 z-10 mt-1 w-48 rounded-md bg-white shadow-lg border border-gray-200">
                         <div className="py-1">
-                          <button
-                            onClick={() => handleRegistrarVotante(mesa)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                          >
-                            <IconUserPlus size={16} className="mr-2" />
-                            Registrar Votante
-                          </button>
-                          <button
-                            onClick={() => handleRegistrarVotos(mesa)}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                          >
-                            <IconClipboardText size={16} className="mr-2" />
-                            Registrar Votos
-                          </button>
-                          <button
-                            onClick={() => handleCambiarEstado(mesa)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
-                              mesa.estado === "Abierta"
-                                ? "text-red-600"
-                                : "text-green-600"
-                            }`}
-                          >
-                            {mesa.estado === "Abierta" ? (
-                              <IconLock size={16} className="mr-2" />
-                            ) : (
-                              <IconLockOpen2 size={16} className="mr-2" />
-                            )}
-                            {mesa.estado === "Abierta"
-                              ? "Cerrar Mesa"
-                              : "Abrir Mesa"}
-                          </button>
+                          {canRegisterVoters && (
+                            <button
+                              onClick={() => handleRegistrarVotante(mesa)}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                            >
+                              <IconUserPlus size={16} className="mr-2" />
+                              Registrar Votante
+                            </button>
+                          )}
+                          {canRegisterVotes && (
+                            <button
+                              onClick={() => handleRegistrarVotos(mesa)}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                            >
+                              <IconClipboardText size={16} className="mr-2" />
+                              Registrar Votos
+                            </button>
+                          )}
+                          {canChangeState && (
+                            <button
+                              onClick={() => handleCambiarEstado(mesa)}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                                mesa.estado_mesa
+                                  ? "text-red-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              {mesa.estado_mesa ? (
+                                <IconLock size={16} className="mr-2" />
+                              ) : (
+                                <IconLockOpen2 size={16} className="mr-2" />
+                              )}
+                              {mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -172,50 +408,52 @@ const Content = () => {
                   {/* Acciones para tablet y desktop */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium hidden md:table-cell">
                     <div className="flex space-x-1">
-                      <button
-                        onClick={() => handleRegistrarVotante(mesa)}
-                        className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-md transition-colors flex items-center"
-                        title="Registrar Votante"
-                      >
-                        <IconUserPlus size={18} />
-                        <span className="ml-1 hidden lg:inline">
-                          Registrar Votante
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => handleRegistrarVotos(mesa)}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
-                        title="Registrar Votos"
-                      >
-                        <IconClipboardText size={18} />
-                        <span className="ml-1 hidden lg:inline">
-                          Registrar Votos
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => handleCambiarEstado(mesa)}
-                        className={`${
-                          mesa.estado === "Abierta"
-                            ? "text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100"
-                            : "text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100"
-                        } p-2 rounded-md transition-colors flex items-center`}
-                        title={
-                          mesa.estado === "Abierta"
-                            ? "Cerrar Mesa"
-                            : "Abrir Mesa"
-                        }
-                      >
-                        {mesa.estado === "Abierta" ? (
-                          <IconLock size={18} />
-                        ) : (
-                          <IconLockOpen2 size={18} />
-                        )}
-                        <span className="ml-1 hidden lg:inline">
-                          {mesa.estado === "Abierta"
-                            ? "Cerrar Mesa"
-                            : "Abrir Mesa"}
-                        </span>
-                      </button>
+                      {canPerformAction(mesa, 'voter') && (
+                        <button
+                          onClick={() => handleRegistrarVotante(mesa)}
+                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-md transition-colors flex items-center"
+                          title="Registrar Votante"
+                        >
+                          <IconUserPlus size={18} />
+                          <span className="ml-1 hidden lg:inline">
+                            Registrar Votante
+                          </span>
+                        </button>
+                      )}
+                      {canPerformAction(mesa, 'vote') && (
+                        <button
+                          onClick={() => handleRegistrarVotos(mesa)}
+                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
+                          title="Registrar Votos"
+                        >
+                          <IconClipboardText size={18} />
+                          <span className="ml-1 hidden lg:inline">
+                            Registrar Votos
+                          </span>
+                        </button>
+                      )}
+                      {canChangeState && (
+                        <button
+                          onClick={() => handleCambiarEstado(mesa)}
+                          className={`${
+                            mesa.estado_mesa
+                              ? "text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100"
+                              : "text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100"
+                          } p-2 rounded-md transition-colors flex items-center`}
+                          title={
+                            mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"
+                          }
+                        >
+                          {mesa.estado_mesa ? (
+                            <IconLock size={18} />
+                          ) : (
+                            <IconLockOpen2 size={18} />
+                          )}
+                          <span className="ml-1 hidden lg:inline">
+                            {mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -223,16 +461,22 @@ const Content = () => {
             </tbody>
           </table>
         </div>
+
+        {mesas.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No hay mesas disponibles para este periodo
+          </div>
+        )}
       </div>
 
-      {/* Modales usando Portal */}
+      {/* Modal de Votos */}
       {showVotosModal && (
         <Portal>
           <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-slate-800">
-                  Votos - Mesa {selectedMesa?.id}
+                  Votos - Mesa {selectedMesa?.nombre}
                 </h3>
                 <button
                   onClick={() => setShowVotosModal(false)}
@@ -242,29 +486,60 @@ const Content = () => {
                 </button>
               </div>
               <p className="mb-4 text-sm text-slate-600">
-                Ingrese votos para cada opción:
+                Ingrese la cantidad de votos para cada opción:
               </p>
 
               <div className="space-y-3">
-                {[1, 2, 3].map((opcion) => (
-                  <div key={opcion} className="flex flex-col">
+                {proyectos.map((proyecto) => (
+                  <div key={proyecto.id_proyecto} className="flex flex-col">
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Opción {opcion}
+                      {proyecto.nombre}
                     </label>
                     <input
                       type="number"
                       min="0"
+                      value={votoForm[proyecto.id_proyecto] || 0}
+                      onChange={(e) =>
+                        setVotoForm((prev) => ({
+                          ...prev,
+                          [proyecto.id_proyecto]: parseInt(e.target.value) || 0,
+                        }))
+                      }
                       className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
                     />
                   </div>
                 ))}
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    En Blanco
+                    Votos en Blanco
                   </label>
                   <input
                     type="number"
                     min="0"
+                    value={votoForm["Blanco"] || 0}
+                    onChange={(e) =>
+                      setVotoForm((prev) => ({
+                        ...prev,
+                        Blanco: parseInt(e.target.value) || 0,
+                      }))
+                    }
+                    className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Votos Nulos
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={votoForm["Nulo"] || 0}
+                    onChange={(e) =>
+                      setVotoForm((prev) => ({
+                        ...prev,
+                        Nulo: parseInt(e.target.value) || 0,
+                      }))
+                    }
                     className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
                   />
                 </div>
@@ -279,7 +554,7 @@ const Content = () => {
                 </button>
                 <button
                   className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors"
-                  onClick={() => setShowVotosModal(false)}
+                  onClick={handleSaveVotos}
                 >
                   Guardar
                 </button>
@@ -289,13 +564,14 @@ const Content = () => {
         </Portal>
       )}
 
+      {/* Modal de Votante */}
       {showVotanteModal && (
         <Portal>
           <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-slate-800">
-                  Votante - Mesa {selectedMesa?.id}
+                  Registrar Votante - Mesa {selectedMesa?.nombre}
                 </h3>
                 <button
                   onClick={() => setShowVotanteModal(false)}
@@ -305,37 +581,94 @@ const Content = () => {
                 </button>
               </div>
               <p className="mb-4 text-sm text-slate-600">
-                Ingrese datos del votante:
+                Ingrese los datos del votante:
               </p>
 
               <div className="space-y-4">
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Identificación
+                    RUT/Identificación
                   </label>
                   <input
                     type="text"
+                    value={votanteForm.rut}
+                    onChange={(e) =>
+                      setVotanteForm((prev) => ({
+                        ...prev,
+                        rut: e.target.value,
+                      }))
+                    }
+                    className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
+                    placeholder="12345678-9"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Nombre Completo
+                  </label>
+                  <input
+                    type="text"
+                    value={votanteForm.nombre}
+                    onChange={(e) =>
+                      setVotanteForm((prev) => ({
+                        ...prev,
+                        nombre: e.target.value,
+                      }))
+                    }
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   />
                 </div>
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Nombre
+                    Dirección
                   </label>
                   <input
                     type="text"
+                    value={votanteForm.direccion}
+                    onChange={(e) =>
+                      setVotanteForm((prev) => ({
+                        ...prev,
+                        direccion: e.target.value,
+                      }))
+                    }
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   />
                 </div>
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Edad
+                    Fecha de Nacimiento
                   </label>
                   <input
-                    type="number"
-                    min="18"
+                    type="date"
+                    value={votanteForm.fecha_nacimiento}
+                    onChange={(e) =>
+                      setVotanteForm((prev) => ({
+                        ...prev,
+                        fecha_nacimiento: e.target.value,
+                      }))
+                    }
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   />
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="extranjero"
+                    checked={votanteForm.extranjero}
+                    onChange={(e) =>
+                      setVotanteForm((prev) => ({
+                        ...prev,
+                        extranjero: e.target.checked,
+                      }))
+                    }
+                    className="mr-2"
+                  />
+                  <label
+                    htmlFor="extranjero"
+                    className="text-sm text-slate-700"
+                  >
+                    Es extranjero
+                  </label>
                 </div>
               </div>
 
@@ -348,7 +681,7 @@ const Content = () => {
                 </button>
                 <button
                   className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors"
-                  onClick={() => setShowVotanteModal(false)}
+                  onClick={handleSaveVotante}
                 >
                   Registrar
                 </button>

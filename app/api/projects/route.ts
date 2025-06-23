@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         COUNT(v.id) as votos_count
       FROM proyectos p
       LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
-      LEFT JOIN votos v ON p.id_proyecto = v.id_proyecto AND v.periodo = p.periodo
+      LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = p.periodo
       WHERE p.periodo = @param1
       GROUP BY p.id, p.id_proyecto, p.nombre, p.id_tipo_proyecto, tp.nombre, p.periodo
       ORDER BY p.id_proyecto
