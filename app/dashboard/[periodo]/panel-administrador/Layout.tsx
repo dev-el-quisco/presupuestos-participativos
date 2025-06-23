@@ -13,6 +13,7 @@ export default function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
     { name: "Proyectos", path: "/proyectos" },
     { name: "Sedes", path: "/sedes" },
     { name: "Asignaciones", path: "/asignaciones" },
+    // { name: "Categorías", path: "/categorias" },
   ];
 
   return (
