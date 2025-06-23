@@ -5,8 +5,7 @@ import { useYear } from "@/app/context/YearContext";
 
 const Banner = () => {
   const { selectedYear } = useYear();
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>("deportivos");
+  const [selectedCategory, setSelectedCategory] = useState<string>("todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const categories = [
@@ -20,6 +19,12 @@ const Banner = () => {
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setDropdownOpen(false);
+  };
+
+  const handleNewProject = () => {
+    if ((window as any).handleCreateProject) {
+      (window as any).handleCreateProject();
+    }
   };
 
   return (
@@ -83,7 +88,10 @@ const Banner = () => {
           )}
         </div>
 
-        <button className="flex items-center space-x-2 bg-[#30c56c] text-white rounded-lg px-4 py-2 hover:bg-[#28a85b] transition-colors focus:ring-2 focus:ring-[#30c56c] focus:ring-opacity-50 outline-none">
+        <button
+          onClick={handleNewProject}
+          className="flex items-center space-x-2 bg-[#30c56c] text-white rounded-lg px-4 py-2 hover:bg-[#28a85b] transition-colors focus:ring-2 focus:ring-[#30c56c] focus:ring-opacity-50 outline-none"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5"
