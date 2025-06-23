@@ -51,7 +51,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-dvh flex flex-col items-center justify-center p-4">
+    <div className="min-h-dvh flex flex-col items-center justify-center p-3 sm:p-4">
       <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
         <div
           className="absolute inset-0 w-full h-full"
@@ -63,26 +63,30 @@ export default function Home() {
         ></div>
       </div>
 
-      <div className="w-full max-w-md bg-[#FFFFFF]/90 rounded-xl shadow-lg overflow-hidden backdrop-blur-sm">
-        <div className="w-full p-6 sm:p-8 flex flex-col">
-          <LoginHeader />
+      <div className="w-full max-w-sm sm:max-w-md bg-[#FFFFFF]/90 rounded-xl shadow-lg overflow-hidden backdrop-blur-sm my-4">
+        <div className="w-full p-4 sm:p-6 lg:p-8 flex flex-col min-h-[500px] sm:min-h-[600px]">
+          {/* Header con logo */}
+          <div className="flex-shrink-0 mb-3 sm:mb-4">
+            <LoginHeader />
+          </div>
 
-          <div className="flex-grow flex flex-col justify-center my-4">
-            <div className="flex items-start justify-center relative">
+          {/* Contenido principal con altura flexible */}
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="relative min-h-[300px] sm:min-h-[350px] flex items-center justify-center">
               <div
-                className={`w-full transition-opacity duration-300 ease-in-out ${
+                className={`w-full transition-all duration-300 ease-in-out ${
                   showResetPassword
-                    ? "opacity-0 pointer-events-none"
-                    : "opacity-100"
+                    ? "opacity-0 pointer-events-none absolute"
+                    : "opacity-100 relative"
                 }`}
               >
                 <LoginForm onResetPasswordClick={handleResetPasswordClick} />
               </div>
               <div
-                className={`absolute w-full transition-opacity duration-300 ease-in-out ${
+                className={`w-full transition-all duration-300 ease-in-out ${
                   showResetPassword
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none"
+                    ? "opacity-100 relative"
+                    : "opacity-0 pointer-events-none absolute"
                 }`}
               >
                 <ResetPassword onCancel={handleCancelReset} />
@@ -90,7 +94,10 @@ export default function Home() {
             </div>
           </div>
 
-          <LoginFooter />
+          {/* Footer con logo municipalidad */}
+          <div className="flex-shrink-0 mt-3 sm:mt-4">
+            <LoginFooter />
+          </div>
         </div>
       </div>
     </div>
