@@ -9,7 +9,7 @@ import {
   IconDotsVertical,
   IconMapPin,
 } from "@tabler/icons-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
 import Portal from "@/app/components/ui/Portal";
@@ -252,6 +252,7 @@ const PollingPlaces = () => {
     name: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Fetch sedes
   const fetchSedes = async () => {
@@ -307,14 +308,17 @@ const PollingPlaces = () => {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
-      setVisibleMenu(null);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (visibleMenu) {
+        const menuElement = menuRefs.current[visibleMenu];
+        if (menuElement && !menuElement.contains(e.target as Node)) {
+          setVisibleMenu(null);
+        }
+      }
     };
 
-    if (visibleMenu) {
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
-    }
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [visibleMenu]);
 
   // Toggle expand sede
@@ -481,8 +485,12 @@ const PollingPlaces = () => {
           sede.mesas?.some((mesa) => mesa.id === id)
         );
         if (sedeWithMesa) {
-          fetchMesas(sedeWithMesa.id);
-          fetchSedes(); // Update mesa count
+          // Primero actualizar el conteo general de sedes
+          await fetchSedes();
+          // Luego actualizar las mesas de la sede específica si está expandida
+          if (expandedSede === sedeWithMesa.id) {
+            await fetchMesas(sedeWithMesa.id);
+          }
         }
         setDeleteConfirm(null);
       } else {
@@ -515,14 +523,14 @@ const PollingPlaces = () => {
           return (
             <div
               key={sede.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 relative"
             >
               {/* Sede Header */}
-              <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => toggleExpand(sede.id)}
-              >
-                <div className="flex items-center space-x-4 min-w-0 flex-1">
+              <div className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div
+                  className="flex items-center space-x-4 min-w-0 flex-1 cursor-pointer"
+                  onClick={() => toggleExpand(sede.id)}
+                >
                   <button className="text-gray-500 flex-shrink-0">
                     {isExpanded ? (
                       <IconChevronDown size={20} />
@@ -562,7 +570,16 @@ const PollingPlaces = () => {
                     </button>
 
                     {isMenuVisible && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-[60] border border-gray-200">
+                      <div
+                        ref={(el) => {
+                          if (el) {
+                            menuRefs.current[sede.id] = el;
+                          } else {
+                            delete menuRefs.current[sede.id];
+                          }
+                        }}
+                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-[1000] border border-gray-200"
+                      >
                         <div className="py-1">
                           <button
                             onClick={(e) => {
