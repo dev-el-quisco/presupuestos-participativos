@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
 
 const Banner = () => {
@@ -10,16 +10,29 @@ const Banner = () => {
 
   const categories = [
     { id: "todos", name: "Todos" },
-    { id: "comunales", name: "Comunales" },
-    { id: "infantiles", name: "Infantiles" },
-    { id: "deportivos", name: "Deportivos" },
-    { id: "culturales", name: "Culturales" },
+    { id: "Comunales", name: "Comunales" },
+    { id: "Infantiles", name: "Infantiles" },
+    { id: "Deportivos", name: "Deportivos" },
+    { id: "Culturales", name: "Culturales" },
   ];
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setDropdownOpen(false);
+    // Comunicar el cambio de categoría al componente de lista
+    if ((window as any).handleCategoryFilter) {
+      (window as any).handleCategoryFilter(categoryId);
+    }
   };
+
+  // Exponer función para obtener categoría actual
+  useEffect(() => {
+    (window as any).getCurrentCategory = () => selectedCategory;
+    
+    return () => {
+      delete (window as any).getCurrentCategory;
+    };
+  }, [selectedCategory]);
 
   const handleNewProject = () => {
     if ((window as any).handleCreateProject) {

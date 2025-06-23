@@ -24,8 +24,10 @@ interface ProjectType {
 const ProjectsListComponent = () => {
   const { selectedYear } = useYear();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentFilter, setCurrentFilter] = useState<string>("todos");
 
   // Estados para modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -49,6 +51,19 @@ const ProjectsListComponent = () => {
 
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
+  // Función para filtrar proyectos
+  const filterProjects = (category: string) => {
+    if (category === "todos") {
+      setFilteredProjects(projects);
+    } else {
+      const filtered = projects.filter(
+        (project) => project.tipo_proyecto_nombre === category
+      );
+      setFilteredProjects(filtered);
+    }
+    setCurrentFilter(category);
+  };
+
   // Función para obtener proyectos
   const fetchProjects = async () => {
     try {
@@ -58,6 +73,17 @@ const ProjectsListComponent = () => {
 
       if (data.success) {
         setProjects(data.projects);
+        // Aplicar filtro actual después de cargar
+        const currentCategory = (window as any).getCurrentCategory ? (window as any).getCurrentCategory() : "todos";
+        if (currentCategory === "todos") {
+          setFilteredProjects(data.projects);
+        } else {
+          const filtered = data.projects.filter(
+            (project: Project) => project.tipo_proyecto_nombre === currentCategory
+          );
+          setFilteredProjects(filtered);
+        }
+        setCurrentFilter(currentCategory);
       } else {
         toast.error("Error al cargar proyectos");
       }
@@ -93,6 +119,11 @@ const ProjectsListComponent = () => {
     fetchProjectTypes();
   }, [selectedYear]);
 
+  // Aplicar filtro cuando cambian los proyectos
+  useEffect(() => {
+    filterProjects(currentFilter);
+  }, [projects]);
+
   // Controlar overflow del body
   useEffect(() => {
     const isModalOpen = showCreateModal || showEditModal || showDeleteModal;
@@ -118,12 +149,23 @@ const ProjectsListComponent = () => {
     };
   }, []);
 
-  // Exponer función para actualizar categorías
+  // Exponer función para manejar filtro de categorías
   useEffect(() => {
-    (window as any).updateCategories = fetchProjects;
+    (window as any).handleCategoryFilter = (category: string) => {
+      filterProjects(category);
+    };
 
     return () => {
-      delete (window as any).updateCategories;
+      delete (window as any).handleCategoryFilter;
+    };
+  }, [projects]);
+
+  // Exponer función para actualizar categorías
+  useEffect(() => {
+    (window as any).updateProjectsList = fetchProjects;
+
+    return () => {
+      delete (window as any).updateProjectsList;
     };
   }, [selectedYear]);
 
@@ -160,9 +202,12 @@ const ProjectsListComponent = () => {
           id_tipo_proyecto: "",
         });
         fetchProjects();
+        // Actualizar categorías
         if ((window as any).updateCategories) {
           (window as any).updateCategories();
         }
+        // Disparar evento personalizado
+        window.dispatchEvent(new CustomEvent('projectCreated'));
       } else {
         toast.error(data.error || "Error al crear proyecto");
       }
@@ -209,9 +254,12 @@ const ProjectsListComponent = () => {
         toast.success("Proyecto actualizado exitosamente");
         setShowEditModal(false);
         fetchProjects();
+        // Actualizar categorías
         if ((window as any).updateCategories) {
           (window as any).updateCategories();
         }
+        // Disparar evento personalizado
+        window.dispatchEvent(new CustomEvent('projectUpdated'));
       } else {
         toast.error(data.error || "Error al actualizar proyecto");
       }
@@ -249,9 +297,12 @@ const ProjectsListComponent = () => {
         setShowDeleteModal(false);
         setProjectToDelete(null);
         fetchProjects();
+        // Actualizar categorías
         if ((window as any).updateCategories) {
           (window as any).updateCategories();
         }
+        // Disparar evento personalizado
+        window.dispatchEvent(new CustomEvent('projectDeleted'));
       } else {
         toast.error(data.error || "Error al eliminar proyecto");
       }
@@ -323,17 +374,20 @@ const ProjectsListComponent = () => {
               </tr>
             </thead>
             <tbody>
-              {projects.length === 0 ? (
+              {filteredProjects.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-6 py-8 text-center text-gray-500"
                   >
-                    No hay proyectos registrados para el año {selectedYear}
+                    {currentFilter === "todos" 
+                      ? `No hay proyectos registrados para el año ${selectedYear}`
+                      : `No hay proyectos de tipo "${currentFilter}" para el año ${selectedYear}`
+                    }
                   </td>
                 </tr>
               ) : (
-                projects.map((project) => (
+                filteredProjects.map((project) => (
                   <tr
                     key={project.db_id}
                     className="border-b border-gray-200 hover:bg-gray-50"
