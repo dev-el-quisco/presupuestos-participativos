@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
 import Portal from "@/app/components/ui/Portal";
+import { useYear } from "@/app/context/YearContext";
 
 interface Mesa {
   id: string;
@@ -257,7 +258,7 @@ const PollingPlaces = () => {
   // Fetch sedes
   const fetchSedes = async () => {
     try {
-      const response = await fetch("/api/sedes");
+      const response = await fetch(`/api/sedes?periodo=${periodo}`);
       const data = await response.json();
 
       if (data.success) {

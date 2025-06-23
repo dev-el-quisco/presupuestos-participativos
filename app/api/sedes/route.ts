@@ -14,18 +14,40 @@ interface SedeWithMesas extends Sede {
 // GET - Obtener todas las sedes
 export async function GET(request: NextRequest) {
   try {
-    const query = `
-      SELECT 
-        s.id,
-        s.nombre,
-        COUNT(m.id) as mesasCount
-      FROM sedes s
-      LEFT JOIN mesas m ON s.id = m.sede_id
-      GROUP BY s.id, s.nombre
-      ORDER BY s.nombre
-    `;
+    const { searchParams } = new URL(request.url);
+    const periodo = searchParams.get("periodo");
+    
+    let query: string;
+    let params: any[] = [];
+    
+    if (periodo) {
+      // Si se proporciona período, filtrar mesas por período
+      query = `
+        SELECT 
+          s.id,
+          s.nombre,
+          COUNT(m.id) as mesasCount
+        FROM sedes s
+        LEFT JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
+        GROUP BY s.id, s.nombre
+        ORDER BY s.nombre
+      `;
+      params = [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }];
+    } else {
+      // Si no se proporciona período, contar todas las mesas
+      query = `
+        SELECT 
+          s.id,
+          s.nombre,
+          COUNT(m.id) as mesasCount
+        FROM sedes s
+        LEFT JOIN mesas m ON s.id = m.sede_id
+        GROUP BY s.id, s.nombre
+        ORDER BY s.nombre
+      `;
+    }
 
-    const sedes = await executeQuery<SedeWithMesas>(query, []);
+    const sedes = await executeQuery<SedeWithMesas>(query, params);
 
     return NextResponse.json({
       success: true,

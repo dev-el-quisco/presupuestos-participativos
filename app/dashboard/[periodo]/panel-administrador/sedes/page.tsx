@@ -135,7 +135,7 @@ export default function PollingPlaces() {
           <h1 className="text-2xl">Sedes</h1>
           <button
             onClick={() => setShowSedeModal(true)}
-            className="flex items-center justify-center bg-slate-800 text-white rounded-lg px-4 py-2 hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none text-sm focus:outline-none"
+            className="flex items-center justify-center border border-gray-300 rounded-lg bg-white px-4 py-2 hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none text-sm focus:outline-none"
           >
             <IconPlus className="w-5 h-5 mr-2" />
             Nueva Sede
