@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { executeQuery } from "@/app/lib/database";
 import { TYPES } from "tedious";
+import { NextRequest, NextResponse } from "next/server";
 
 interface Voto {
   id: string;
@@ -38,10 +38,13 @@ export async function GET(request: NextRequest) {
       SELECT 
         v.tipo_voto,
         v.id_proyecto,
-        p.nombre as proyecto_nombre,
+        CASE 
+          WHEN v.id_proyecto IS NULL THEN v.tipo_voto
+          ELSE p.nombre
+        END as proyecto_nombre,
         COUNT(*) as cantidad
       FROM votos v
-      LEFT JOIN proyectos p ON v.id_proyecto = p.id_proyecto AND v.periodo = p.periodo
+      LEFT JOIN proyectos p ON v.id_proyecto = p.id AND v.periodo = p.periodo
       WHERE v.id_mesa = @param1 AND v.periodo = @param2
       GROUP BY v.tipo_voto, v.id_proyecto, p.nombre
       ORDER BY v.tipo_voto, p.nombre
@@ -83,9 +86,31 @@ export async function POST(request: NextRequest) {
     // Insertar cada voto individualmente según la cantidad
     for (const voto of votos) {
       if (voto.cantidad > 0) {
+        let projectDbId = null;
+
+        // Si es un voto normal (no blanco ni nulo), obtener el ID interno del proyecto
+        if (voto.tipo_voto === "Normal" && voto.id_proyecto) {
+          const projectQuery = `
+            SELECT id as db_id
+            FROM proyectos 
+            WHERE id_proyecto = @param1 AND periodo = @param2
+          `;
+
+          const project = await executeQuery<{ db_id: string }>(projectQuery, [
+            { name: "param1", type: TYPES.VarChar, value: voto.id_proyecto },
+            { name: "param2", type: TYPES.Int, value: periodo },
+          ]);
+
+          if (project.length > 0) {
+            projectDbId = project[0].db_id;
+          }
+        }
+
         const insertQuery = `
           INSERT INTO votos (periodo, tipo_voto, id_proyecto, id_mesa) 
-          VALUES ${Array(voto.cantidad).fill('(@param1, @param2, @param3, @param4)').join(', ')}
+          VALUES ${Array(voto.cantidad)
+            .fill("(@param1, @param2, @param3, @param4)")
+            .join(", ")}
         `;
 
         const params = [];
@@ -93,7 +118,11 @@ export async function POST(request: NextRequest) {
           params.push(
             { name: "param1", type: TYPES.Int, value: periodo },
             { name: "param2", type: TYPES.VarChar, value: voto.tipo_voto },
-            { name: "param3", type: TYPES.VarChar, value: voto.id_proyecto || null },
+            {
+              name: "param3",
+              type: TYPES.UniqueIdentifier,
+              value: projectDbId,
+            },
             { name: "param4", type: TYPES.UniqueIdentifier, value: id_mesa }
           );
         }

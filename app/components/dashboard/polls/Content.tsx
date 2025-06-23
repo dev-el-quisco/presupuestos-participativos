@@ -162,9 +162,59 @@ const Content = () => {
     setActiveDropdown(null);
   };
 
-  const handleRegistrarVotos = (mesa: Mesa): void => {
+  // Agregar estado para votos existentes
+  const [votosExistentes, setVotosExistentes] = useState<VotoForm>({});
+  
+  // Función para cargar votos existentes de una mesa
+  const fetchVotosExistentes = async (mesaId: string) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(
+        `/api/votos?mesa_id=${mesaId}&periodo=${selectedYear}`, // Cambiar id_mesa por mesa_id
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.ok) {
+        const result = await response.json();
+        const votosCount: VotoForm = {};
+        
+        // Inicializar contadores
+        proyectos.forEach((proyecto) => {
+          votosCount[proyecto.id_proyecto] = 0;
+        });
+        votosCount["Blanco"] = 0;
+        votosCount["Nulo"] = 0;
+  
+        // Contar votos existentes usando la estructura correcta
+        result.data.forEach((voto: any) => { // Cambiar data.votos por result.data
+          if (voto.tipo_voto === "Normal" && voto.id_proyecto) {
+            votosCount[voto.id_proyecto] = voto.cantidad; // Usar cantidad directamente
+          } else if (voto.tipo_voto === "Blanco") {
+            votosCount["Blanco"] = voto.cantidad;
+          } else if (voto.tipo_voto === "Nulo") {
+            votosCount["Nulo"] = voto.cantidad;
+          }
+        });
+  
+        setVotosExistentes(votosCount);
+      } else {
+        console.error("Error al cargar votos:", response.status);
+      }
+    } catch (error) {
+      console.error("Error al cargar votos existentes:", error);
+    }
+  };
+  
+  const handleRegistrarVotos = async (mesa: Mesa): Promise<void> => {
     setSelectedMesa(mesa);
-    // Inicializar formulario de votos
+    // Cargar votos existentes primero
+    await fetchVotosExistentes(mesa.id);
+    
+    // Inicializar formulario de votos nuevos en 0
     const initialForm: VotoForm = {};
     proyectos.forEach((proyecto) => {
       initialForm[proyecto.id_proyecto] = 0;
@@ -284,12 +334,12 @@ const Content = () => {
     user?.rol === "Encargado de Local" || user?.rol === "Administrador";
   const canRegisterVotes = user?.rol !== "Ministro de Fe";
   const canRegisterVoters = user?.rol !== "Ministro de Fe";
-  
+
   // Función para verificar si se pueden realizar acciones en una mesa específica
-  const canPerformAction = (mesa: Mesa, action: 'vote' | 'voter') => {
+  const canPerformAction = (mesa: Mesa, action: "vote" | "voter") => {
     if (!mesa.estado_mesa) return false; // Mesa cerrada
-    if (action === 'vote') return canRegisterVotes;
-    if (action === 'voter') return canRegisterVoters;
+    if (action === "vote") return canRegisterVotes;
+    if (action === "voter") return canRegisterVoters;
     return false;
   };
 
@@ -408,7 +458,7 @@ const Content = () => {
                   {/* Acciones para tablet y desktop */}
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium hidden md:table-cell">
                     <div className="flex space-x-1">
-                      {canPerformAction(mesa, 'voter') && (
+                      {canPerformAction(mesa, "voter") && (
                         <button
                           onClick={() => handleRegistrarVotante(mesa)}
                           className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-md transition-colors flex items-center"
@@ -420,7 +470,7 @@ const Content = () => {
                           </span>
                         </button>
                       )}
-                      {canPerformAction(mesa, 'vote') && (
+                      {canPerformAction(mesa, "vote") && (
                         <button
                           onClick={() => handleRegistrarVotos(mesa)}
                           className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
@@ -489,59 +539,91 @@ const Content = () => {
                 Ingrese la cantidad de votos para cada opción:
               </p>
 
+              {/* Modal de Votos - Modificar la sección de proyectos */}
               <div className="space-y-3">
                 {proyectos.map((proyecto) => (
                   <div key={proyecto.id_proyecto} className="flex flex-col">
                     <label className="block text-sm font-medium text-slate-700 mb-1">
                       {proyecto.nombre}
+                      <span className="text-sm text-gray-500 ml-2">
+                        (Actual: {votosExistentes[proyecto.id_proyecto] || 0})
+                      </span>
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={votoForm[proyecto.id_proyecto] || 0}
-                      onChange={(e) =>
-                        setVotoForm((prev) => ({
-                          ...prev,
-                          [proyecto.id_proyecto]: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
-                    />
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 min-w-[60px]">
+                        Total: {(votosExistentes[proyecto.id_proyecto] || 0) + (votoForm[proyecto.id_proyecto] || 0)}
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Agregar votos"
+                        value={votoForm[proyecto.id_proyecto] || 0}
+                        onChange={(e) =>
+                          setVotoForm((prev) => ({
+                            ...prev,
+                            [proyecto.id_proyecto]: parseInt(e.target.value) || 0,
+                          }))
+                        }
+                        className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
+                      />
+                    </div>
                   </div>
                 ))}
+                
+                {/* Votos en Blanco */}
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Votos en Blanco
+                    <span className="text-sm text-gray-500 ml-2">
+                      (Actual: {votosExistentes["Blanco"] || 0})
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={votoForm["Blanco"] || 0}
-                    onChange={(e) =>
-                      setVotoForm((prev) => ({
-                        ...prev,
-                        Blanco: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 min-w-[60px]">
+                      Total: {(votosExistentes["Blanco"] || 0) + (votoForm["Blanco"] || 0)}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Agregar votos"
+                      value={votoForm["Blanco"] || 0}
+                      onChange={(e) =>
+                        setVotoForm((prev) => ({
+                          ...prev,
+                          Blanco: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
+                    />
+                  </div>
                 </div>
+                
+                {/* Votos Nulos */}
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Votos Nulos
+                    <span className="text-sm text-gray-500 ml-2">
+                      (Actual: {votosExistentes["Nulo"] || 0})
+                    </span>
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={votoForm["Nulo"] || 0}
-                    onChange={(e) =>
-                      setVotoForm((prev) => ({
-                        ...prev,
-                        Nulo: parseInt(e.target.value) || 0,
-                      }))
-                    }
-                    className="border border-slate-300 rounded-md p-2 w-full focus:ring-slate-500 focus:border-slate-500"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 min-w-[60px]">
+                      Total: {(votosExistentes["Nulo"] || 0) + (votoForm["Nulo"] || 0)}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Agregar votos"
+                      value={votoForm["Nulo"] || 0}
+                      onChange={(e) =>
+                        setVotoForm((prev) => ({
+                          ...prev,
+                          Nulo: parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
+                    />
+                  </div>
                 </div>
               </div>
 
