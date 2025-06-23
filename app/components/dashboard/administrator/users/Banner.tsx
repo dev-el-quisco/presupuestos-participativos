@@ -15,10 +15,10 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    nombre: '',
-    usuario: '',
-    email: '',
-    rol: 'Digitador'
+    nombre: "",
+    usuario: "",
+    email: "",
+    rol: "Digitador",
   });
 
   // Controlar el overflow del body cuando el modal está abierto
@@ -34,11 +34,13 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
     };
   }, [showModal]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -47,10 +49,10 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
+      const response = await fetch("/api/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
@@ -58,21 +60,21 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Usuario creado exitosamente');
+        toast.success("Usuario creado exitosamente");
         setShowModal(false);
         setFormData({
-          nombre: '',
-          usuario: '',
-          email: '',
-          rol: 'Digitador'
+          nombre: "",
+          usuario: "",
+          email: "",
+          rol: "Digitador",
         });
         onUserCreated();
       } else {
-        toast.error(data.error || 'Error al crear usuario');
+        toast.error(data.error || "Error al crear usuario");
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error de conexión');
+      console.error("Error:", error);
+      toast.error("Error de conexión");
     } finally {
       setIsLoading(false);
     }
@@ -81,10 +83,10 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setFormData({
-      nombre: '',
-      usuario: '',
-      email: '',
-      rol: 'Digitador'
+      nombre: "",
+      usuario: "",
+      email: "",
+      rol: "Digitador",
     });
   };
 
@@ -188,7 +190,9 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   >
                     <option value="Digitador">Digitador</option>
-                    <option value="Encargado de Local">Encargado de Local</option>
+                    <option value="Encargado de Local">
+                      Encargado de Local
+                    </option>
                     <option value="Ministro de Fe">Ministro de Fe</option>
                     <option value="Administrador">Administrador</option>
                   </select>
@@ -196,7 +200,8 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> Se generará una contraseña temporal que será enviada al email del usuario.
+                    <strong>Nota:</strong> Se generará una contraseña temporal
+                    que será enviada al email del usuario.
                   </p>
                 </div>
 
@@ -214,7 +219,7 @@ const Banner = ({ onUserCreated, searchTerm, onSearchChange }: BannerProps) => {
                     className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Creando...' : 'Crear Usuario'}
+                    {isLoading ? "Creando..." : "Crear Usuario"}
                   </button>
                 </div>
               </form>

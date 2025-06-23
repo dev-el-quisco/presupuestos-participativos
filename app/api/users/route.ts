@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { TYPES } from "tedious";
 import { executeQuery } from "@/app/lib/database";
 import { hashPassword } from "@/app/lib/auth";
-import { sendUserRegister, sendAccountStatusChange, sendUserRoleChanged } from "@/app/api/email";
+import {
+  sendUserRegister,
+  sendAccountStatusChange,
+  sendUserRoleChanged,
+} from "@/app/api/email";
 
 interface CreateUserRequest {
   nombre: string;
@@ -30,8 +34,9 @@ interface UserFromDB {
 
 // Función para generar contraseña temporal
 function generateTempPassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
   for (let i = 0; i < 8; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -51,7 +56,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      users
+      users,
     });
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
@@ -79,19 +84,18 @@ export async function POST(request: NextRequest) {
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Email inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
 
     // Validar rol
-    const rolesValidos = ['Administrador', 'Digitador', 'Encargado de Local', 'Ministro de Fe'];
+    const rolesValidos = [
+      "Administrador",
+      "Digitador",
+      "Encargado de Local",
+      "Ministro de Fe",
+    ];
     if (!rolesValidos.includes(rol)) {
-      return NextResponse.json(
-        { error: "Rol inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
     }
 
     // Verificar si el usuario ya existe
@@ -103,10 +107,13 @@ export async function POST(request: NextRequest) {
 
     const checkParams = [
       { type: TYPES.VarChar, value: usuario },
-      { type: TYPES.VarChar, value: email }
+      { type: TYPES.VarChar, value: email },
     ];
 
-    const existingUsers = await executeQuery<{count: number}>(checkUserQuery, checkParams);
+    const existingUsers = await executeQuery<{ count: number }>(
+      checkUserQuery,
+      checkParams
+    );
 
     if (existingUsers[0].count > 0) {
       return NextResponse.json(
@@ -129,9 +136,9 @@ export async function POST(request: NextRequest) {
       { type: TYPES.VarChar, value: nombre },
       { type: TYPES.VarChar, value: usuario },
       { type: TYPES.VarChar, value: rol },
-      { type: TYPES.VarChar, value: 'Activa' },
+      { type: TYPES.VarChar, value: "Activa" },
       { type: TYPES.VarChar, value: email },
-      { type: TYPES.VarChar, value: hashedPassword }
+      { type: TYPES.VarChar, value: hashedPassword },
     ];
 
     await executeQuery(insertQuery, insertParams);
@@ -146,9 +153,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Usuario creado exitosamente"
+      message: "Usuario creado exitosamente",
     });
-
   } catch (error) {
     console.error("Error al crear usuario:", error);
     return NextResponse.json(
@@ -175,28 +181,24 @@ export async function PUT(request: NextRequest) {
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Email inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
 
     // Validar rol
-    const rolesValidos = ['Administrador', 'Digitador', 'Encargado de Local', 'Ministro de Fe'];
+    const rolesValidos = [
+      "Administrador",
+      "Digitador",
+      "Encargado de Local",
+      "Ministro de Fe",
+    ];
     if (!rolesValidos.includes(rol)) {
-      return NextResponse.json(
-        { error: "Rol inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
     }
 
     // Validar estado
-    const estadosValidos = ['Activa', 'Desactivada', 'Suspendida'];
+    const estadosValidos = ["Activa", "Desactivada", "Suspendida"];
     if (!estadosValidos.includes(estado)) {
-      return NextResponse.json(
-        { error: "Estado inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Estado inválido" }, { status: 400 });
     }
 
     // Obtener datos actuales del usuario
@@ -206,11 +208,12 @@ export async function PUT(request: NextRequest) {
       WHERE id = @param1
     `;
 
-    const getCurrentUserParams = [
-      { type: TYPES.UniqueIdentifier, value: id }
-    ];
+    const getCurrentUserParams = [{ type: TYPES.UniqueIdentifier, value: id }];
 
-    const currentUsers = await executeQuery<UserFromDB>(getCurrentUserQuery, getCurrentUserParams);
+    const currentUsers = await executeQuery<UserFromDB>(
+      getCurrentUserQuery,
+      getCurrentUserParams
+    );
 
     if (currentUsers.length === 0) {
       return NextResponse.json(
@@ -230,10 +233,13 @@ export async function PUT(request: NextRequest) {
 
     const checkEmailParams = [
       { type: TYPES.VarChar, value: email },
-      { type: TYPES.UniqueIdentifier, value: id }
+      { type: TYPES.UniqueIdentifier, value: id },
     ];
 
-    const existingEmails = await executeQuery<{count: number}>(checkEmailQuery, checkEmailParams);
+    const existingEmails = await executeQuery<{ count: number }>(
+      checkEmailQuery,
+      checkEmailParams
+    );
 
     if (existingEmails[0].count > 0) {
       return NextResponse.json(
@@ -254,7 +260,7 @@ export async function PUT(request: NextRequest) {
       { type: TYPES.VarChar, value: email },
       { type: TYPES.VarChar, value: rol },
       { type: TYPES.VarChar, value: estado },
-      { type: TYPES.UniqueIdentifier, value: id }
+      { type: TYPES.UniqueIdentifier, value: id },
     ];
 
     await executeQuery(updateQuery, updateParams);
@@ -262,9 +268,13 @@ export async function PUT(request: NextRequest) {
     // Enviar notificaciones por email si hay cambios relevantes
     try {
       if (currentUser.estado !== estado) {
-        await sendAccountStatusChange(email, nombre, estado as "Activa" | "Desactivada" | "Suspendida");
+        await sendAccountStatusChange(
+          email,
+          nombre,
+          estado as "Activa" | "Desactivada" | "Suspendida"
+        );
       }
-      
+
       if (currentUser.rol !== rol) {
         await sendUserRoleChanged(email, nombre, rol);
       }
@@ -275,9 +285,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Usuario actualizado exitosamente"
+      message: "Usuario actualizado exitosamente",
     });
-
   } catch (error) {
     console.error("Error al actualizar usuario:", error);
     return NextResponse.json(
@@ -291,7 +300,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
@@ -307,11 +316,12 @@ export async function DELETE(request: NextRequest) {
       WHERE id = @param1
     `;
 
-    const checkUserParams = [
-      { type: TYPES.UniqueIdentifier, value: id }
-    ];
+    const checkUserParams = [{ type: TYPES.UniqueIdentifier, value: id }];
 
-    const existingUsers = await executeQuery<{count: number}>(checkUserQuery, checkUserParams);
+    const existingUsers = await executeQuery<{ count: number }>(
+      checkUserQuery,
+      checkUserParams
+    );
 
     if (existingUsers[0].count === 0) {
       return NextResponse.json(
@@ -326,17 +336,14 @@ export async function DELETE(request: NextRequest) {
       WHERE id = @param1
     `;
 
-    const deleteParams = [
-      { type: TYPES.UniqueIdentifier, value: id }
-    ];
+    const deleteParams = [{ type: TYPES.UniqueIdentifier, value: id }];
 
     await executeQuery(deleteQuery, deleteParams);
 
     return NextResponse.json({
       success: true,
-      message: "Usuario eliminado exitosamente"
+      message: "Usuario eliminado exitosamente",
     });
-
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     return NextResponse.json(

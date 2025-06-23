@@ -29,26 +29,26 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editFormData, setEditFormData] = useState({
-    nombre: '',
-    email: '',
-    rol: '',
-    estado: ''
+    nombre: "",
+    email: "",
+    rol: "",
+    estado: "",
   });
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/users');
+      const response = await fetch("/api/users");
       const data = await response.json();
 
       if (response.ok) {
         setUsers(data.users);
       } else {
-        toast.error('Error al cargar usuarios');
+        toast.error("Error al cargar usuarios");
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error de conexión');
+      console.error("Error:", error);
+      toast.error("Error de conexión");
     } finally {
       setIsLoading(false);
     }
@@ -59,11 +59,12 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
   }, [refreshTrigger]);
 
   useEffect(() => {
-    const filtered = users.filter(user => 
-      user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.rol.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = users.filter(
+      (user) =>
+        user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.rol.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredUsers(filtered);
   }, [users, searchTerm]);
@@ -87,7 +88,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
       nombre: user.nombre,
       email: user.email,
       rol: user.rol,
-      estado: user.estado
+      estado: user.estado,
     });
     setShowEditModal(true);
   };
@@ -97,11 +98,13 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
     setShowDeleteModal(true);
   };
 
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleEditInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -112,30 +115,30 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
     setIsUpdating(true);
 
     try {
-      const response = await fetch('/api/users', {
-        method: 'PUT',
+      const response = await fetch("/api/users", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           id: selectedUser.id,
-          ...editFormData
+          ...editFormData,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Usuario actualizado exitosamente');
+        toast.success("Usuario actualizado exitosamente");
         setShowEditModal(false);
         setSelectedUser(null);
         fetchUsers(); // Recargar la lista
       } else {
-        toast.error(data.error || 'Error al actualizar usuario');
+        toast.error(data.error || "Error al actualizar usuario");
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error de conexión');
+      console.error("Error:", error);
+      toast.error("Error de conexión");
     } finally {
       setIsUpdating(false);
     }
@@ -148,22 +151,22 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
 
     try {
       const response = await fetch(`/api/users?id=${selectedUser.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Usuario eliminado exitosamente');
+        toast.success("Usuario eliminado exitosamente");
         setShowDeleteModal(false);
         setSelectedUser(null);
         fetchUsers(); // Recargar la lista
       } else {
-        toast.error(data.error || 'Error al eliminar usuario');
+        toast.error(data.error || "Error al eliminar usuario");
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error de conexión');
+      console.error("Error:", error);
+      toast.error("Error de conexión");
     } finally {
       setIsDeleting(false);
     }
@@ -173,10 +176,10 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
     setShowEditModal(false);
     setSelectedUser(null);
     setEditFormData({
-      nombre: '',
-      email: '',
-      rol: '',
-      estado: ''
+      nombre: "",
+      email: "",
+      rol: "",
+      estado: "",
     });
   };
 
@@ -242,8 +245,13 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    {searchTerm ? 'No se encontraron usuarios que coincidan con la búsqueda' : 'No hay usuarios registrados'}
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {searchTerm
+                      ? "No se encontraron usuarios que coincidan con la búsqueda"
+                      : "No hay usuarios registrados"}
                   </td>
                 </tr>
               ) : (
@@ -257,14 +265,18 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                     <td className="px-6 py-4">{user.email}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${getRoleColor(user.rol)}`}
+                        className={`px-2 py-1 rounded-full text-xs ${getRoleColor(
+                          user.rol
+                        )}`}
                       >
                         {user.rol}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(user.estado)}`}
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                          user.estado
+                        )}`}
                       >
                         {user.estado}
                       </span>
@@ -355,7 +367,9 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   >
                     <option value="Digitador">Digitador</option>
-                    <option value="Encargado de Local">Encargado de Local</option>
+                    <option value="Encargado de Local">
+                      Encargado de Local
+                    </option>
                     <option value="Ministro de Fe">Ministro de Fe</option>
                     <option value="Administrador">Administrador</option>
                   </select>
@@ -380,7 +394,8 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> Se enviará una notificación por email si se cambia el rol o estado de la cuenta.
+                    <strong>Nota:</strong> Se enviará una notificación por email
+                    si se cambia el rol o estado de la cuenta.
                   </p>
                 </div>
 
@@ -398,7 +413,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                     className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isUpdating}
                   >
-                    {isUpdating ? 'Actualizando...' : 'Actualizar Usuario'}
+                    {isUpdating ? "Actualizando..." : "Actualizar Usuario"}
                   </button>
                 </div>
               </form>
@@ -426,11 +441,14 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
 
               <div className="mb-6">
                 <p className="text-sm text-slate-600 mb-4">
-                  ¿Estás seguro de que deseas eliminar al usuario <strong>{selectedUser.nombre}</strong>?
+                  ¿Estás seguro de que deseas eliminar al usuario{" "}
+                  <strong>{selectedUser.nombre}</strong>?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-md p-3">
                   <p className="text-sm text-red-800">
-                    <strong>Advertencia:</strong> Esta acción no se puede deshacer. Se eliminarán todos los datos asociados al usuario, incluyendo permisos y registros.
+                    <strong>Advertencia:</strong> Esta acción no se puede
+                    deshacer. Se eliminarán todos los datos asociados al
+                    usuario, incluyendo permisos y registros.
                   </p>
                 </div>
               </div>
@@ -450,7 +468,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                   onClick={handleConfirmDelete}
                   disabled={isDeleting}
                 >
-                  {isDeleting ? 'Eliminando...' : 'Eliminar Usuario'}
+                  {isDeleting ? "Eliminando..." : "Eliminar Usuario"}
                 </button>
               </div>
             </div>
