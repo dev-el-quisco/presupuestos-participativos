@@ -12,7 +12,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-dvh flex flex-col">
         <DashboardYearDetector />
         <div className="h-full w-full fixed inset-0 -z-10 bg-[#2c3e4a]">
           <div
