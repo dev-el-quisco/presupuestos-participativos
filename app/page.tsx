@@ -7,6 +7,7 @@ import LoginHeader from "@/app/components/login/LoginHeader";
 import LoginForm from "@/app/components/login/LoginForm";
 import ResetPassword from "@/app/components/login/ResetPassword";
 import LoginFooter from "@/app/components/login/LoginFooter";
+import toast from "react-hot-toast";
 
 export default function Home() {
   const [showResetPassword, setShowResetPassword] = useState(false);
