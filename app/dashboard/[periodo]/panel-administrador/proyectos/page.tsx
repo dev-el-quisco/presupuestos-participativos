@@ -2,6 +2,7 @@ import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
 import Banner from "@/app/components/dashboard/administrator/projects/Banner";
 import Category from "@/app/components/dashboard/administrator/projects/Category";
 import ProjectsListComponent from "@/app/components/dashboard/administrator/projects/ProjectsListComponent";
+import toast from "react-hot-toast";
 
 export default function PollingPlaces() {
   return (

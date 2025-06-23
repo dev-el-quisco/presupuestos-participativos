@@ -2,6 +2,7 @@ import Layout from "@/app/dashboard/Layout";
 import Filter from "@/app/components/dashboard/polls/Filter";
 import Content from "@/app/components/dashboard/polls/Content";
 import RoleProtectedRoute from "@/app/components/auth/RoleProtectedRoute";
+import toast from "react-hot-toast";
 
 export default function Votaciones() {
   return (

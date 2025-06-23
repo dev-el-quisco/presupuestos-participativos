@@ -1,6 +1,7 @@
 import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
 import Banner from "@/app/components/dashboard/administrator/users/Banner";
 import UsersList from "@/app/components/dashboard/administrator/users/Users";
+import toast from "react-hot-toast";
 
 export default function Users() {
   return (

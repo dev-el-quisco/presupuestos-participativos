@@ -1,6 +1,7 @@
 import Layout from "@/app/dashboard/[periodo]/panel-administrador/Layout";
 import { IconPlus } from "@tabler/icons-react";
 import PollingPlacesList from "@/app/components/dashboard/administrator/pollingplaces/PollingPlaces";
+import toast from "react-hot-toast";
 
 export default function PollingPlaces() {
   return (
