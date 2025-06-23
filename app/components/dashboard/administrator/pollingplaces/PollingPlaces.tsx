@@ -29,6 +29,209 @@ interface Sede {
   mesas?: Mesa[];
 }
 
+// Componente SedeForm para edición
+const SedeForm = ({
+  initialValue = "",
+  onSubmit,
+  onCancel,
+  isLoading = false,
+  isEdit = false,
+}: {
+  initialValue?: string;
+  onSubmit: (nombre: string) => void;
+  onCancel: () => void;
+  isLoading?: boolean;
+  isEdit?: boolean;
+}) => {
+  const [nombre, setNombre] = useState(initialValue);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!nombre.trim()) {
+      setError("El nombre de la sede es requerido");
+      return;
+    }
+
+    if (nombre.trim().length < 2) {
+      setError("El nombre debe tener al menos 2 caracteres");
+      return;
+    }
+
+    setError("");
+    onSubmit(nombre.trim());
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label
+          htmlFor="nombre"
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Nombre de la Sede
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          value={nombre}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            if (error) setError("");
+          }}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none transition-colors ${
+            error ? "border-red-300" : "border-gray-300"
+          }`}
+          placeholder="Ingrese el nombre de la sede"
+          disabled={isLoading}
+          autoFocus
+        />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={isLoading || !nombre.trim()}
+          className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-[#30c56c] transition-colors disabled:opacity-50 flex items-center"
+        >
+          {isLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          )}
+          {isEdit ? "Actualizar" : "Crear"} Sede
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// Componente MesaForm
+const MesaForm = ({
+  initialNombre = "",
+  initialEstado = true,
+  onSubmit,
+  onCancel,
+  isLoading = false,
+  isEdit = false,
+}: {
+  initialNombre?: string;
+  initialEstado?: boolean;
+  onSubmit: (nombre: string, estado_mesa: boolean) => void;
+  onCancel: () => void;
+  isLoading?: boolean;
+  isEdit?: boolean;
+}) => {
+  const [nombre, setNombre] = useState(initialNombre);
+  const [estadoMesa, setEstadoMesa] = useState(initialEstado);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!nombre.trim()) {
+      setError("El nombre de la mesa es requerido");
+      return;
+    }
+
+    if (nombre.trim().length < 2) {
+      setError("El nombre debe tener al menos 2 caracteres");
+      return;
+    }
+
+    setError("");
+    onSubmit(nombre.trim(), estadoMesa);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label
+          htmlFor="nombre"
+          className="block text-sm font-medium text-slate-700 mb-2"
+        >
+          Nombre de la Mesa
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          value={nombre}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            if (error) setError("");
+          }}
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none transition-colors ${
+            error ? "border-red-300" : "border-gray-300"
+          }`}
+          placeholder="Ingrese el nombre de la mesa"
+          disabled={isLoading}
+          autoFocus
+        />
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Estado de la Mesa
+        </label>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="estado"
+              checked={estadoMesa === true}
+              onChange={() => setEstadoMesa(true)}
+              className="mr-2 text-[#30c56c] focus:ring-[#30c56c]"
+              disabled={isLoading}
+            />
+            <span className="text-sm text-gray-700">Abierta</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="estado"
+              checked={estadoMesa === false}
+              onChange={() => setEstadoMesa(false)}
+              className="mr-2 text-[#30c56c] focus:ring-[#30c56c]"
+              disabled={isLoading}
+            />
+            <span className="text-sm text-gray-700">Cerrada</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isLoading}
+          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={isLoading || !nombre.trim()}
+          className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-[#30c56c] transition-colors disabled:opacity-50 flex items-center"
+        >
+          {isLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          )}
+          {isEdit ? "Actualizar" : "Crear"} Mesa
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const PollingPlaces = () => {
   const params = useParams();
   const periodo = params.periodo as string;
@@ -39,23 +242,16 @@ const PollingPlaces = () => {
   const [visibleMenu, setVisibleMenu] = useState<string | null>(null);
   const [editingSede, setEditingSede] = useState<Sede | null>(null);
   const [editingMesa, setEditingMesa] = useState<Mesa | null>(null);
-  const [showSedeModal, setShowSedeModal] = useState(false);
   const [showMesaModal, setShowMesaModal] = useState(false);
-  const [selectedSedeForMesa, setSelectedSedeForMesa] = useState<string | null>(null);
+  const [selectedSedeForMesa, setSelectedSedeForMesa] = useState<string | null>(
+    null
+  );
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: "sede" | "mesa";
     id: string;
     name: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Expose createNewSede function globally
-  useEffect(() => {
-    (window as any).createNewSede = () => setShowSedeModal(true);
-    return () => {
-      delete (window as any).createNewSede;
-    };
-  }, []);
 
   // Fetch sedes
   const fetchSedes = async () => {
@@ -75,6 +271,14 @@ const PollingPlaces = () => {
       setLoading(false);
     }
   };
+
+  // Expose refresh function globally
+  useEffect(() => {
+    (window as any).refreshSedes = fetchSedes;
+    return () => {
+      delete (window as any).refreshSedes;
+    };
+  }, []);
 
   // Fetch mesas for a specific sede
   const fetchMesas = async (sedeId: string) => {
@@ -106,10 +310,10 @@ const PollingPlaces = () => {
     const handleClickOutside = () => {
       setVisibleMenu(null);
     };
-    
+
     if (visibleMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [visibleMenu]);
 
@@ -132,33 +336,7 @@ const PollingPlaces = () => {
     setVisibleMenu(visibleMenu === sedeId ? null : sedeId);
   };
 
-  // Handle sede operations
-  const handleCreateSede = async (nombre: string) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/sedes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success("Sede creada exitosamente");
-        fetchSedes();
-        setShowSedeModal(false);
-      } else {
-        toast.error(data.error || "Error al crear la sede");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al crear la sede");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Handle sede operations (only edit and delete, create moved to page.tsx)
   const handleEditSede = async (id: string, nombre: string) => {
     try {
       setIsLoading(true);
@@ -172,7 +350,11 @@ const PollingPlaces = () => {
 
       if (data.success) {
         toast.success("Sede actualizada exitosamente");
-        fetchSedes();
+        await fetchSedes();
+        // Si la sede está expandida, también actualizar sus mesas
+        if (expandedSede === id) {
+          await fetchMesas(id);
+        }
         setEditingSede(null);
       } else {
         toast.error(data.error || "Error al actualizar la sede");
@@ -230,8 +412,12 @@ const PollingPlaces = () => {
 
       if (data.success) {
         toast.success("Mesa creada exitosamente");
-        fetchMesas(selectedSedeForMesa);
-        fetchSedes(); // Update mesa count
+        // Primero actualizar el conteo general de sedes
+        await fetchSedes();
+        // Luego actualizar las mesas de la sede específica si está expandida
+        if (expandedSede === selectedSedeForMesa) {
+          await fetchMesas(selectedSedeForMesa);
+        }
         setShowMesaModal(false);
         setSelectedSedeForMesa(null);
       } else {
@@ -264,7 +450,8 @@ const PollingPlaces = () => {
         toast.success("Mesa actualizada exitosamente");
         const mesa = editingMesa;
         if (mesa) {
-          fetchMesas(mesa.sede_id);
+          // Actualizar las mesas de la sede específica
+          await fetchMesas(mesa.sede_id);
         }
         setEditingMesa(null);
       } else {
@@ -348,17 +535,23 @@ const PollingPlaces = () => {
                       <IconMapPin size={24} className="text-gray-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-medium text-slate-800 truncate">{sede.nombre}</h3>
+                      <h3 className="font-medium text-slate-800 truncate">
+                        {sede.nombre}
+                      </h3>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 flex-shrink-0">
                   <div className="text-right hidden sm:block">
                     <span className="text-sm text-gray-500">Mesas</span>
-                    <p className="font-semibold text-lg text-slate-800">{sede.mesasCount}</p>
+                    <p className="font-semibold text-lg text-slate-800">
+                      {sede.mesasCount}
+                    </p>
                   </div>
                   <div className="sm:hidden">
-                    <span className="text-sm font-semibold text-slate-800">{sede.mesasCount} mesas</span>
+                    <span className="text-sm font-semibold text-slate-800">
+                      {sede.mesasCount} mesas
+                    </span>
                   </div>
                   <div className="relative">
                     <button
@@ -379,7 +572,10 @@ const PollingPlaces = () => {
                             }}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
-                            <IconEdit size={16} className="mr-2 text-blue-600" />
+                            <IconEdit
+                              size={16}
+                              className="mr-2 text-blue-600"
+                            />
                             Editar Sede
                           </button>
                           <button
@@ -391,7 +587,10 @@ const PollingPlaces = () => {
                             }}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           >
-                            <IconPlus size={16} className="mr-2 text-green-600" />
+                            <IconPlus
+                              size={16}
+                              className="mr-2 text-green-600"
+                            />
                             Agregar Mesa
                           </button>
                           <button
@@ -430,9 +629,14 @@ const PollingPlaces = () => {
                       {/* Mobile view */}
                       <div className="block sm:hidden">
                         {sede.mesas.map((mesa) => (
-                          <div key={mesa.id} className="p-4 border-b border-gray-200 last:border-b-0">
+                          <div
+                            key={mesa.id}
+                            className="p-4 border-b border-gray-200 last:border-b-0"
+                          >
                             <div className="flex items-center justify-between mb-2">
-                              <h5 className="font-medium text-slate-800">{mesa.nombre}</h5>
+                              <h5 className="font-medium text-slate-800">
+                                {mesa.nombre}
+                              </h5>
                               <div className="flex space-x-2">
                                 <button
                                   onClick={() => setEditingMesa(mesa)}
@@ -487,7 +691,10 @@ const PollingPlaces = () => {
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
                             {sede.mesas.map((mesa) => (
-                              <tr key={mesa.id} className="hover:bg-gray-50 transition-colors">
+                              <tr
+                                key={mesa.id}
+                                className="hover:bg-gray-50 transition-colors"
+                              >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
                                   {mesa.nombre}
                                 </td>
@@ -545,33 +752,6 @@ const PollingPlaces = () => {
         })}
       </div>
 
-      {/* Modal Crear Sede */}
-      {showSedeModal && (
-        <Portal>
-          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-slate-800">
-                  Crear Nueva Sede
-                </h3>
-                <button
-                  onClick={() => setShowSedeModal(false)}
-                  className="text-slate-500 hover:text-slate-700 h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-
-              <SedeForm
-                onSubmit={handleCreateSede}
-                onCancel={() => setShowSedeModal(false)}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-        </Portal>
-      )}
-
       {/* Modal Editar Sede */}
       {editingSede && (
         <Portal>
@@ -628,8 +808,6 @@ const PollingPlaces = () => {
                   setSelectedSedeForMesa(null);
                 }}
                 isLoading={isLoading}
-                periodo={periodo}
-                sedeName={sedes.find(s => s.id === selectedSedeForMesa)?.nombre || ""}
               />
             </div>
           </div>
@@ -662,8 +840,6 @@ const PollingPlaces = () => {
                 onCancel={() => setEditingMesa(null)}
                 isLoading={isLoading}
                 isEdit
-                periodo={periodo}
-                sedeName={sedes.find(s => s.id === editingMesa.sede_id)?.nombre || ""}
               />
             </div>
           </div>
@@ -688,40 +864,29 @@ const PollingPlaces = () => {
               </div>
 
               <div className="mb-6">
-                <p className="text-slate-600 mb-4">
-                  ¿Estás seguro de que deseas eliminar {deleteConfirm.type === "sede" ? "esta sede" : "esta mesa"}?
+                <p className="text-gray-600 mb-4">
+                  ¿Estás seguro de que deseas eliminar{" "}
+                  {deleteConfirm.type === "sede" ? "la sede" : "la mesa"}{" "}
+                  <span className="font-semibold text-slate-800">
+                    "{deleteConfirm.name}"
+                  </span>
+                  ?
                 </p>
-                <div className="bg-gray-50 rounded-md p-3">
-                  <p className="text-slate-800 text-sm">
-                    <strong>Nombre:</strong> {deleteConfirm.name}
-                  </p>
-                  {deleteConfirm.type === "sede" && (
-                    <p className="text-sm">
-                      <strong>Tipo:</strong> Sede de votación
+                {deleteConfirm.type === "sede" && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-yellow-800 text-sm">
+                      ⚠️ Esta acción eliminará también todas las mesas asociadas
+                      a esta sede.
                     </p>
-                  )}
-                  {deleteConfirm.type === "mesa" && (
-                    <p className="text-sm">
-                      <strong>Tipo:</strong> Mesa de votación
-                    </p>
-                  )}
-                </div>
-                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Advertencia:</strong> {deleteConfirm.type === "sede" 
-                      ? "Esta acción eliminará la sede y todas sus mesas asociadas si no tienen votos registrados."
-                      : "Esta acción eliminará la mesa si no tiene votos registrados en el periodo actual."
-                    }
-                  </p>
-                </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end space-x-3">
                 <button
-                  type="button"
-                  className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
                   onClick={() => setDeleteConfirm(null)}
                   disabled={isLoading}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -733,10 +898,13 @@ const PollingPlaces = () => {
                       handleDeleteMesa(deleteConfirm.id);
                     }
                   }}
-                  className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
                 >
-                  {isLoading ? "Eliminando..." : "Eliminar"}
+                  {isLoading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  )}
+                  Eliminar
                 </button>
               </div>
             </div>
@@ -744,152 +912,6 @@ const PollingPlaces = () => {
         </Portal>
       )}
     </>
-  );
-};
-
-// Componente SedeForm
-interface SedeFormProps {
-  initialValue?: string;
-  onSubmit: (nombre: string) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-  isEdit?: boolean;
-}
-
-const SedeForm = ({ initialValue = "", onSubmit, onCancel, isLoading, isEdit = false }: SedeFormProps) => {
-  const [nombre, setNombre] = useState(initialValue);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre.trim()) return;
-    onSubmit(nombre.trim());
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col">
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Nombre de la Sede *
-        </label>
-        <input
-          type="text"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-          placeholder="Ej: Escuela Básica Los Aromos"
-          required
-        />
-      </div>
-
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isLoading || !nombre.trim()}
-        >
-          {isLoading ? (isEdit ? "Actualizando..." : "Creando...") : (isEdit ? "Actualizar Sede" : "Crear Sede")}
-        </button>
-      </div>
-    </form>
-  );
-};
-
-// Componente MesaForm
-interface MesaFormProps {
-  initialNombre?: string;
-  initialEstado?: boolean;
-  onSubmit: (nombre: string, estado_mesa: boolean) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-  isEdit?: boolean;
-  periodo: string;
-  sedeName: string;
-}
-
-const MesaForm = ({ 
-  initialNombre = "", 
-  initialEstado = true, 
-  onSubmit, 
-  onCancel, 
-  isLoading, 
-  isEdit = false,
-  periodo,
-  sedeName
-}: MesaFormProps) => {
-  const [nombre, setNombre] = useState(initialNombre);
-  const [estado_mesa, setEstadoMesa] = useState(initialEstado);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre.trim()) return;
-    onSubmit(nombre.trim(), estado_mesa);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col">
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Nombre de la Mesa *
-        </label>
-        <input
-          type="text"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-          placeholder="Ej: Mesa 1, Mesa A, Mesa Principal"
-          required
-        />
-      </div>
-
-      <div className="flex flex-col">
-        <label className="block text-sm font-medium text-slate-700 mb-1">
-          Estado de la Mesa *
-        </label>
-        <select
-          value={estado_mesa ? "true" : "false"}
-          onChange={(e) => setEstadoMesa(e.target.value === "true")}
-          className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
-        >
-          <option value="true">Abierta</option>
-          <option value="false">Cerrada</option>
-        </select>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-        <p className="text-sm text-blue-800">
-          <strong>Sede:</strong> {sedeName}
-        </p>
-        <p className="text-sm text-blue-800">
-          <strong>Periodo:</strong> {periodo}
-        </p>
-      </div>
-
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isLoading || !nombre.trim()}
-        >
-          {isLoading ? (isEdit ? "Actualizando..." : "Creando...") : (isEdit ? "Actualizar Mesa" : "Crear Mesa")}
-        </button>
-      </div>
-    </form>
   );
 };
 
