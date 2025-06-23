@@ -12,7 +12,7 @@ DROP TABLE sedes;
 -- Tabla de Sedes
 CREATE TABLE sedes (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    nombres VARCHAR(255) NOT NULL
+    nombre VARCHAR(255) NOT NULL
 );
 
 -- Tabla de Mesas
@@ -50,12 +50,6 @@ CREATE TABLE permisos (
     CONSTRAINT FK_permisos_usuarios FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
--- Tabla de Sectores
-CREATE TABLE sectores (
-    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    nombre VARCHAR(255) NOT NULL
-);
-
 -- Tabla de Tipos de Proyectos
 CREATE TABLE tipo_proyectos (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
@@ -64,12 +58,11 @@ CREATE TABLE tipo_proyectos (
 
 -- Tabla de Proyectos
 CREATE TABLE proyectos (
-    id varchar(50) PRIMARY KEY,
+    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+	id_proyecto VARCHAR(255) NOT NULL,
     nombre VARCHAR(255) NOT NULL,
-    id_sector UNIQUEIDENTIFIER NULL,
     id_tipo_proyecto UNIQUEIDENTIFIER NULL,
     periodo INT NOT NULL,
-    CONSTRAINT FK_proyectos_sector FOREIGN KEY (id_sector) REFERENCES sectores(id) ON DELETE SET NULL,
     CONSTRAINT FK_proyectos_tipo_proyecto FOREIGN KEY (id_tipo_proyecto) REFERENCES tipo_proyectos(id) ON DELETE SET NULL
 );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IconMoodSmile,
   IconBallAmericanFootball,
@@ -21,7 +21,7 @@ const Category = () => {
   const [loading, setLoading] = useState(true);
 
   // Iconos para cada categoría
-  const categoryIcons: Record<string, JSX.Element> = {
+  const categoryIcons: Record<string, React.ReactElement> = {
     Comunales: <IconBuildingCommunity />,
     Infantiles: <IconMoodSmile />,
     Deportivos: <IconBallAmericanFootball />,
@@ -89,6 +89,24 @@ const Category = () => {
       delete (window as any).updateCategories;
     };
   }, [selectedYear]);
+
+  // Escuchar eventos personalizados para actualizar automáticamente
+  useEffect(() => {
+    const handleProjectUpdate = () => {
+      fetchCategoryData();
+    };
+
+    // Agregar listeners para eventos personalizados
+    window.addEventListener('projectCreated', handleProjectUpdate);
+    window.addEventListener('projectUpdated', handleProjectUpdate);
+    window.addEventListener('projectDeleted', handleProjectUpdate);
+
+    return () => {
+      window.removeEventListener('projectCreated', handleProjectUpdate);
+      window.removeEventListener('projectUpdated', handleProjectUpdate);
+      window.removeEventListener('projectDeleted', handleProjectUpdate);
+    };
+  }, []);
 
   if (loading) {
     return (

@@ -270,16 +270,34 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verificar si existen votos para este proyecto
-    const votesQuery = `
-      SELECT COUNT(*) as count 
-      FROM votos 
+    // Primero obtener el ID interno del proyecto
+    const projectQuery = `
+      SELECT id as db_id
+      FROM proyectos 
       WHERE id_proyecto = @param1 AND periodo = @param2
     `;
 
-    const votes = await executeQuery<{ count: number }>(votesQuery, [
+    const project = await executeQuery<{ db_id: string }>(projectQuery, [
       { name: "param1", type: TYPES.VarChar, value: id_proyecto },
       { name: "param2", type: TYPES.Int, value: parseInt(periodo) },
+    ]);
+
+    if (project.length === 0) {
+      return NextResponse.json(
+        { error: "Proyecto no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar si existen votos para este proyecto usando el ID interno
+    const votesQuery = `
+      SELECT COUNT(*) as count 
+      FROM votos 
+      WHERE id_proyecto = @param1
+    `;
+
+    const votes = await executeQuery<{ count: number }>(votesQuery, [
+      { name: "param1", type: TYPES.UniqueIdentifier, value: project[0].db_id },
     ]);
 
     if (votes[0]?.count > 0) {
