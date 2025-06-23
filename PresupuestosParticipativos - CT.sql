@@ -59,7 +59,7 @@ CREATE TABLE tipo_proyectos (
 -- Tabla de Proyectos
 CREATE TABLE proyectos (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-	id_proyecto VARCHAR(255) NOT NULL,
+	id_proyecto VARCHAR(50) NOT NULL,
     nombre VARCHAR(255) NOT NULL,
     id_tipo_proyecto UNIQUEIDENTIFIER NULL,
     periodo INT NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE votos (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     periodo INT NOT NULL,
     tipo_voto varchar(50) NOT NULL, -- Blanco, Nulo, Normal
-    id_proyecto varchar(50) NULL,
+    id_proyecto UNIQUEIDENTIFIER NULL,
 	id_mesa UNIQUEIDENTIFIER NULL,
     CONSTRAINT FK_votos_mesas FOREIGN KEY (id_mesa) REFERENCES mesas(id) ON DELETE CASCADE,
     CONSTRAINT FK_votos_proyectos FOREIGN KEY (id_proyecto) REFERENCES proyectos(id) ON DELETE CASCADE
