@@ -97,20 +97,20 @@ const Category = () => {
     };
 
     // Agregar listeners para eventos personalizados
-    window.addEventListener('projectCreated', handleProjectUpdate);
-    window.addEventListener('projectUpdated', handleProjectUpdate);
-    window.addEventListener('projectDeleted', handleProjectUpdate);
+    window.addEventListener("projectCreated", handleProjectUpdate);
+    window.addEventListener("projectUpdated", handleProjectUpdate);
+    window.addEventListener("projectDeleted", handleProjectUpdate);
 
     return () => {
-      window.removeEventListener('projectCreated', handleProjectUpdate);
-      window.removeEventListener('projectUpdated', handleProjectUpdate);
-      window.removeEventListener('projectDeleted', handleProjectUpdate);
+      window.removeEventListener("projectCreated", handleProjectUpdate);
+      window.removeEventListener("projectUpdated", handleProjectUpdate);
+      window.removeEventListener("projectDeleted", handleProjectUpdate);
     };
   }, []);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -128,13 +128,13 @@ const Category = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {categories.map((category) => (
         <div
           key={category.id}
-          className="bg-white rounded-lg shadow-sm p-4 border border-gray-200 flex items-center"
+          className="bg-white rounded-lg shadow-sm p-4 border border-gray-200 flex flex-col md:flex-row items-center justify-center md:justify-start"
         >
-          <div className="mr-4 text-gray-600">
+          <div className="md:mr-4 text-gray-600">
             {categoryIcons[category.name] || <IconBuildingCommunity />}
           </div>
           <div>
@@ -142,8 +142,7 @@ const Category = () => {
               {category.name}
             </h3>
             <p className="text-sm text-gray-500">
-              {category.count} proyecto{category.count !== 1 ? "s" : ""} activo
-              {category.count !== 1 ? "s" : ""}
+              {category.count} proyecto{category.count !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
