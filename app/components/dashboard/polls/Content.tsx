@@ -57,22 +57,22 @@ const getCategoryColors = (categoria: string) => {
       hover: "hover:bg-green-100",
     },
     Infantiles: {
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      icon: "bg-blue-100 text-blue-800",
-      hover: "hover:bg-blue-100",
+      bg: "bg-yellow-50",
+      border: "border-yellow-200",
+      icon: "bg-yellow-100 text-yellow-800",
+      hover: "hover:bg-yellow-100",
     },
-    Deportivos: {
+    Juveniles: {
+      bg: "bg-sky-50",
+      border: "border-sky-200",
+      icon: "bg-sky-100 text-sky-800",
+      hover: "hover:bg-sky-100",
+    },
+    Sectoriales: {
       bg: "bg-orange-50",
       border: "border-orange-200",
       icon: "bg-orange-100 text-orange-800",
       hover: "hover:bg-orange-100",
-    },
-    Culturales: {
-      bg: "bg-red-50",
-      border: "border-red-200",
-      icon: "bg-red-100 text-red-800",
-      hover: "hover:bg-red-100",
     },
   };
 
@@ -655,7 +655,7 @@ const Content = () => {
                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                               : mesa.estado_mesa
                               ? "bg-red-100 text-red-700 hover:bg-red-200"
-                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                              : "bg-green-100 text-green-700 hover:bg-green-200"
                           }`}
                           title={
                             mesa.estado_mesa && !canCloseMesa(mesa)
