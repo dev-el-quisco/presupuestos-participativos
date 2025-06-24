@@ -116,7 +116,7 @@ const ProjectsList = () => {
       color: "bg-blue-500",
     },
     {
-      id: "I3-1", // ID único
+      id: "I3-1",
       title: "Biblioteca infantil comunitaria",
       category: "Proyectos Infantiles",
       categoryId: "infantiles",
