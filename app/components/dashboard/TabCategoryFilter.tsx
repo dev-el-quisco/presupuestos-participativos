@@ -47,7 +47,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
       setActiveTab(matchingTab.path);
     } else if (
       // No seleccionar automáticamente si estamos en la ruta base de estadísticas o panel-administrador
-      !currentPath.endsWith("/estadisticas") && 
+      !currentPath.endsWith("/estadisticas") &&
       !currentPath.endsWith("/panel-administrador")
     ) {
       // Solo establecer la primera pestaña como activa si no estamos en las rutas base
@@ -82,7 +82,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   return (
     <div className="w-full pb-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex">
+        <div className="flex overflow-x-auto">
           {tabsToRender.map((tab) => (
             <Link
               key={tab.path}

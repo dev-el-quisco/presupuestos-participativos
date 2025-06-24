@@ -66,10 +66,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nombre, direccion, fecha_nacimiento, id_mesa, periodo, rut, extranjero } = body;
+    const {
+      nombre,
+      direccion,
+      fecha_nacimiento,
+      id_mesa,
+      periodo,
+      rut,
+      extranjero,
+    } = body;
 
     // Validaciones
-    if (!nombre || !direccion || !fecha_nacimiento || !id_mesa || !periodo || !rut) {
+    if (
+      !nombre ||
+      !direccion ||
+      !fecha_nacimiento ||
+      !id_mesa ||
+      !periodo ||
+      !rut
+    ) {
       return NextResponse.json(
         { error: "Todos los campos son requeridos" },
         { status: 400 }
@@ -79,49 +94,47 @@ export async function POST(request: NextRequest) {
     // Función para validar RUT chileno
     const validarRUT = (rut: string): boolean => {
       // Limpiar el RUT
-      const rutLimpio = rut.replace(/[^0-9kK]/g, '').toUpperCase();
-      
+      const rutLimpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
+
       if (rutLimpio.length < 2) return false;
-      
+
       const cuerpo = rutLimpio.slice(0, -1);
       const dv = rutLimpio.slice(-1);
-      
+
       // Calcular dígito verificador
       let suma = 0;
       let multiplicador = 2;
-      
+
       for (let i = cuerpo.length - 1; i >= 0; i--) {
         suma += parseInt(cuerpo[i]) * multiplicador;
         multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
       }
-      
+
       const resto = suma % 11;
-      const dvCalculado = resto === 0 ? '0' : resto === 1 ? 'K' : (11 - resto).toString();
-      
+      const dvCalculado =
+        resto === 0 ? "0" : resto === 1 ? "K" : (11 - resto).toString();
+
       return dv === dvCalculado;
     };
 
     // Función para formatear RUT
     const formatearRUT = (rut: string): string => {
-      const rutLimpio = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+      const rutLimpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
       if (rutLimpio.length <= 1) return rutLimpio;
-      
+
       const cuerpo = rutLimpio.slice(0, -1);
       const dv = rutLimpio.slice(-1);
-      
+
       // Formatear con puntos
-      const cuerpoFormateado = cuerpo.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-      
+      const cuerpoFormateado = cuerpo.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
       return `${cuerpoFormateado}-${dv}`;
     };
 
     // Validar RUT solo si no es extranjero
     if (!extranjero) {
       if (!validarRUT(rut)) {
-        return NextResponse.json(
-          { error: "RUT inválido" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "RUT inválido" }, { status: 400 });
       }
     }
 
@@ -156,7 +169,11 @@ export async function POST(request: NextRequest) {
     await executeQuery(insertQuery, [
       { name: "param1", type: TYPES.VarChar, value: nombre.trim() },
       { name: "param2", type: TYPES.VarChar, value: direccion.trim() },
-      { name: "param3", type: TYPES.DateTime2, value: new Date(fecha_nacimiento) },
+      {
+        name: "param3",
+        type: TYPES.DateTime2,
+        value: new Date(fecha_nacimiento),
+      },
       { name: "param4", type: TYPES.UniqueIdentifier, value: id_mesa },
       { name: "param5", type: TYPES.Int, value: parseInt(periodo) },
       { name: "param6", type: TYPES.VarChar, value: rutFormateado },

@@ -145,11 +145,11 @@ const Content = () => {
       setRutError("");
     } else {
       // Solo para chilenos: aplicar restricciones y formateo
-      const valorLimpio = value.replace(/[^0-9kK.-]/g, '').toUpperCase();
-      
+      const valorLimpio = value.replace(/[^0-9kK.-]/g, "").toUpperCase();
+
       // Formatear automáticamente
       const rutFormateado = formatearRUT(valorLimpio);
-      
+
       setVotanteForm((prev) => ({
         ...prev,
         rut: rutFormateado,
@@ -422,14 +422,12 @@ const Content = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setMesas(prevMesas => 
-          prevMesas.map(mesa => 
-            mesa.id === mesaId 
-              ? { ...mesa, votantes_count: data.count }
-              : mesa
+        setMesas((prevMesas) =>
+          prevMesas.map((mesa) =>
+            mesa.id === mesaId ? { ...mesa, votantes_count: data.count } : mesa
           )
         );
       }
@@ -473,9 +471,9 @@ const Content = () => {
         });
         setRutError("");
         // Incrementar el contador localmente sin recargar
-        setMesas(prevMesas => 
-          prevMesas.map(mesa => 
-            mesa.id === selectedMesa?.id 
+        setMesas((prevMesas) =>
+          prevMesas.map((mesa) =>
+            mesa.id === selectedMesa?.id
               ? { ...mesa, votantes_count: (mesa.votantes_count || 0) + 1 }
               : mesa
           )
@@ -1357,35 +1355,56 @@ const Content = () => {
 
               {/* Resumen de información antes de guardar */}
               <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <h4 className="text-sm font-medium text-slate-700 mb-2">Resumen de la Mesa:</h4>
+                <h4 className="text-sm font-medium text-slate-700 mb-2">
+                  Resumen de la Mesa:
+                </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
                   <div className="flex justify-between">
                     <span>Votantes registrados:</span>
-                    <span className="font-medium text-slate-800">{selectedMesa?.votantes_count || 0}</span>
+                    <span className="font-medium text-slate-800">
+                      {selectedMesa?.votantes_count || 0}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Votos actuales:</span>
-                    <span className="font-medium text-slate-800">{selectedMesa?.votos_count || 0}</span>
+                    <span className="font-medium text-slate-800">
+                      {selectedMesa?.votos_count || 0}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Nuevos votos:</span>
                     <span className="font-medium text-blue-600">
-                      {Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)}
+                      {Object.values(votoForm).reduce(
+                        (sum, val) => sum + (val || 0),
+                        0
+                      )}
                     </span>
                   </div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-slate-200">
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-600">Total votos después de guardar:</span>
+                    <span className="text-slate-600">
+                      Total votos después de guardar:
+                    </span>
                     <span className="font-medium text-slate-800">
-                      {(selectedMesa?.votos_count || 0) + Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)}
+                      {(selectedMesa?.votos_count || 0) +
+                        Object.values(votoForm).reduce(
+                          (sum, val) => sum + (val || 0),
+                          0
+                        )}
                     </span>
                   </div>
                 </div>
                 {/* Advertencia si los votos no coinciden con votantes */}
-                {((selectedMesa?.votos_count || 0) + Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)) !== (selectedMesa?.votantes_count || 0) && (
+                {(selectedMesa?.votos_count || 0) +
+                  Object.values(votoForm).reduce(
+                    (sum, val) => sum + (val || 0),
+                    0
+                  ) !==
+                  (selectedMesa?.votantes_count || 0) && (
                   <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                    ⚠️ Los votos totales no coinciden con los votantes registrados
+                    ⚠️ Los votos totales no coinciden con los votantes
+                    registrados
                   </div>
                 )}
               </div>
