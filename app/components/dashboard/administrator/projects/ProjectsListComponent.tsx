@@ -12,6 +12,8 @@ interface Project {
   nombre: string;
   id_tipo_proyecto: string;
   tipo_proyecto_nombre: string;
+  id_sector?: string;
+  sector_nombre?: string;
   periodo: number;
   votos_count: number;
 }
@@ -21,11 +23,18 @@ interface ProjectType {
   nombre: string;
 }
 
+// Add the missing Sector interface
+interface Sector {
+  id: string;
+  nombre: string;
+}
+
 const ProjectsListComponent = () => {
   const { selectedYear } = useYear();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
+  const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentFilter, setCurrentFilter] = useState<string>("todos");
 
@@ -40,6 +49,7 @@ const ProjectsListComponent = () => {
     id_proyecto: "",
     nombre: "",
     id_tipo_proyecto: "",
+    id_sector: "",
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -47,6 +57,7 @@ const ProjectsListComponent = () => {
     id_proyecto: "",
     nombre: "",
     id_tipo_proyecto: "",
+    id_sector: "",
   });
 
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -115,11 +126,42 @@ const ProjectsListComponent = () => {
     }
   };
 
+  // Función para obtener sectores
+  const fetchSectors = async () => {
+    try {
+      const response = await fetch("/api/sectores");
+      const data = await response.json();
+
+      if (data.success) {
+        setSectors(data.sectores);
+      } else {
+        toast.error("Error al cargar sectores");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error de conexión");
+    }
+  };
+
+  // Función para verificar si un tipo de proyecto requiere sector
+  const requiresSector = (tipoProyectoNombre: string) => {
+    return ["Juveniles", "Infantiles", "Sectoriales"].includes(
+      tipoProyectoNombre
+    );
+  };
+
+  // Función para obtener el nombre del tipo de proyecto por ID
+  const getProjectTypeName = (id: string) => {
+    const type = projectTypes.find((t) => t.id === id);
+    return type ? type.nombre : "";
+  };
+
   useEffect(() => {
     if (selectedYear) {
       fetchProjects();
     }
     fetchProjectTypes();
+    fetchSectors();
   }, [selectedYear]);
 
   // Aplicar filtro cuando cambian los proyectos
@@ -177,7 +219,38 @@ const ProjectsListComponent = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setCreateFormData((prev) => ({ ...prev, [name]: value }));
+    setCreateFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      // Si se cambia el tipo de proyecto, limpiar el sector si no es requerido
+      if (name === "id_tipo_proyecto") {
+        const typeName = getProjectTypeName(value);
+        if (!requiresSector(typeName)) {
+          newData.id_sector = "";
+        }
+      }
+
+      return newData;
+    });
+  };
+
+  const handleEditInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      // Si se cambia el tipo de proyecto, limpiar el sector si no es requerido
+      if (name === "id_tipo_proyecto") {
+        const typeName = getProjectTypeName(value);
+        if (!requiresSector(typeName)) {
+          newData.id_sector = "";
+        }
+      }
+
+      return newData;
+    });
   };
 
   const handleSubmitCreate = async (e: React.FormEvent) => {
@@ -203,6 +276,7 @@ const ProjectsListComponent = () => {
           id_proyecto: "",
           nombre: "",
           id_tipo_proyecto: "",
+          id_sector: "", // Add this missing property
         });
         fetchProjects();
         // Actualizar categorías
@@ -229,15 +303,9 @@ const ProjectsListComponent = () => {
       id_proyecto: project.id_proyecto,
       nombre: project.nombre,
       id_tipo_proyecto: project.id_tipo_proyecto,
+      id_sector: project.id_sector || "",
     });
     setShowEditModal(true);
-  };
-
-  const handleEditInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setEditFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitEdit = async (e: React.FormEvent) => {
@@ -324,6 +392,7 @@ const ProjectsListComponent = () => {
       id_proyecto: "",
       nombre: "",
       id_tipo_proyecto: "",
+      id_sector: "",
     });
   };
 
@@ -334,6 +403,7 @@ const ProjectsListComponent = () => {
       id_proyecto: "",
       nombre: "",
       id_tipo_proyecto: "",
+      id_sector: "",
     });
   };
 
@@ -346,9 +416,9 @@ const ProjectsListComponent = () => {
   const getCategoryColor = (type: string) => {
     const colors: Record<string, string> = {
       Comunales: "bg-green-100 text-green-800",
-      Infantiles: "bg-blue-100 text-yellow-800",
-      Juveniles: "bg-yellow-100 text-sky-800",
-      Sectoirales: "bg-red-100 text-orange-800",
+      Infantiles: "bg-yellow-100 text-yellow-800",
+      Juveniles: "bg-sky-100 text-sky-800",
+      Sectoriales: "bg-orange-100 text-orange-800",
     };
     return colors[type] || "bg-gray-100 text-gray-800";
   };
@@ -372,6 +442,7 @@ const ProjectsListComponent = () => {
                 <th className="px-6 py-3">ID</th>
                 <th className="px-6 py-3">Nombre del Proyecto</th>
                 <th className="px-6 py-3">Tipo</th>
+                <th className="px-6 py-3">Sector</th>
                 <th className="px-6 py-3">Votos</th>
                 <th className="px-6 py-3 text-right">Acciones</th>
               </tr>
@@ -380,7 +451,7 @@ const ProjectsListComponent = () => {
               {filteredProjects.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     {currentFilter === "todos"
@@ -406,6 +477,15 @@ const ProjectsListComponent = () => {
                       >
                         {project.tipo_proyecto_nombre}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {project.sector_nombre ? (
+                        <span className="text-gray-700">
+                          {project.sector_nombre}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">Sin sector</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 font-medium">
                       {project.votos_count.toLocaleString()}
@@ -504,10 +584,43 @@ const ProjectsListComponent = () => {
                   </select>
                 </div>
 
+                {/* Selector de sector - solo para tipos específicos */}
+                {requiresSector(
+                  getProjectTypeName(createFormData.id_tipo_proyecto)
+                ) && (
+                  <div className="flex flex-col">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Sector *
+                    </label>
+                    <select
+                      name="id_sector"
+                      value={createFormData.id_sector}
+                      onChange={handleCreateInputChange}
+                      required
+                      className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
+                    >
+                      <option value="">Seleccionar sector</option>
+                      {sectors.map((sector) => (
+                        <option key={sector.id} value={sector.id}>
+                          {sector.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
                     <strong>Año:</strong> {selectedYear}
                   </p>
+                  {requiresSector(
+                    getProjectTypeName(createFormData.id_tipo_proyecto)
+                  ) && (
+                    <p className="text-sm text-blue-800 mt-1">
+                      <strong>Nota:</strong> Este tipo de proyecto requiere
+                      seleccionar un sector.
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">
@@ -600,6 +713,31 @@ const ProjectsListComponent = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Selector de sector - solo para tipos específicos */}
+                {requiresSector(
+                  getProjectTypeName(editFormData.id_tipo_proyecto)
+                ) && (
+                  <div className="flex flex-col">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Sector *
+                    </label>
+                    <select
+                      name="id_sector"
+                      value={editFormData.id_sector}
+                      onChange={handleEditInputChange}
+                      required
+                      className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
+                    >
+                      <option value="">Seleccionar sector</option>
+                      {sectors.map((sector) => (
+                        <option key={sector.id} value={sector.id}>
+                          {sector.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="mt-6 flex justify-end gap-3">
                   <button

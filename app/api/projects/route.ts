@@ -6,6 +6,7 @@ interface CreateProjectRequest {
   id_proyecto: string;
   nombre: string;
   id_tipo_proyecto: string;
+  id_sector?: string;
   periodo: number;
 }
 
@@ -14,6 +15,7 @@ interface UpdateProjectRequest {
   id_proyecto: string;
   nombre: string;
   id_tipo_proyecto: string;
+  id_sector?: string;
 }
 
 interface ProjectFromDB {
@@ -22,6 +24,8 @@ interface ProjectFromDB {
   nombre: string;
   id_tipo_proyecto: string;
   tipo_proyecto_nombre: string;
+  id_sector?: string;
+  sector_nombre?: string;
   periodo: number;
   votos_count: number;
 }
@@ -46,13 +50,16 @@ export async function GET(request: NextRequest) {
         p.nombre,
         p.id_tipo_proyecto,
         tp.nombre as tipo_proyecto_nombre,
+        p.id_sector,
+        s.nombre as sector_nombre,
         p.periodo,
         COUNT(v.id) as votos_count
       FROM proyectos p
       LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
+      LEFT JOIN sectores s ON p.id_sector = s.id
       LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = p.periodo
       WHERE p.periodo = @param1
-      GROUP BY p.id, p.id_proyecto, p.nombre, p.id_tipo_proyecto, tp.nombre, p.periodo
+      GROUP BY p.id, p.id_proyecto, p.nombre, p.id_tipo_proyecto, tp.nombre, p.id_sector, s.nombre, p.periodo
       ORDER BY p.id_proyecto
     `;
 
@@ -77,7 +84,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body: CreateProjectRequest = await request.json();
-    const { id_proyecto, nombre, id_tipo_proyecto, periodo } = body;
+    const { id_proyecto, nombre, id_tipo_proyecto, id_sector, periodo } = body;
 
     if (!id_proyecto || !nombre || !id_tipo_proyecto || !periodo) {
       return NextResponse.json(
@@ -91,20 +98,53 @@ export async function POST(request: NextRequest) {
 
     // Validar que el tipo de proyecto exista
     const typeQuery = `
-      SELECT COUNT(*) as count 
+      SELECT nombre
       FROM tipo_proyectos 
       WHERE id = @param1
     `;
 
-    const typeExists = await executeQuery<{ count: number }>(typeQuery, [
+    const typeResult = await executeQuery<{ nombre: string }>(typeQuery, [
       { name: "param1", type: TYPES.UniqueIdentifier, value: id_tipo_proyecto },
     ]);
 
-    if (typeExists[0]?.count === 0) {
+    if (typeResult.length === 0) {
       return NextResponse.json(
         { error: "Tipo de proyecto no válido" },
         { status: 400 }
       );
+    }
+
+    // Verificar si el tipo de proyecto requiere sector
+    const tipoNombre = typeResult[0].nombre;
+    const requiresSector = ["Juveniles", "Infantiles", "Sectoriales"].includes(
+      tipoNombre
+    );
+
+    if (requiresSector && !id_sector) {
+      return NextResponse.json(
+        { error: "Este tipo de proyecto requiere seleccionar un sector" },
+        { status: 400 }
+      );
+    }
+
+    // Si se proporciona sector, validar que exista
+    if (id_sector) {
+      const sectorQuery = `
+        SELECT COUNT(*) as count 
+        FROM sectores 
+        WHERE id = @param1
+      `;
+
+      const sectorExists = await executeQuery<{ count: number }>(sectorQuery, [
+        { name: "param1", type: TYPES.UniqueIdentifier, value: id_sector },
+      ]);
+
+      if (sectorExists[0]?.count === 0) {
+        return NextResponse.json(
+          { error: "Sector no válido" },
+          { status: 400 }
+        );
+      }
     }
 
     // Verificar si el ID_PROYECTO ya existe en el periodo
@@ -130,15 +170,20 @@ export async function POST(request: NextRequest) {
 
     // Insertar proyecto
     const insertQuery = `
-      INSERT INTO proyectos (id_proyecto, nombre, id_tipo_proyecto, periodo)
-      VALUES (@param1, @param2, @param3, @param4)
+      INSERT INTO proyectos (id_proyecto, nombre, id_tipo_proyecto, id_sector, periodo)
+      VALUES (@param1, @param2, @param3, @param4, @param5)
     `;
 
     const params = [
       { name: "param1", type: TYPES.VarChar, value: id_proyecto },
       { name: "param2", type: TYPES.VarChar, value: nombre },
       { name: "param3", type: TYPES.UniqueIdentifier, value: id_tipo_proyecto },
-      { name: "param4", type: TYPES.Int, value: periodo },
+      {
+        name: "param4",
+        type: TYPES.UniqueIdentifier,
+        value: id_sector || null,
+      },
+      { name: "param5", type: TYPES.Int, value: periodo },
     ];
 
     await executeQuery(insertQuery, params);
@@ -160,7 +205,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body: UpdateProjectRequest = await request.json();
-    const { db_id, id_proyecto, nombre, id_tipo_proyecto } = body;
+    const { db_id, id_proyecto, nombre, id_tipo_proyecto, id_sector } = body;
 
     if (!db_id || !id_proyecto || !nombre || !id_tipo_proyecto) {
       return NextResponse.json(
@@ -171,20 +216,53 @@ export async function PUT(request: NextRequest) {
 
     // Validar que el tipo de proyecto exista
     const typeQuery = `
-      SELECT COUNT(*) as count 
+      SELECT nombre
       FROM tipo_proyectos 
       WHERE id = @param1
     `;
 
-    const typeExists = await executeQuery<{ count: number }>(typeQuery, [
+    const typeResult = await executeQuery<{ nombre: string }>(typeQuery, [
       { name: "param1", type: TYPES.UniqueIdentifier, value: id_tipo_proyecto },
     ]);
 
-    if (typeExists[0]?.count === 0) {
+    if (typeResult.length === 0) {
       return NextResponse.json(
         { error: "Tipo de proyecto no válido" },
         { status: 400 }
       );
+    }
+
+    // Verificar si el tipo de proyecto requiere sector
+    const tipoNombre = typeResult[0].nombre;
+    const requiresSector = ["Juveniles", "Infantiles", "Sectoriales"].includes(
+      tipoNombre
+    );
+
+    if (requiresSector && !id_sector) {
+      return NextResponse.json(
+        { error: "Este tipo de proyecto requiere seleccionar un sector" },
+        { status: 400 }
+      );
+    }
+
+    // Si se proporciona sector, validar que exista
+    if (id_sector) {
+      const sectorQuery = `
+        SELECT COUNT(*) as count 
+        FROM sectores 
+        WHERE id = @param1
+      `;
+
+      const sectorExists = await executeQuery<{ count: number }>(sectorQuery, [
+        { name: "param1", type: TYPES.UniqueIdentifier, value: id_sector },
+      ]);
+
+      if (sectorExists[0]?.count === 0) {
+        return NextResponse.json(
+          { error: "Sector no válido" },
+          { status: 400 }
+        );
+      }
     }
 
     // Obtener el proyecto actual
@@ -230,15 +308,20 @@ export async function PUT(request: NextRequest) {
     // Actualizar proyecto
     const updateQuery = `
       UPDATE proyectos 
-      SET id_proyecto = @param1, nombre = @param2, id_tipo_proyecto = @param3
-      WHERE id = @param4
+      SET id_proyecto = @param1, nombre = @param2, id_tipo_proyecto = @param3, id_sector = @param4
+      WHERE id = @param5
     `;
 
     const params = [
       { name: "param1", type: TYPES.VarChar, value: id_proyecto },
       { name: "param2", type: TYPES.VarChar, value: nombre },
       { name: "param3", type: TYPES.UniqueIdentifier, value: id_tipo_proyecto },
-      { name: "param4", type: TYPES.UniqueIdentifier, value: db_id },
+      {
+        name: "param4",
+        type: TYPES.UniqueIdentifier,
+        value: id_sector || null,
+      },
+      { name: "param5", type: TYPES.UniqueIdentifier, value: db_id },
     ];
 
     await executeQuery(updateQuery, params);

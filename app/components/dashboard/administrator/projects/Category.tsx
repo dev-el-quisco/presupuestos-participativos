@@ -42,12 +42,12 @@ const Category = () => {
       count: 0,
     },
     {
-      id: "deportivos",
+      id: "juveniles",
       name: "Juveniles",
       count: 0,
     },
     {
-      id: "culturales",
+      id: "sectoriales",
       name: "Sectoriales",
       count: 0,
     },
