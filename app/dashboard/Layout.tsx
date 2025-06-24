@@ -14,9 +14,9 @@ export default function Layout({ children }: LayoutProps) {
     <ProtectedRoute>
       <div className="min-h-dvh flex flex-col">
         <DashboardYearDetector />
-        <div className="h-full w-full fixed inset-0 -z-10 bg-[#2c3e4a]">
+        <div className="h-dvh w-full fixed inset-0 -z-10 bg-[#2c3e4a]">
           <div
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 w-dvh h-full"
             style={{
               backgroundImage: `repeating-linear-gradient(45deg, #4f4f4f 0, #4f4f4f 2px, transparent 2px, transparent 10px)`,
               backgroundSize: "14px 14px",
