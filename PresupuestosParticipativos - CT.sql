@@ -4,9 +4,17 @@ DROP TABLE permisos;
 DROP TABLE votantes;
 DROP TABLE proyectos;
 DROP TABLE tipo_proyectos;
+DROP TABLE sectores;
 DROP TABLE mesas;
 DROP TABLE usuarios;
 DROP TABLE sedes;
+
+delete from votos;
+delete from permisos;
+delete from votantes;
+delete from proyectos;
+delete from mesas;
+delete from sedes;
 
 -- Tabla de Sedes
 CREATE TABLE sedes (
@@ -49,6 +57,12 @@ CREATE TABLE permisos (
     CONSTRAINT FK_permisos_usuarios FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
+-- Tabla de Sectores
+CREATE TABLE sectores (
+    id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    nombre VARCHAR(255) NOT NULL
+);
+
 -- Tabla de Tipos de Proyectos
 CREATE TABLE tipo_proyectos (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
@@ -59,8 +73,11 @@ CREATE TABLE tipo_proyectos (
 CREATE TABLE proyectos (
     id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
 	id_proyecto VARCHAR(50) NOT NULL,
+	nombre VARCHAR(255) NOT NULL,
+	id_sector UNIQUEIDENTIFIER NULL,
     id_tipo_proyecto UNIQUEIDENTIFIER NULL,
     periodo INT NOT NULL,
+	CONSTRAINT FK_proyectos_sector FOREIGN KEY (id_sector) REFERENCES sectores(id) ON DELETE SET NULL,
     CONSTRAINT FK_proyectos_tipo_proyecto FOREIGN KEY (id_tipo_proyecto) REFERENCES tipo_proyectos(id) ON DELETE SET NULL
 );
 
@@ -201,7 +218,9 @@ CREATE INDEX idx_permisos_usuario_periodo ON permisos (id_usuario, periodo);
 
 -- Índices para la tabla 'proyectos'
 CREATE INDEX idx_proyectos_periodo ON proyectos (periodo);
+CREATE INDEX idx_proyectos_sector ON proyectos (id_sector);
 CREATE INDEX idx_proyectos_tipo ON proyectos (id_tipo_proyecto);
+CREATE INDEX idx_proyectos_sector_tipo ON proyectos (id_sector, id_tipo_proyecto);
 
 -- Índices para la tabla 'votos'
 CREATE INDEX idx_votos_periodo ON votos (periodo);

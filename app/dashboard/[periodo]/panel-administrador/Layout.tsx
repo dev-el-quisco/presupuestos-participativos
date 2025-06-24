@@ -14,6 +14,7 @@ export default function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
     { name: "Sedes", path: "/sedes" },
     { name: "Asignaciones", path: "/asignaciones" },
     { name: "Categorías", path: "/categorias" },
+    { name: "Sectores", path: "/sectores" },
   ];
 
   return (

@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import {
   IconMoodSmile,
   IconBallAmericanFootball,
-  IconBook,
-  IconBuildingCommunity,
+  IconMap,
+  IconX,
+  IconLocationPin,
 } from "@tabler/icons-react";
 import { useYear } from "@/app/context/YearContext";
 
@@ -22,10 +23,10 @@ const Category = () => {
 
   // Iconos para cada categoría
   const categoryIcons: Record<string, React.ReactElement> = {
-    Comunales: <IconBuildingCommunity />,
+    Comunales: <IconMap />,
     Infantiles: <IconMoodSmile />,
-    Deportivos: <IconBallAmericanFootball />,
-    Culturales: <IconBook />,
+    Juveniles: <IconBallAmericanFootball />,
+    Sectoriales: <IconLocationPin />,
   };
 
   // Datos estáticos como fallback
@@ -42,12 +43,12 @@ const Category = () => {
     },
     {
       id: "deportivos",
-      name: "Deportivos",
+      name: "Juveniles",
       count: 0,
     },
     {
       id: "culturales",
-      name: "Culturales",
+      name: "Sectoriales",
       count: 0,
     },
   ];
@@ -135,7 +136,7 @@ const Category = () => {
           className="bg-white rounded-lg shadow-sm p-4 border border-gray-200 flex flex-col md:flex-row items-center justify-center md:justify-start"
         >
           <div className="md:mr-4 text-gray-600">
-            {categoryIcons[category.name] || <IconBuildingCommunity />}
+            {categoryIcons[category.name] || <IconX />}
           </div>
           <div>
             <h3 className="text-lg font-medium text-gray-900">
