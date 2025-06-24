@@ -306,6 +306,22 @@ const PollingPlaces = () => {
   const toggleMenu = (e: React.MouseEvent, sedeId: string) => {
     e.stopPropagation();
     setVisibleMenu(visibleMenu === sedeId ? null : sedeId);
+
+    if (visibleMenu === sedeId) {
+      const menuElement = menuRefs.current[sedeId];
+      if (menuElement) {
+        const rect = menuElement.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+
+        // Check if the menu extends beyond the viewport
+        if (rect.bottom > windowHeight) {
+          // Adjust the menu to be aligned at the top instead of the bottom
+          menuElement.style.top = `${
+            rect.top - (rect.bottom - windowHeight)
+          }px`;
+        }
+      }
+    }
   };
 
   // Handle sede operations (only edit and delete, create moved to page.tsx)

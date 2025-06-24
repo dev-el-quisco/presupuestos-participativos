@@ -18,7 +18,7 @@ export default function AdminPanelLayout({ children }: AdminPanelLayoutProps) {
 
   return (
     <Layout>
-      <div className="p-6 w-full flex flex-col justify-start ">
+      <div className="p-6 w-full flex flex-col justify-start overflow-y-auto">
         <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between space-x-1 pb-4">
           <div>
             <h1 className="text-2xl">
