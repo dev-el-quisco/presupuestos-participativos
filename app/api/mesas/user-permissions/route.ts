@@ -11,6 +11,7 @@ interface MesaWithPermissions {
   periodo: number;
   sede_nombre: string;
   votos_count: number;
+  votantes_count: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -50,10 +51,12 @@ export async function GET(request: NextRequest) {
         m.sede_id,
         m.periodo,
         s.nombre as sede_nombre,
-        COUNT(v.id) as votos_count
+        COUNT(DISTINCT v.id) as votos_count,
+        COUNT(DISTINCT vt.id) as votantes_count
       FROM mesas m
       INNER JOIN sedes s ON m.sede_id = s.id
       LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = m.periodo
+      LEFT JOIN votantes vt ON m.id = vt.id_mesa AND vt.periodo = m.periodo
     `;
 
     const params: any[] = [];

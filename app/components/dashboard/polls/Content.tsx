@@ -21,11 +21,13 @@ interface Mesa {
   periodo: number;
   sede_nombre: string;
   votos_count: number;
+  votantes_count: number;
 }
 
 interface Proyecto {
   id_proyecto: string;
   nombre: string;
+  tipo_proyecto_nombre?: string;
 }
 
 interface VotanteForm {
@@ -40,16 +42,75 @@ interface VotoForm {
   [key: string]: number;
 }
 
+// Función para validar si se puede cerrar la mesa
+const canCloseMesa = (mesa: Mesa) => {
+  return mesa.votos_count === mesa.votantes_count;
+};
+
+// Función para obtener colores por categoría
+const getCategoryColors = (categoria: string) => {
+  const colors = {
+    Comunales: {
+      bg: "bg-green-50",
+      border: "border-green-200",
+      icon: "bg-green-100 text-green-800",
+      hover: "hover:bg-green-100",
+    },
+    Infantiles: {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      icon: "bg-blue-100 text-blue-800",
+      hover: "hover:bg-blue-100",
+    },
+    Deportivos: {
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      icon: "bg-orange-100 text-orange-800",
+      hover: "hover:bg-orange-100",
+    },
+    Culturales: {
+      bg: "bg-red-50",
+      border: "border-red-200",
+      icon: "bg-red-100 text-red-800",
+      hover: "hover:bg-red-100",
+    },
+  };
+
+  return (
+    colors[categoria as keyof typeof colors] || {
+      bg: "bg-gray-50",
+      border: "border-gray-200",
+      icon: "bg-gray-100 text-gray-800",
+      hover: "hover:bg-gray-100",
+    }
+  );
+};
+
 const Content = () => {
   const { user } = useAuth();
   const { selectedYear } = useYear();
   const [showVotosModal, setShowVotosModal] = useState<boolean>(false);
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Función para ordenar proyectos por categoría y nombre
+  const getOrderedProjects = () => {
+    return [...proyectos].sort((a, b) => {
+      // Primero ordenar por categoría
+      const categoriaA = a.tipo_proyecto_nombre || "";
+      const categoriaB = b.tipo_proyecto_nombre || "";
+
+      if (categoriaA !== categoriaB) {
+        return categoriaA.localeCompare(categoriaB);
+      }
+
+      // Si la categoría es la misma, ordenar por nombre
+      return a.nombre.localeCompare(b.nombre);
+    });
+  };
 
   // Formularios
   const [votanteForm, setVotanteForm] = useState<VotanteForm>({
@@ -78,7 +139,17 @@ const Content = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setMesas(data.data);
+        // Ordenar mesas por sede y luego por nombre de mesa
+        const mesasOrdenadas = data.data.sort((a: Mesa, b: Mesa) => {
+          // Primero ordenar por sede
+          const sedeComparison = a.sede_nombre.localeCompare(b.sede_nombre);
+          if (sedeComparison !== 0) {
+            return sedeComparison;
+          }
+          // Si la sede es la misma, ordenar por nombre de mesa
+          return a.nombre.localeCompare(b.nombre);
+        });
+        setMesas(mesasOrdenadas);
       } else {
         toast.error("Error al cargar las mesas");
       }
@@ -123,12 +194,16 @@ const Content = () => {
     };
   }, [showVotosModal, showVotanteModal]);
 
-  const toggleDropdown = (index: number) => {
-    setActiveDropdown(activeDropdown === index ? null : index);
-  };
-
   // Cambiar estado de mesa (solo Encargado de Local y Administrador)
   const handleCambiarEstado = async (mesa: Mesa): Promise<void> => {
+    // Si se intenta cerrar la mesa, validar que votos coincidan con votantes
+    if (!mesa.estado_mesa && !canCloseMesa(mesa)) {
+      toast.error(
+        `No se puede cerrar la mesa. Votos registrados: ${mesa.votos_count}, Votantes registrados: ${mesa.votantes_count}`
+      );
+      return;
+    }
+
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(`/api/mesas?id=${mesa.id}`, {
@@ -140,6 +215,8 @@ const Content = () => {
         body: JSON.stringify({
           nombre: mesa.nombre,
           estado_mesa: !mesa.estado_mesa,
+          sede_id: mesa.sede_id,
+          periodo: mesa.periodo,
         }),
       });
 
@@ -150,7 +227,7 @@ const Content = () => {
           )
         );
         toast.success(
-          `Mesa ${!mesa.estado_mesa ? "abierta" : "cerrada"} exitosamente`
+          `Mesa ${!mesa.estado_mesa ? "cerrada" : "abierta"} exitosamente`
         );
       } else {
         toast.error("Error al cambiar el estado de la mesa");
@@ -159,48 +236,54 @@ const Content = () => {
       console.error("Error:", error);
       toast.error("Error al cambiar el estado de la mesa");
     }
-    setActiveDropdown(null);
   };
 
   // Agregar estado para votos existentes
   const [votosExistentes, setVotosExistentes] = useState<VotoForm>({});
-  
+
   // Función para cargar votos existentes de una mesa
   const fetchVotosExistentes = async (mesaId: string) => {
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/votos?mesa_id=${mesaId}&periodo=${selectedYear}`, // Cambiar id_mesa por mesa_id
+        `/api/votos?mesa_id=${mesaId}&periodo=${selectedYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-  
+
       if (response.ok) {
         const result = await response.json();
         const votosCount: VotoForm = {};
-        
+
         // Inicializar contadores
         proyectos.forEach((proyecto) => {
           votosCount[proyecto.id_proyecto] = 0;
         });
         votosCount["Blanco"] = 0;
         votosCount["Nulo"] = 0;
-  
+
         // Contar votos existentes usando la estructura correcta
-        result.data.forEach((voto: any) => { // Cambiar data.votos por result.data
-          if (voto.tipo_voto === "Normal" && voto.id_proyecto) {
-            votosCount[voto.id_proyecto] = voto.cantidad; // Usar cantidad directamente
+        result.data.forEach((voto: any) => {
+          if (voto.tipo_voto === "Normal" && voto.proyecto_nombre) {
+            // Buscar el proyecto por nombre para obtener su id_proyecto
+            const proyecto = proyectos.find(
+              (p) => p.nombre === voto.proyecto_nombre
+            );
+            if (proyecto) {
+              votosCount[proyecto.id_proyecto] = voto.cantidad;
+            }
           } else if (voto.tipo_voto === "Blanco") {
             votosCount["Blanco"] = voto.cantidad;
           } else if (voto.tipo_voto === "Nulo") {
             votosCount["Nulo"] = voto.cantidad;
           }
         });
-  
+
         setVotosExistentes(votosCount);
+        console.log("Votos existentes cargados:", votosCount); // Para debug
       } else {
         console.error("Error al cargar votos:", response.status);
       }
@@ -208,12 +291,12 @@ const Content = () => {
       console.error("Error al cargar votos existentes:", error);
     }
   };
-  
+
   const handleRegistrarVotos = async (mesa: Mesa): Promise<void> => {
     setSelectedMesa(mesa);
     // Cargar votos existentes primero
     await fetchVotosExistentes(mesa.id);
-    
+
     // Inicializar formulario de votos nuevos en 0
     const initialForm: VotoForm = {};
     proyectos.forEach((proyecto) => {
@@ -223,7 +306,6 @@ const Content = () => {
     initialForm["Nulo"] = 0;
     setVotoForm(initialForm);
     setShowVotosModal(true);
-    setActiveDropdown(null);
   };
 
   const handleRegistrarVotante = (mesa: Mesa): void => {
@@ -236,7 +318,6 @@ const Content = () => {
       extranjero: false,
     });
     setShowVotanteModal(true);
-    setActiveDropdown(null);
   };
 
   // Guardar votante
@@ -356,152 +437,196 @@ const Content = () => {
       <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
         {/* Tabla responsiva */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-100">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Mesa
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Sede
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Votos
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:hidden">
-                  Acciones
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">
+                  Votantes
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-slate-200">
               {mesas.map((mesa, index) => (
-                <tr key={mesa.id}>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={mesa.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                     {mesa.nombre}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-600">
                     {mesa.sede_nombre}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap text-center">
                     <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         mesa.estado_mesa
-                          ? "bg-[#dcfce7] text-[#166534]"
-                          : "bg-[#fee2e2] text-[#991b1b]"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       }`}
                     >
                       {mesa.estado_mesa ? "Abierta" : "Cerrada"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-slate-600">
                     {mesa.votos_count}
                   </td>
-
-                  {/* Acciones para dispositivos móviles */}
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium md:hidden relative">
-                    <button
-                      onClick={() => toggleDropdown(index)}
-                      className="p-2 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                      <IconDotsVertical size={20} />
-                    </button>
-
-                    {activeDropdown === index && (
-                      <div className="absolute right-4 z-10 mt-1 w-48 rounded-md bg-white shadow-lg border border-gray-200">
-                        <div className="py-1">
-                          {canRegisterVoters && (
-                            <button
-                              onClick={() => handleRegistrarVotante(mesa)}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                            >
-                              <IconUserPlus size={16} className="mr-2" />
-                              Registrar Votante
-                            </button>
-                          )}
-                          {canRegisterVotes && (
-                            <button
-                              onClick={() => handleRegistrarVotos(mesa)}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                            >
-                              <IconClipboardText size={16} className="mr-2" />
-                              Registrar Votos
-                            </button>
-                          )}
-                          {canChangeState && (
-                            <button
-                              onClick={() => handleCambiarEstado(mesa)}
-                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
-                                mesa.estado_mesa
-                                  ? "text-red-600"
-                                  : "text-green-600"
-                              }`}
-                            >
-                              {mesa.estado_mesa ? (
-                                <IconLock size={16} className="mr-2" />
-                              ) : (
-                                <IconLockOpen2 size={16} className="mr-2" />
-                              )}
-                              {mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                  <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-slate-600">
+                    {mesa.votantes_count}
                   </td>
-
-                  {/* Acciones para tablet y desktop */}
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium hidden md:table-cell">
-                    <div className="flex space-x-1">
-                      {canPerformAction(mesa, "voter") && (
-                        <button
-                          onClick={() => handleRegistrarVotante(mesa)}
-                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 p-2 rounded-md transition-colors flex items-center"
-                          title="Registrar Votante"
-                        >
-                          <IconUserPlus size={18} />
-                          <span className="ml-1 hidden lg:inline">
-                            Registrar Votante
-                          </span>
-                        </button>
-                      )}
-                      {canPerformAction(mesa, "vote") && (
-                        <button
-                          onClick={() => handleRegistrarVotos(mesa)}
-                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-md transition-colors flex items-center"
-                          title="Registrar Votos"
-                        >
-                          <IconClipboardText size={18} />
-                          <span className="ml-1 hidden lg:inline">
-                            Registrar Votos
-                          </span>
-                        </button>
-                      )}
-                      {canChangeState && (
+                  <td className="px-2 py-4 whitespace-nowrap text-center">
+                    {/* Botones para desktop */}
+                    <div className="hidden lg:flex items-center justify-center space-x-2">
+                      <button
+                        onClick={() => handleRegistrarVotante(mesa)}
+                        disabled={!canPerformAction(mesa, "voter")}
+                        className="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votante"
+                      >
+                        <IconUserPlus size={14} className="mr-1" />
+                        Votante
+                      </button>
+                      <button
+                        onClick={() => handleRegistrarVotos(mesa)}
+                        disabled={!canPerformAction(mesa, "vote")}
+                        className="flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votos"
+                      >
+                        <IconClipboardText size={14} className="mr-1" />
+                        Votos
+                      </button>
+                      {(user?.rol === "Encargado de Local" ||
+                        user?.rol === "Administrador") && (
                         <button
                           onClick={() => handleCambiarEstado(mesa)}
-                          className={`${
-                            mesa.estado_mesa
-                              ? "text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100"
-                              : "text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100"
-                          } p-2 rounded-md transition-colors flex items-center`}
+                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
+                          className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : mesa.estado_mesa
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          }`}
                           title={
-                            mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
+                              : mesa.estado_mesa
+                              ? "Cerrar Mesa"
+                              : "Abrir Mesa"
                           }
                         >
                           {mesa.estado_mesa ? (
-                            <IconLock size={18} />
+                            <IconLock size={14} className="mr-1" />
                           ) : (
-                            <IconLockOpen2 size={18} />
+                            <IconLockOpen2 size={14} className="mr-1" />
                           )}
-                          <span className="ml-1 hidden lg:inline">
-                            {mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"}
-                          </span>
+                          {mesa.estado_mesa ? "Cerrar" : "Abrir"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Botones para tablet */}
+                    <div className="hidden md:flex lg:hidden items-center justify-center space-x-1">
+                      <button
+                        onClick={() => handleRegistrarVotante(mesa)}
+                        disabled={!canPerformAction(mesa, "voter")}
+                        className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votante"
+                      >
+                        <IconUserPlus size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleRegistrarVotos(mesa)}
+                        disabled={!canPerformAction(mesa, "vote")}
+                        className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-md hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votos"
+                      >
+                        <IconClipboardText size={16} />
+                      </button>
+                      {(user?.rol === "Encargado de Local" ||
+                        user?.rol === "Administrador") && (
+                        <button
+                          onClick={() => handleCambiarEstado(mesa)}
+                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
+                          className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : mesa.estado_mesa
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          }`}
+                          title={
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
+                              : mesa.estado_mesa
+                              ? "Cerrar Mesa"
+                              : "Abrir Mesa"
+                          }
+                        >
+                          {mesa.estado_mesa ? (
+                            <IconLock size={16} />
+                          ) : (
+                            <IconLockOpen2 size={16} />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Botones para móvil - layout horizontal */}
+                    <div className="flex md:hidden items-center justify-center space-x-1">
+                      <button
+                        onClick={() => handleRegistrarVotante(mesa)}
+                        disabled={!canPerformAction(mesa, "voter")}
+                        className="flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votante"
+                      >
+                        <IconUserPlus size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleRegistrarVotos(mesa)}
+                        disabled={!canPerformAction(mesa, "vote")}
+                        className="flex items-center justify-center w-7 h-7 bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                        title="Registrar Votos"
+                      >
+                        <IconClipboardText size={14} />
+                      </button>
+                      {(user?.rol === "Encargado de Local" ||
+                        user?.rol === "Administrador") && (
+                        <button
+                          onClick={() => handleCambiarEstado(mesa)}
+                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
+                          className={`flex items-center justify-center w-7 h-7 rounded transition-colors ${
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : mesa.estado_mesa
+                              ? "bg-red-100 text-red-700 hover:bg-red-200"
+                              : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                          }`}
+                          title={
+                            mesa.estado_mesa && !canCloseMesa(mesa)
+                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
+                              : mesa.estado_mesa
+                              ? "Cerrar Mesa"
+                              : "Abrir Mesa"
+                          }
+                        >
+                          {mesa.estado_mesa ? (
+                            <IconLock size={14} />
+                          ) : (
+                            <IconLockOpen2 size={14} />
+                          )}
                         </button>
                       )}
                     </div>
@@ -522,10 +647,10 @@ const Content = () => {
       {/* Modal de Votos */}
       {showVotosModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
+          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-2 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl p-3 sm:p-6 w-full max-w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-y-auto shadow-xl border border-slate-200">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-slate-800">
+                <h3 className="text-base sm:text-lg font-medium text-slate-800">
                   Votos - Mesa {selectedMesa?.nombre}
                 </h3>
                 <button
@@ -535,107 +660,570 @@ const Content = () => {
                   ×
                 </button>
               </div>
-              <p className="mb-4 text-sm text-slate-600">
-                Ingrese la cantidad de votos para cada opción:
-              </p>
 
-              {/* Modal de Votos - Modificar la sección de proyectos */}
-              <div className="space-y-3">
-                {proyectos.map((proyecto) => (
-                  <div key={proyecto.id_proyecto} className="flex flex-col">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      {proyecto.nombre}
-                      <span className="text-sm text-gray-500 ml-2">
-                        (Actual: {votosExistentes[proyecto.id_proyecto] || 0})
-                      </span>
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 min-w-[60px]">
-                        Total: {(votosExistentes[proyecto.id_proyecto] || 0) + (votoForm[proyecto.id_proyecto] || 0)}
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="Agregar votos"
-                        value={votoForm[proyecto.id_proyecto] || 0}
-                        onChange={(e) =>
-                          setVotoForm((prev) => ({
-                            ...prev,
-                            [proyecto.id_proyecto]: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                        className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
-                      />
+              {/* Header de la tabla - Responsive */}
+              <div className="bg-slate-100 rounded-lg p-2 sm:p-3 mb-2">
+                <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center text-xs font-medium text-slate-600 uppercase">
+                  <div className="col-span-1">ID</div>
+                  <div className="col-span-4">Proyecto</div>
+                  <div className="col-span-1 text-center">Actual</div>
+                  <div className="col-span-1 text-center">Total</div>
+                  <div className="col-span-3 text-center">Acciones</div>
+                  <div className="col-span-2 text-center">Total Manual</div>
+                </div>
+                <div className="sm:hidden text-xs font-medium text-slate-600 uppercase text-center">
+                  Proyectos por Categoría
+                </div>
+              </div>
+
+              {/* Lista de proyectos - Responsive */}
+              <div className="space-y-1 max-h-[50vh] sm:max-h-96 overflow-y-auto">
+                {getOrderedProjects().map((proyecto, index) => {
+                  const votosActuales =
+                    votosExistentes[proyecto.id_proyecto] || 0;
+                  const votosNuevos = votoForm[proyecto.id_proyecto] || 0;
+                  const totalVotos = votosActuales + votosNuevos;
+                  const categoryColors = getCategoryColors(
+                    proyecto.tipo_proyecto_nombre || ""
+                  );
+
+                  return (
+                    <div
+                      key={proyecto.id_proyecto}
+                      className={`border ${categoryColors.border} rounded-lg p-2 sm:p-3 ${categoryColors.bg} ${categoryColors.hover} transition-colors`}
+                    >
+                      {/* Layout Desktop */}
+                      <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
+                        {/* ID Visual */}
+                        <div className="col-span-1">
+                          <span
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${categoryColors.icon} text-xs font-bold`}
+                          >
+                            {proyecto.id_proyecto}
+                          </span>
+                        </div>
+
+                        {/* Nombre del proyecto */}
+                        <div className="col-span-4">
+                          <div>
+                            <span
+                              className="text-sm font-medium text-slate-800 block"
+                              title={proyecto.nombre}
+                            >
+                              {proyecto.nombre.length > 40
+                                ? `${proyecto.nombre.substring(0, 40)}...`
+                                : proyecto.nombre}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {proyecto.tipo_proyecto_nombre}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Votos actuales */}
+                        <div className="col-span-1 text-center">
+                          <span className="text-sm text-slate-600">
+                            {votosActuales}
+                          </span>
+                        </div>
+
+                        {/* Total calculado */}
+                        <div className="col-span-1 text-center">
+                          <span className="text-sm font-medium text-slate-800">
+                            {totalVotos}
+                          </span>
+                        </div>
+
+                        {/* Botones +/- */}
+                        <div className="col-span-3">
+                          <div className="flex items-center justify-center space-x-1">
+                            <button
+                              onClick={() => {
+                                if (votosNuevos > 0) {
+                                  setVotoForm((prev) => ({
+                                    ...prev,
+                                    [proyecto.id_proyecto]: votosNuevos - 1,
+                                  }));
+                                }
+                              }}
+                              disabled={votosNuevos <= 0}
+                              className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center text-sm font-medium text-slate-700">
+                              {votosNuevos}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  [proyecto.id_proyecto]: votosNuevos + 1,
+                                }));
+                              }}
+                              className="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Input manual para total */}
+                        <div className="col-span-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={totalVotos}
+                            onChange={(e) => {
+                              const nuevoTotal = parseInt(e.target.value) || 0;
+                              const nuevosVotosCalculados = Math.max(
+                                0,
+                                nuevoTotal - votosActuales
+                              );
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                [proyecto.id_proyecto]: nuevosVotosCalculados,
+                              }));
+                            }}
+                            className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Total"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Layout Mobile */}
+                      <div className="sm:hidden space-y-2">
+                        {/* Header móvil */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${categoryColors.icon} text-xs font-bold`}
+                            >
+                              {proyecto.id_proyecto}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <span
+                                className="text-sm font-medium text-slate-800 block truncate"
+                                title={proyecto.nombre}
+                              >
+                                {proyecto.nombre.length > 25
+                                  ? `${proyecto.nombre.substring(0, 25)}...`
+                                  : proyecto.nombre}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {proyecto.tipo_proyecto_nombre}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Controles móvil */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-slate-600">
+                            Actual:{" "}
+                            <span className="font-medium">{votosActuales}</span>{" "}
+                            | Total:{" "}
+                            <span className="font-medium">{totalVotos}</span>
+                          </div>
+
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => {
+                                if (votosNuevos > 0) {
+                                  setVotoForm((prev) => ({
+                                    ...prev,
+                                    [proyecto.id_proyecto]: votosNuevos - 1,
+                                  }));
+                                }
+                              }}
+                              disabled={votosNuevos <= 0}
+                              className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
+                            >
+                              −
+                            </button>
+                            <span className="w-6 text-center text-xs font-medium text-slate-700">
+                              {votosNuevos}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  [proyecto.id_proyecto]: votosNuevos + 1,
+                                }));
+                              }}
+                              className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
+                            >
+                              +
+                            </button>
+                            <input
+                              type="number"
+                              min="0"
+                              value={totalVotos}
+                              onChange={(e) => {
+                                const nuevoTotal =
+                                  parseInt(e.target.value) || 0;
+                                const nuevosVotosCalculados = Math.max(
+                                  0,
+                                  nuevoTotal - votosActuales
+                                );
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  [proyecto.id_proyecto]: nuevosVotosCalculados,
+                                }));
+                              }}
+                              className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Votos especiales (Blanco y Nulo) - Responsive */}
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <h4 className="text-sm font-medium text-slate-700 mb-3">
+                  Votos Especiales
+                </h4>
+                <div className="space-y-2">
+                  {/* Votos en Blanco */}
+                  <div className="border border-slate-200 rounded-lg p-2 sm:p-3 bg-blue-50">
+                    <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
+                      <div className="col-span-1">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">
+                          B
+                        </span>
+                      </div>
+                      <div className="col-span-4">
+                        <span className="text-sm font-medium text-slate-800">
+                          Votos en Blanco
+                        </span>
+                      </div>
+                      <div className="col-span-1 text-center">
+                        <span className="text-sm text-slate-600">
+                          {votosExistentes["Blanco"] || 0}
+                        </span>
+                      </div>
+                      <div className="col-span-1 text-center">
+                        <span className="text-sm font-medium text-slate-800">
+                          {(votosExistentes["Blanco"] || 0) +
+                            (votoForm["Blanco"] || 0)}
+                        </span>
+                      </div>
+                      <div className="col-span-3">
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Blanco"] || 0;
+                              if (currentValue > 0) {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  Blanco: currentValue - 1,
+                                }));
+                              }
+                            }}
+                            disabled={(votoForm["Blanco"] || 0) <= 0}
+                            className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center text-sm font-medium text-slate-700">
+                            {votoForm["Blanco"] || 0}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Blanco"] || 0;
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Blanco: currentValue + 1,
+                              }));
+                            }}
+                            className="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={
+                            (votosExistentes["Blanco"] || 0) +
+                            (votoForm["Blanco"] || 0)
+                          }
+                          onChange={(e) => {
+                            const nuevoTotal = parseInt(e.target.value) || 0;
+                            const nuevosVotosCalculados = Math.max(
+                              0,
+                              nuevoTotal - (votosExistentes["Blanco"] || 0)
+                            );
+                            setVotoForm((prev) => ({
+                              ...prev,
+                              Blanco: nuevosVotosCalculados,
+                            }));
+                          }}
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Total"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Layout móvil para votos en blanco */}
+                    <div className="sm:hidden">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">
+                            B
+                          </span>
+                          <span className="text-sm font-medium text-slate-800">
+                            Votos en Blanco
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-slate-600">
+                          Actual:{" "}
+                          <span className="font-medium">
+                            {votosExistentes["Blanco"] || 0}
+                          </span>{" "}
+                          | Total:{" "}
+                          <span className="font-medium">
+                            {(votosExistentes["Blanco"] || 0) +
+                              (votoForm["Blanco"] || 0)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Blanco"] || 0;
+                              if (currentValue > 0) {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  Blanco: currentValue - 1,
+                                }));
+                              }
+                            }}
+                            disabled={(votoForm["Blanco"] || 0) <= 0}
+                            className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="w-6 text-center text-xs font-medium text-slate-700">
+                            {votoForm["Blanco"] || 0}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Blanco"] || 0;
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Blanco: currentValue + 1,
+                              }));
+                            }}
+                            className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
+                          >
+                            +
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              (votosExistentes["Blanco"] || 0) +
+                              (votoForm["Blanco"] || 0)
+                            }
+                            onChange={(e) => {
+                              const nuevoTotal = parseInt(e.target.value) || 0;
+                              const nuevosVotosCalculados = Math.max(
+                                0,
+                                nuevoTotal - (votosExistentes["Blanco"] || 0)
+                              );
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Blanco: nuevosVotosCalculados,
+                              }));
+                            }}
+                            className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
-                
-                {/* Votos en Blanco */}
-                <div className="flex flex-col">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Votos en Blanco
-                    <span className="text-sm text-gray-500 ml-2">
-                      (Actual: {votosExistentes["Blanco"] || 0})
-                    </span>
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 min-w-[60px]">
-                      Total: {(votosExistentes["Blanco"] || 0) + (votoForm["Blanco"] || 0)}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Agregar votos"
-                      value={votoForm["Blanco"] || 0}
-                      onChange={(e) =>
-                        setVotoForm((prev) => ({
-                          ...prev,
-                          Blanco: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
-                    />
-                  </div>
-                </div>
-                
-                {/* Votos Nulos */}
-                <div className="flex flex-col">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Votos Nulos
-                    <span className="text-sm text-gray-500 ml-2">
-                      (Actual: {votosExistentes["Nulo"] || 0})
-                    </span>
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 min-w-[60px]">
-                      Total: {(votosExistentes["Nulo"] || 0) + (votoForm["Nulo"] || 0)}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Agregar votos"
-                      value={votoForm["Nulo"] || 0}
-                      onChange={(e) =>
-                        setVotoForm((prev) => ({
-                          ...prev,
-                          Nulo: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className="border border-slate-300 rounded-md p-2 flex-1 focus:ring-slate-500 focus:border-slate-500"
-                    />
+
+                  {/* Votos Nulos */}
+                  <div className="border border-slate-200 rounded-lg p-2 sm:p-3 bg-yellow-50">
+                    <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
+                      <div className="col-span-1">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-200 text-yellow-800 text-xs font-bold">
+                          N
+                        </span>
+                      </div>
+                      <div className="col-span-4">
+                        <span className="text-sm font-medium text-slate-800">
+                          Votos Nulos
+                        </span>
+                      </div>
+                      <div className="col-span-1 text-center">
+                        <span className="text-sm text-slate-600">
+                          {votosExistentes["Nulo"] || 0}
+                        </span>
+                      </div>
+                      <div className="col-span-1 text-center">
+                        <span className="text-sm font-medium text-slate-800">
+                          {(votosExistentes["Nulo"] || 0) +
+                            (votoForm["Nulo"] || 0)}
+                        </span>
+                      </div>
+                      <div className="col-span-3">
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Nulo"] || 0;
+                              if (currentValue > 0) {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  Nulo: currentValue - 1,
+                                }));
+                              }
+                            }}
+                            disabled={(votoForm["Nulo"] || 0) <= 0}
+                            className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center text-sm font-medium text-slate-700">
+                            {votoForm["Nulo"] || 0}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Nulo"] || 0;
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Nulo: currentValue + 1,
+                              }));
+                            }}
+                            className="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={
+                            (votosExistentes["Nulo"] || 0) +
+                            (votoForm["Nulo"] || 0)
+                          }
+                          onChange={(e) => {
+                            const nuevoTotal = parseInt(e.target.value) || 0;
+                            const nuevosVotosCalculados = Math.max(
+                              0,
+                              nuevoTotal - (votosExistentes["Nulo"] || 0)
+                            );
+                            setVotoForm((prev) => ({
+                              ...prev,
+                              Nulo: nuevosVotosCalculados,
+                            }));
+                          }}
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Total"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Layout móvil para votos nulos */}
+                    <div className="sm:hidden">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-200 text-yellow-800 text-xs font-bold">
+                            N
+                          </span>
+                          <span className="text-sm font-medium text-slate-800">
+                            Votos Nulos
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-slate-600">
+                          Actual:{" "}
+                          <span className="font-medium">
+                            {votosExistentes["Nulo"] || 0}
+                          </span>{" "}
+                          | Total:{" "}
+                          <span className="font-medium">
+                            {(votosExistentes["Nulo"] || 0) +
+                              (votoForm["Nulo"] || 0)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Nulo"] || 0;
+                              if (currentValue > 0) {
+                                setVotoForm((prev) => ({
+                                  ...prev,
+                                  Nulo: currentValue - 1,
+                                }));
+                              }
+                            }}
+                            disabled={(votoForm["Nulo"] || 0) <= 0}
+                            className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="w-6 text-center text-xs font-medium text-slate-700">
+                            {votoForm["Nulo"] || 0}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const currentValue = votoForm["Nulo"] || 0;
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Nulo: currentValue + 1,
+                              }));
+                            }}
+                            className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
+                          >
+                            +
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              (votosExistentes["Nulo"] || 0) +
+                              (votoForm["Nulo"] || 0)
+                            }
+                            onChange={(e) => {
+                              const nuevoTotal = parseInt(e.target.value) || 0;
+                              const nuevosVotosCalculados = Math.max(
+                                0,
+                                nuevoTotal - (votosExistentes["Nulo"] || 0)
+                              );
+                              setVotoForm((prev) => ({
+                                ...prev,
+                                Nulo: nuevosVotosCalculados,
+                              }));
+                            }}
+                            className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <button
-                  className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                  className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors order-2 sm:order-1"
                   onClick={() => setShowVotosModal(false)}
                 >
                   Cancelar
                 </button>
                 <button
-                  className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors"
+                  className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors order-1 sm:order-2"
                   onClick={handleSaveVotos}
                 >
                   Guardar
