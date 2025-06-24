@@ -118,21 +118,18 @@ const SedeForm = ({
 // Componente MesaForm
 const MesaForm = ({
   initialNombre = "",
-  initialEstado = true,
   onSubmit,
   onCancel,
   isLoading = false,
   isEdit = false,
 }: {
   initialNombre?: string;
-  initialEstado?: boolean;
-  onSubmit: (nombre: string, estado_mesa: boolean) => void;
+  onSubmit: (nombre: string) => void;
   onCancel: () => void;
   isLoading?: boolean;
   isEdit?: boolean;
 }) => {
   const [nombre, setNombre] = useState(initialNombre);
-  const [estadoMesa, setEstadoMesa] = useState(initialEstado);
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -149,7 +146,7 @@ const MesaForm = ({
     }
 
     setError("");
-    onSubmit(nombre.trim(), estadoMesa);
+    onSubmit(nombre.trim());
   };
 
   return (
@@ -177,36 +174,6 @@ const MesaForm = ({
           autoFocus
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          Estado de la Mesa
-        </label>
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="estado"
-              checked={estadoMesa === true}
-              onChange={() => setEstadoMesa(true)}
-              className="mr-2 text-[#30c56c] focus:ring-[#30c56c]"
-              disabled={isLoading}
-            />
-            <span className="text-sm text-gray-700">Abierta</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="estado"
-              checked={estadoMesa === false}
-              onChange={() => setEstadoMesa(false)}
-              className="mr-2 text-[#30c56c] focus:ring-[#30c56c]"
-              disabled={isLoading}
-            />
-            <span className="text-sm text-gray-700">Cerrada</span>
-          </label>
-        </div>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
@@ -397,7 +364,7 @@ const PollingPlaces = () => {
   };
 
   // Handle mesa operations
-  const handleCreateMesa = async (nombre: string, estado_mesa: boolean) => {
+  const handleCreateMesa = async (nombre: string) => {
     if (!selectedSedeForMesa) return;
 
     try {
@@ -409,7 +376,7 @@ const PollingPlaces = () => {
           nombre,
           sede_id: selectedSedeForMesa,
           periodo: parseInt(periodo),
-          estado_mesa,
+          // estado_mesa se eliminó, siempre será true por defecto en la API
         }),
       });
 
@@ -436,17 +403,16 @@ const PollingPlaces = () => {
     }
   };
 
-  const handleEditMesa = async (
-    id: string,
-    nombre: string,
-    estado_mesa: boolean
-  ) => {
+  const handleEditMesa = async (id: string, nombre: string) => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/mesas?id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, estado_mesa }),
+        body: JSON.stringify({
+          nombre,
+          // estado_mesa se eliminó, se mantiene el estado actual
+        }),
       });
 
       const data = await response.json();
@@ -799,7 +765,6 @@ const PollingPlaces = () => {
         </Portal>
       )}
 
-      {/* Modal Crear Mesa */}
       {showMesaModal && selectedSedeForMesa && (
         <Portal>
           <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
@@ -832,7 +797,6 @@ const PollingPlaces = () => {
         </Portal>
       )}
 
-      {/* Modal Editar Mesa */}
       {editingMesa && (
         <Portal>
           <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
@@ -851,10 +815,7 @@ const PollingPlaces = () => {
 
               <MesaForm
                 initialNombre={editingMesa.nombre}
-                initialEstado={editingMesa.estado_mesa}
-                onSubmit={(nombre, estado) =>
-                  handleEditMesa(editingMesa.id, nombre, estado)
-                }
+                onSubmit={(nombre) => handleEditMesa(editingMesa.id, nombre)}
                 onCancel={() => setEditingMesa(null)}
                 isLoading={isLoading}
                 isEdit

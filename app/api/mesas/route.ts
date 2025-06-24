@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nombre, sede_id, periodo, estado_mesa = true } = body;
+    const { nombre, sede_id, periodo } = body; // Eliminamos estado_mesa del destructuring
 
     if (!nombre || nombre.trim() === "") {
       return NextResponse.json(
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insertar nueva mesa
+    // Insertar nueva mesa (siempre activa)
     const insertQuery = `
       INSERT INTO mesas (nombre, sede_id, periodo, estado_mesa) 
       VALUES (@param1, @param2, @param3, @param4)
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       { name: "param1", type: TYPES.VarChar, value: nombre.trim() },
       { name: "param2", type: TYPES.UniqueIdentifier, value: sede_id },
       { name: "param3", type: TYPES.Int, value: parseInt(periodo) },
-      { name: "param4", type: TYPES.Bit, value: estado_mesa },
+      { name: "param4", type: TYPES.Bit, value: true }, // Siempre true
     ]);
 
     return NextResponse.json({
@@ -161,7 +161,7 @@ export async function PUT(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const body = await request.json();
-    const { nombre, estado_mesa } = body;
+    const { nombre } = body; // Eliminamos estado_mesa del destructuring
 
     if (!id) {
       return NextResponse.json(
@@ -216,17 +216,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Actualizar mesa
+    // Actualizar mesa (solo el nombre, el estado se mantiene)
     const updateQuery = `
       UPDATE mesas 
-      SET nombre = @param1, estado_mesa = @param2
-      WHERE id = @param3
+      SET nombre = @param1
+      WHERE id = @param2
     `;
 
     await executeQuery(updateQuery, [
       { name: "param1", type: TYPES.VarChar, value: nombre.trim() },
-      { name: "param2", type: TYPES.Bit, value: estado_mesa },
-      { name: "param3", type: TYPES.UniqueIdentifier, value: id },
+      { name: "param2", type: TYPES.UniqueIdentifier, value: id },
     ]);
 
     return NextResponse.json({
