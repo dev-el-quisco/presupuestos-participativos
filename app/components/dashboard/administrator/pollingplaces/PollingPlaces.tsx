@@ -525,7 +525,7 @@ const PollingPlaces = () => {
                   </div>
                   <div className="sm:hidden">
                     <span className="text-sm font-semibold text-slate-800">
-                      {sede.mesasCount} mesas
+                      {sede.mesasCount} mesa{sede.mesasCount !== 1 ? "s" : ""}
                     </span>
                   </div>
                   <div className="relative">
@@ -739,8 +739,8 @@ const PollingPlaces = () => {
       {/* Modal Editar Sede */}
       {editingSede && (
         <Portal>
-          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
+          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200 z-50">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-slate-800">
                   Editar Sede

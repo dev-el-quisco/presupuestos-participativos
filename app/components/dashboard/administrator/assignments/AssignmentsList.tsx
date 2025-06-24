@@ -453,7 +453,7 @@ const AssignmentsList = () => {
                     </div>
                     <div className="sm:hidden">
                       <span className="text-sm font-semibold text-slate-800">
-                        {sede.mesasCount} mesas
+                        {sede.mesasCount} mesa{sede.mesasCount !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </div>
