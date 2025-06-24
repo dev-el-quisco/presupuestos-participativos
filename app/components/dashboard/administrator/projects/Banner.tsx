@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useYear } from "@/app/context/YearContext";
 
 const Banner = () => {
-  const { selectedYear } = useYear();
   const [selectedCategory, setSelectedCategory] = useState<string>("todos");
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -28,7 +26,7 @@ const Banner = () => {
   // Exponer función para obtener categoría actual
   useEffect(() => {
     (window as any).getCurrentCategory = () => selectedCategory;
-    
+
     return () => {
       delete (window as any).getCurrentCategory;
     };
@@ -42,7 +40,7 @@ const Banner = () => {
 
   return (
     <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
-      <div className="relative flex flex-row items-center justify-between space-x-2">
+      <div className="relative flex flex-row items-center justify-between space-x-2 w-full">
         <div>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -117,7 +115,8 @@ const Banner = () => {
               clipRule="evenodd"
             />
           </svg>
-          <span>Nuevo Proyecto</span>
+          <span className="hidden md:block">Nuevo Proyecto</span>
+          <span className="block md:hidden">Nuevo</span>
         </button>
       </div>
     </div>
