@@ -230,7 +230,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hide-scrollbar">
           <table className="w-full text-sm text-left text-gray-700">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>

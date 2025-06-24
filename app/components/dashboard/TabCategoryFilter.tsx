@@ -82,7 +82,7 @@ const TabCategoryFilter = ({ tabs, basePath = "" }: TabCategoryFilterProps) => {
   return (
     <div className="w-full pb-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="flex overflow-x-auto">
+        <div className="flex overflow-x-auto hide-scrollbar">
           {tabsToRender.map((tab) => (
             <Link
               key={tab.path}

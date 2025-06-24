@@ -574,7 +574,7 @@ const Content = () => {
     <>
       <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
         {/* Tabla responsiva */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hide-scrollbar">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-100">
               <tr>
