@@ -95,6 +95,98 @@ const Content = () => {
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rutError, setRutError] = useState<string>("");
+
+  // Función para validar RUT chileno
+  const validarRUT = (rut: string): boolean => {
+    const rutLimpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
+
+    if (rutLimpio.length < 2) return false;
+
+    const cuerpo = rutLimpio.slice(0, -1);
+    const dv = rutLimpio.slice(-1);
+
+    let suma = 0;
+    let multiplicador = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo[i]) * multiplicador;
+      multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+
+    const resto = suma % 11;
+    const dvCalculado =
+      resto === 0 ? "0" : resto === 1 ? "K" : (11 - resto).toString();
+
+    return dv === dvCalculado;
+  };
+
+  // Función para formatear RUT
+  const formatearRUT = (rut: string): string => {
+    const rutLimpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
+    if (rutLimpio.length <= 1) return rutLimpio;
+
+    const cuerpo = rutLimpio.slice(0, -1);
+    const dv = rutLimpio.slice(-1);
+
+    const cuerpoFormateado = cuerpo.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+    return `${cuerpoFormateado}-${dv}`;
+  };
+
+  // Manejar cambio en el campo RUT
+  const handleRutChange = (value: string) => {
+    if (votanteForm.extranjero) {
+      // Para extranjeros, permitir cualquier carácter sin formateo
+      setVotanteForm((prev) => ({
+        ...prev,
+        rut: value,
+      }));
+      setRutError("");
+    } else {
+      // Solo para chilenos: aplicar restricciones y formateo
+      const valorLimpio = value.replace(/[^0-9kK.-]/g, '').toUpperCase();
+      
+      // Formatear automáticamente
+      const rutFormateado = formatearRUT(valorLimpio);
+      
+      setVotanteForm((prev) => ({
+        ...prev,
+        rut: rutFormateado,
+      }));
+
+      // Validar solo si tiene contenido
+      if (rutFormateado.length > 1) {
+        if (validarRUT(rutFormateado)) {
+          setRutError("");
+        } else {
+          setRutError("RUT inválido");
+        }
+      } else {
+        setRutError("");
+      }
+    }
+  };
+
+  // Manejar cambio en checkbox extranjero
+  const handleExtranjeroChange = (checked: boolean) => {
+    setVotanteForm((prev) => ({
+      ...prev,
+      extranjero: checked,
+    }));
+
+    // Limpiar error de RUT si se marca como extranjero
+    if (checked) {
+      setRutError("");
+    } else if (votanteForm.rut) {
+      // Revalidar RUT si se desmarca extranjero
+      if (validarRUT(votanteForm.rut)) {
+        setRutError("");
+      } else {
+        setRutError("RUT inválido");
+      }
+    }
+  };
 
   // Función para ordenar proyectos por categoría y nombre
   const getOrderedProjects = () => {
@@ -317,11 +409,18 @@ const Content = () => {
       rut: "",
       extranjero: false,
     });
+    setRutError("");
     setShowVotanteModal(true);
   };
 
   // Guardar votante
   const handleSaveVotante = async () => {
+    // Validar RUT antes de enviar si no es extranjero
+    if (!votanteForm.extranjero && !validarRUT(votanteForm.rut)) {
+      setRutError("RUT inválido");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch("/api/votantes", {
@@ -339,7 +438,16 @@ const Content = () => {
 
       if (response.ok) {
         toast.success("Votante registrado exitosamente");
-        setShowVotanteModal(false);
+        // En lugar de cerrar el modal, reiniciar los campos
+        setVotanteForm({
+          nombre: "",
+          direccion: "",
+          fecha_nacimiento: "",
+          rut: "",
+          extranjero: false,
+        });
+        setRutError("");
+        fetchMesas(); // Recargar para actualizar conteo de votantes
       } else {
         const error = await response.json();
         toast.error(error.error || "Error al registrar votante");
@@ -1255,6 +1363,22 @@ const Content = () => {
               </p>
 
               <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="extranjero"
+                    checked={votanteForm.extranjero}
+                    onChange={(e) => handleExtranjeroChange(e.target.checked)}
+                    className="mr-2"
+                  />
+                  <label
+                    htmlFor="extranjero"
+                    className="text-sm text-slate-700"
+                  >
+                    Es extranjero
+                  </label>
+                </div>
+
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     RUT/Identificación
@@ -1262,16 +1386,29 @@ const Content = () => {
                   <input
                     type="text"
                     value={votanteForm.rut}
-                    onChange={(e) =>
-                      setVotanteForm((prev) => ({
-                        ...prev,
-                        rut: e.target.value,
-                      }))
+                    onChange={(e) => handleRutChange(e.target.value)}
+                    className={`border rounded-md p-2 focus:ring-slate-500 focus:border-slate-500 ${
+                      rutError ? "border-red-500" : "border-slate-300"
+                    }`}
+                    placeholder={
+                      votanteForm.extranjero
+                        ? "Identificación"
+                        : "12.345.678-9 o identificador"
                     }
-                    className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
-                    placeholder="12345678-9"
+                    disabled={false}
                   />
+                  {rutError && (
+                    <span className="text-red-500 text-xs mt-1">
+                      {rutError}
+                    </span>
+                  )}
+                  {!votanteForm.extranjero && (
+                    <span className="text-gray-500 text-xs mt-1">
+                      Solo números y letra K para rut chileno
+                    </span>
+                  )}
                 </div>
+
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Nombre Completo
@@ -1320,26 +1457,6 @@ const Content = () => {
                     className="border border-slate-300 rounded-md p-2 focus:ring-slate-500 focus:border-slate-500"
                   />
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="extranjero"
-                    checked={votanteForm.extranjero}
-                    onChange={(e) =>
-                      setVotanteForm((prev) => ({
-                        ...prev,
-                        extranjero: e.target.checked,
-                      }))
-                    }
-                    className="mr-2"
-                  />
-                  <label
-                    htmlFor="extranjero"
-                    className="text-sm text-slate-700"
-                  >
-                    Es extranjero
-                  </label>
-                </div>
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
@@ -1350,8 +1467,13 @@ const Content = () => {
                   Cancelar
                 </button>
                 <button
-                  className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors"
+                  className={`py-2 px-4 rounded-md transition-colors ${
+                    rutError && !votanteForm.extranjero
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-slate-800 text-white hover:bg-[#30c56c] hover:text-[#e3ecea]"
+                  }`}
                   onClick={handleSaveVotante}
+                  disabled={!!(rutError && !votanteForm.extranjero)}
                 >
                   Registrar
                 </button>

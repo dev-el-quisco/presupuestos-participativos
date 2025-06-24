@@ -17,7 +17,7 @@ interface MesaWithPermissions {
 export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get("authorization")?.replace("Bearer ", "");
-    
+
     if (!token) {
       return NextResponse.json(
         { error: "Token de autorización requerido" },
@@ -27,10 +27,7 @@ export async function GET(request: NextRequest) {
 
     const user = verifyToken(token);
     if (!user) {
-      return NextResponse.json(
-        { error: "Token inválido" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
