@@ -10,8 +10,8 @@ const Banner = () => {
     { id: "todos", name: "Todos" },
     { id: "Comunales", name: "Comunales" },
     { id: "Infantiles", name: "Infantiles" },
-    { id: "Deportivos", name: "Deportivos" },
-    { id: "Culturales", name: "Culturales" },
+    { id: "Juveniles", name: "Juveniles" },
+    { id: "Sectoriale", name: "Sectoriales" },
   ];
 
   const handleCategoryChange = (categoryId: string) => {
@@ -40,7 +40,7 @@ const Banner = () => {
 
   return (
     <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
-      <div className="relative flex flex-row items-center justify-between space-x-2 w-full">
+      <div className="relative flex flex-row items-end justify-between md:justify-end-safe space-x-2 w-full">
         <div>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}

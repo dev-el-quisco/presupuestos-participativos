@@ -346,9 +346,9 @@ const ProjectsListComponent = () => {
   const getCategoryColor = (type: string) => {
     const colors: Record<string, string> = {
       Comunales: "bg-green-100 text-green-800",
-      Infantiles: "bg-blue-100 text-blue-800",
-      Deportivos: "bg-yellow-100 text-yellow-800",
-      Culturales: "bg-red-100 text-red-800",
+      Infantiles: "bg-blue-100 text-yellow-800",
+      Juveniles: "bg-yellow-100 text-sky-800",
+      Sectoirales: "bg-red-100 text-orange-800",
     };
     return colors[type] || "bg-gray-100 text-gray-800";
   };
