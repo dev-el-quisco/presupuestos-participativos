@@ -1355,6 +1355,41 @@ const Content = () => {
                 </div>
               </div>
 
+              {/* Resumen de información antes de guardar */}
+              <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <h4 className="text-sm font-medium text-slate-700 mb-2">Resumen de la Mesa:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
+                  <div className="flex justify-between">
+                    <span>Votantes registrados:</span>
+                    <span className="font-medium text-slate-800">{selectedMesa?.votantes_count || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Votos actuales:</span>
+                    <span className="font-medium text-slate-800">{selectedMesa?.votos_count || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Nuevos votos:</span>
+                    <span className="font-medium text-blue-600">
+                      {Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-slate-200">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600">Total votos después de guardar:</span>
+                    <span className="font-medium text-slate-800">
+                      {(selectedMesa?.votos_count || 0) + Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)}
+                    </span>
+                  </div>
+                </div>
+                {/* Advertencia si los votos no coinciden con votantes */}
+                {((selectedMesa?.votos_count || 0) + Object.values(votoForm).reduce((sum, val) => sum + (val || 0), 0)) !== (selectedMesa?.votantes_count || 0) && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                    ⚠️ Los votos totales no coinciden con los votantes registrados
+                  </div>
+                )}
+              </div>
+
               <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <button
                   className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors order-2 sm:order-1"
