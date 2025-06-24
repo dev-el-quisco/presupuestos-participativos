@@ -24,7 +24,7 @@ const RoleProtectedRoute = ({
     // Delay mínimo de 500ms para suavizar la transición
     const timer = setTimeout(() => {
       setMinDelayCompleted(true);
-    }, 500);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, []);
@@ -41,10 +41,19 @@ const RoleProtectedRoute = ({
         router.push(redirectTo);
         return;
       }
-      
+
       setInitialCheckDone(true);
     }
-  }, [isAuthenticated, isLoading, user, allowedRoles, redirectTo, router, initialCheckDone, minDelayCompleted]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    user,
+    allowedRoles,
+    redirectTo,
+    router,
+    initialCheckDone,
+    minDelayCompleted,
+  ]);
 
   // Mostrar spinner durante la carga inicial o hasta que se complete el delay mínimo
   if ((isLoading || !minDelayCompleted) && !initialCheckDone) {
@@ -66,7 +75,10 @@ const RoleProtectedRoute = ({
   }
 
   // No mostrar mensaje de redirección en navegaciones posteriores
-  if (!initialCheckDone && (!isAuthenticated || !user?.rol || !allowedRoles.includes(user.rol))) {
+  if (
+    !initialCheckDone &&
+    (!isAuthenticated || !user?.rol || !allowedRoles.includes(user.rol))
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">

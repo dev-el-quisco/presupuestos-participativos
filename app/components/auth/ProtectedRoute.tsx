@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     // Delay mínimo de 500ms para suavizar la transición
     const timer = setTimeout(() => {
       setMinDelayCompleted(true);
-    }, 500);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, []);
@@ -36,10 +36,18 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
         router.push("/unauthorized");
         return;
       }
-      
+
       setInitialCheckDone(true);
     }
-  }, [isAuthenticated, isLoading, user, requiredRole, router, initialCheckDone, minDelayCompleted]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    user,
+    requiredRole,
+    router,
+    initialCheckDone,
+    minDelayCompleted,
+  ]);
 
   // Mostrar spinner durante la carga inicial o hasta que se complete el delay mínimo
   if ((isLoading || !minDelayCompleted) && !initialCheckDone) {
