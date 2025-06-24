@@ -13,10 +13,20 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [minDelayCompleted, setMinDelayCompleted] = useState(false);
 
   useEffect(() => {
-    // Solo realizar la redirección en la carga inicial, no en navegaciones posteriores
-    if (!initialCheckDone && !isLoading) {
+    // Delay mínimo de 500ms para suavizar la transición
+    const timer = setTimeout(() => {
+      setMinDelayCompleted(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Solo realizar la redirección cuando tanto la carga como el delay mínimo hayan terminado
+    if (!initialCheckDone && !isLoading && minDelayCompleted) {
       if (!isAuthenticated) {
         router.push("/");
         return;
@@ -29,10 +39,10 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
       
       setInitialCheckDone(true);
     }
-  }, [isAuthenticated, isLoading, user, requiredRole, router, initialCheckDone]);
+  }, [isAuthenticated, isLoading, user, requiredRole, router, initialCheckDone, minDelayCompleted]);
 
-  // Mostrar spinner solo durante la carga inicial
-  if (isLoading && !initialCheckDone) {
+  // Mostrar spinner durante la carga inicial o hasta que se complete el delay mínimo
+  if ((isLoading || !minDelayCompleted) && !initialCheckDone) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
