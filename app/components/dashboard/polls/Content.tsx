@@ -413,6 +413,31 @@ const Content = () => {
     setShowVotanteModal(true);
   };
 
+  // Función para actualizar solo el conteo de votantes de una mesa específica
+  const updateMesaVotantesCount = async (mesaId: string) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/mesas/${mesaId}/votantes-count`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMesas(prevMesas => 
+          prevMesas.map(mesa => 
+            mesa.id === mesaId 
+              ? { ...mesa, votantes_count: data.count }
+              : mesa
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar conteo:", error);
+    }
+  };
+
   // Guardar votante
   const handleSaveVotante = async () => {
     // Validar RUT antes de enviar si no es extranjero
@@ -438,7 +463,7 @@ const Content = () => {
 
       if (response.ok) {
         toast.success("Votante registrado exitosamente");
-        // En lugar de cerrar el modal, reiniciar los campos
+        // Reiniciar los campos del formulario
         setVotanteForm({
           nombre: "",
           direccion: "",
@@ -447,7 +472,14 @@ const Content = () => {
           extranjero: false,
         });
         setRutError("");
-        fetchMesas(); // Recargar para actualizar conteo de votantes
+        // Incrementar el contador localmente sin recargar
+        setMesas(prevMesas => 
+          prevMesas.map(mesa => 
+            mesa.id === selectedMesa?.id 
+              ? { ...mesa, votantes_count: (mesa.votantes_count || 0) + 1 }
+              : mesa
+          )
+        );
       } else {
         const error = await response.json();
         toast.error(error.error || "Error al registrar votante");
