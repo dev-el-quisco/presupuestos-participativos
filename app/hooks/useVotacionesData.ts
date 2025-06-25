@@ -4,10 +4,10 @@ import { useAuth } from '@/app/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 interface Mesa {
-  id: number;
+  id: string; // Cambiar de number a string
   nombre: string;
   estado_mesa: boolean;
-  sede_id: number;
+  sede_id: string; // Cambiar de number a string
   sede_nombre: string;
   periodo: number;
   votos_count: number;
@@ -15,13 +15,12 @@ interface Mesa {
 }
 
 interface Proyecto {
-  id: number;
-  id_proyecto: string;
+  id_proyecto: string; // Mantener como string
   nombre: string;
-  tipo_proyecto: string;
-  sector: string;
-  periodo: number;
-  votos_count: number;
+  tipo_proyecto_nombre?: string; // Cambiar de tipo_proyecto a tipo_proyecto_nombre
+  sector?: string;
+  periodo?: number;
+  votos_count?: number;
 }
 
 export function useVotacionesData() {

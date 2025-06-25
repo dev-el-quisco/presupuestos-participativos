@@ -6,30 +6,12 @@ import {
   IconClipboardText,
   IconLock,
   IconLockOpen2,
-  IconDotsVertical,
 } from "@tabler/icons-react";
 import Portal from "@/app/components/ui/Portal";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useYear } from "@/app/context/YearContext";
-import { useVotacionesData } from '@/app/hooks/useVotacionesData';
+import { useVotacionesData } from "@/app/hooks/useVotacionesData";
 import toast from "react-hot-toast";
-
-interface Mesa {
-  id: string;
-  nombre: string;
-  estado_mesa: boolean;
-  sede_id: string;
-  periodo: number;
-  sede_nombre: string;
-  votos_count: number;
-  votantes_count: number;
-}
-
-interface Proyecto {
-  id_proyecto: string;
-  nombre: string;
-  tipo_proyecto_nombre?: string;
-}
 
 interface VotanteForm {
   nombre: string;
@@ -44,7 +26,7 @@ interface VotoForm {
 }
 
 // Función para validar si se puede cerrar la mesa
-const canCloseMesa = (mesa: Mesa) => {
+const canCloseMesa = (mesa: any) => {
   return mesa.votos_count === mesa.votantes_count;
 };
 
@@ -90,10 +72,11 @@ const getCategoryColors = (categoria: string) => {
 const Content = () => {
   const { user } = useAuth();
   const { selectedYear, isYearReady } = useYear();
-  const { mesas, proyectos, loading, setMesas, refetchMesas } = useVotacionesData();
+  const { mesas, proyectos, loading, setMesas, refetchMesas } =
+    useVotacionesData();
   const [showVotosModal, setShowVotosModal] = useState<boolean>(false);
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
-  const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
+  const [selectedMesa, setSelectedMesa] = useState<any>(null);
   const [rutError, setRutError] = useState<string>("");
 
   // Función para validar RUT chileno
@@ -214,8 +197,6 @@ const Content = () => {
 
   const [votoForm, setVotoForm] = useState<VotoForm>({});
 
-
-
   // Controlar el overflow del body cuando los modales están abiertos
   useEffect(() => {
     if (showVotosModal || showVotanteModal) {
@@ -230,7 +211,7 @@ const Content = () => {
   }, [showVotosModal, showVotanteModal]);
 
   // Cambiar estado de mesa (solo Encargado de Local y Administrador)
-  const handleCambiarEstado = async (mesa: Mesa): Promise<void> => {
+  const handleCambiarEstado = async (mesa: any): Promise<void> => {
     // Si se intenta cerrar la mesa, validar que votos coincidan con votantes
     if (!mesa.estado_mesa && !canCloseMesa(mesa)) {
       toast.error(
@@ -327,7 +308,7 @@ const Content = () => {
     }
   };
 
-  const handleRegistrarVotos = async (mesa: Mesa): Promise<void> => {
+  const handleRegistrarVotos = async (mesa: any): Promise<void> => {
     setSelectedMesa(mesa);
     // Cargar votos existentes primero
     await fetchVotosExistentes(mesa.id);
@@ -343,7 +324,7 @@ const Content = () => {
     setShowVotosModal(true);
   };
 
-  const handleRegistrarVotante = (mesa: Mesa): void => {
+  const handleRegistrarVotante = (mesa: any): void => {
     setSelectedMesa(mesa);
     setVotanteForm({
       nombre: "",
@@ -498,7 +479,7 @@ const Content = () => {
   const canRegisterVoters = user?.rol !== "Ministro de Fe";
 
   // Función para verificar si se pueden realizar acciones en una mesa específica
-  const canPerformAction = (mesa: Mesa, action: "vote" | "voter") => {
+  const canPerformAction = (mesa: any, action: "vote" | "voter") => {
     if (!mesa.estado_mesa) return false; // Mesa cerrada
     if (action === "vote") return canRegisterVotes;
     if (action === "voter") return canRegisterVoters;
