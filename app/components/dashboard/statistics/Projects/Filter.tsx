@@ -2,77 +2,146 @@
 
 import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
+import { useState, useEffect } from "react";
+
+interface CategoryData {
+  id: string;
+  name: string;
+  count: number;
+  projects: number;
+  percentage: number;
+}
+
+interface StatisticsData {
+  categories: CategoryData[];
+  totalVotes: number;
+  totalProjects: number;
+}
 
 const Filter = () => {
   const { selectedYear } = useYear();
   const { selectedCategory, setSelectedCategory } = useFilter();
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
 
+  // Mapeo de colores por tipo de proyecto
+  const getColorConfig = (categoryName: string) => {
+    const colorMap: Record<string, any> = {
+      Comunales: {
+        color: "bg-green-100",
+        textColor: "text-green-800",
+        borderColor: "ring-green-500",
+        bottomBorderColor: "border-green-500",
+      },
+      Infantiles: {
+        color: "bg-yellow-100",
+        textColor: "text-yellow-800",
+        borderColor: "ring-yellow-500",
+        bottomBorderColor: "border-yellow-500",
+      },
+      Juveniles: {
+        color: "bg-blue-100",
+        textColor: "text-blue-800",
+        borderColor: "ring-blue-500",
+        bottomBorderColor: "border-blue-500",
+      },
+      Sectoriales: {
+        color: "bg-orange-100",
+        textColor: "text-orange-800",
+        borderColor: "ring-orange-500",
+        bottomBorderColor: "border-orange-500",
+      },
+    };
+
+    return (
+      colorMap[categoryName] || {
+        color: "bg-gray-100",
+        textColor: "text-gray-800",
+        borderColor: "ring-gray-500",
+        bottomBorderColor: "border-gray-500",
+      }
+    );
+  };
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStatisticsData(data.statistics);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, [selectedYear]);
+
+  const handleCategorySelect = (category: string) => {
+    if (selectedCategory === category) {
+      setSelectedCategory("todos");
+    } else {
+      setSelectedCategory(category);
+    }
+  };
+
+  if (loading || !statisticsData) {
+    return (
+      <div className="w-full my-6">
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="flex-1 min-w-[180px] bg-gray-200 rounded-lg shadow-sm h-24 animate-pulse"
+            ></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Crear datos del filtro incluyendo "Todos"
   const filterData = {
     todos: {
       title: "Todos los Proyectos",
-      count: 5850,
+      count: statisticsData.totalVotes,
       percentage: 100,
-      projects: 14,
+      projects: statisticsData.totalProjects,
       color: "bg-gray-200",
       textColor: "text-gray-800",
       borderColor: "ring-gray-500",
       bottomBorderColor: "border-gray-500",
     },
-    comunales: {
-      title: "Proyectos Comunales",
-      count: 2453,
-      percentage: 41.9,
-      projects: 4,
-      color: "bg-green-100",
-      textColor: "text-green-800",
-      borderColor: "ring-green-500",
-      bottomBorderColor: "border-green-500",
-    },
-    infantiles: {
-      title: "Proyectos Infantiles",
-      count: 1876,
-      percentage: 32.1,
-      projects: 4,
-      color: "bg-blue-100",
-      textColor: "text-blue-800",
-      borderColor: "ring-blue-500",
-      bottomBorderColor: "border-blue-500",
-    },
-    deportivos: {
-      title: "Proyectos Deportivos",
-      count: 987,
-      percentage: 16.9,
-      projects: 3,
-      color: "bg-yellow-100",
-      textColor: "text-yellow-800",
-      borderColor: "ring-yellow-500",
-      bottomBorderColor: "border-yellow-500",
-    },
-    culturales: {
-      title: "Proyectos Culturales",
-      count: 534,
-      percentage: 9.1,
-      projects: 3,
-      color: "bg-red-100",
-      textColor: "text-red-800",
-      borderColor: "ring-red-500",
-      bottomBorderColor: "border-red-500",
-    },
-  };
-
-  const handleCategorySelect = (category: string) => {
-    if (selectedCategory === category) {
-      setSelectedCategory("todos"); // Cambiado de null a "todos" para siempre tener una selección
-    } else {
-      setSelectedCategory(category);
-    }
+    ...Object.fromEntries(
+      statisticsData.categories.map((category) => {
+        const colorConfig = getColorConfig(category.name);
+        return [
+          category.name.toLowerCase(),
+          {
+            title: `Proyectos ${category.name}`,
+            count: category.count,
+            percentage: category.percentage,
+            projects: category.projects,
+            ...colorConfig,
+          },
+        ];
+      })
+    ),
   };
 
   return (
     <div className="w-full my-6">
       <div className="flex flex-wrap gap-2">
         {Object.entries(filterData).map(([key, data]) => {
-          // Solo marcar como seleccionada la categoría específica, no todas cuando es "todos"
           const isSelected = selectedCategory === key;
 
           const selectedClass = isSelected
@@ -106,7 +175,7 @@ const Filter = () => {
                     <span className="text-sm font-light"> votos</span>
                   </span>
                   <span className="ml-auto text-md text-gray-700">
-                    {data.percentage}%
+                    {data.percentage.toFixed(1)}%
                   </span>
                 </div>
                 <div className="hidden md:block w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -123,9 +192,6 @@ const Filter = () => {
                     }}
                   ></div>
                 </div>
-                {/* <p className="text-sm mt-2 text-gray-500">
-                  {data.projects} proyectos
-                </p> */}
               </div>
             </div>
           );
@@ -142,6 +208,7 @@ function getColorFromTextColor(textColor: string) {
     "text-blue-800": "#1E40AF",
     "text-yellow-800": "#92400E",
     "text-red-800": "#991B1B",
+    "text-orange-800": "#efa844",
   };
 
   return colorMap[textColor] || "#6B7280";

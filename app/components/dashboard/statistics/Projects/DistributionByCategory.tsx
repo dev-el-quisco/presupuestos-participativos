@@ -4,56 +4,126 @@ import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
 import { useState, useEffect } from "react";
 
+interface CategoryData {
+  id: string;
+  name: string;
+  count: number;
+  projects: number;
+  percentage: number;
+}
+
+interface StatisticsData {
+  categories: CategoryData[];
+  totalVotes: number;
+  totalProjects: number;
+}
+
 const DistributionByCategory = () => {
   const { selectedYear } = useYear();
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
 
-  // Datos para el gráfico de distribución por categoría
-  const categoryData = [
-    {
-      name: "Comunales",
-      value: 41.9,
-      color: "#10B981", // verde
-      colorClass: "bg-green-500",
-      key: "comunales",
-    },
-    {
-      name: "Infantiles",
-      value: 32.1,
-      color: "#3B82F6", // azul
-      colorClass: "bg-blue-500",
-      key: "infantiles",
-    },
-    {
-      name: "Deportivos",
-      value: 16.9,
-      color: "#F59E0B", // amarillo
-      colorClass: "bg-yellow-500",
-      key: "deportivos",
-    },
-    {
-      name: "Culturales",
-      value: 9.1,
-      color: "#EF4444", // rojo
-      colorClass: "bg-red-500",
-      key: "culturales",
-    },
-  ];
+  // Mapeo de colores por categoría
+  const getColorConfig = (categoryName: string) => {
+    const colorMap: Record<
+      string,
+      { color: string; colorClass: string; key: string }
+    > = {
+      Comunales: {
+        color: "#10B981", // Verde
+        colorClass: "bg-green-500",
+        key: "comunales",
+      },
+      Infantiles: {
+        color: "#f7f139", // Amarillo
+        colorClass: "bg-[#f7f139]",
+        key: "infantiles",
+      },
+      Juveniles: {
+        color: "#3B82F6", // Azul
+        colorClass: "bg-blue-500",
+        key: "juveniles",
+      },
+      Sectoriales: {
+        color: "#f0a843", // Naranja
+        colorClass: "bg-[#f0a843]",
+        key: "sectoriales",
+      },
+    };
+
+    return (
+      colorMap[categoryName] || {
+        color: "#6B7280",
+        colorClass: "bg-gray-500",
+        key: categoryName.toLowerCase(),
+      }
+    );
+  };
 
   useEffect(() => {
-    // Actualizar el ancho de la ventana para hacer el gráfico responsivo
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStatisticsData(data.statistics);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, [selectedYear]);
+
+  useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize(); // Inicializar
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  if (loading || !statisticsData) {
+    return (
+      <div className="w-full p-4">
+        <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
+          <h2 className="text-xl font-semibold mb-4">
+            Distribución por Categoría
+          </h2>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Calcular dimensiones del gráfico
   const size = Math.min(windowWidth > 768 ? 300 : 200, 300);
   const radius = size / 2;
   const centerX = radius;
   const centerY = radius;
+
+  // Preparar datos para el gráfico
+  const categoryData = statisticsData.categories
+    .filter((cat) => cat.percentage > 0)
+    .map((category) => {
+      const colorConfig = getColorConfig(category.name);
+      return {
+        name: category.name,
+        value: category.percentage,
+        ...colorConfig,
+      };
+    });
 
   // Generar el gráfico circular
   let startAngle = 0;
@@ -90,7 +160,6 @@ const DistributionByCategory = () => {
   });
 
   return (
-    // <div className="w-full md:w-1/2 p-4">
     <div className="w-full p-4">
       <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">
@@ -143,7 +212,7 @@ const DistributionByCategory = () => {
                     className={`text-sm transition-opacity duration-300`}
                     style={{ opacity: isSelected ? 1 : 0.5 }}
                   >
-                    {item.name} ({item.value}%)
+                    {item.name} ({item.value.toFixed(1)}%)
                   </span>
                 </div>
               );

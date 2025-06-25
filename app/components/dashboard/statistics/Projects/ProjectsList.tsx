@@ -4,15 +4,27 @@ import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
 import { useState, useEffect } from "react";
 
-// Definir las categorías válidas como un tipo
-type CategoryId = "comunales" | "infantiles" | "deportivos" | "culturales";
+interface ProjectWithVotes {
+  id: string;
+  id_proyecto: string;
+  nombre: string;
+  tipo_proyecto_nombre: string;
+  votos_count: number;
+}
 
-// Definir el tipo de proyecto
+interface StatisticsData {
+  categories: any[];
+  totalVotes: number;
+  totalProjects: number;
+  projects: ProjectWithVotes[];
+}
+
 type Project = {
   id: string;
+  id_proyecto: string; // Agregar el ID visual
   title: string;
   category: string;
-  categoryId: CategoryId; // Usar el tipo CategoryId aquí
+  categoryId: string;
   percentTotal: number;
   percentCategory: number;
   votes: number;
@@ -24,178 +36,116 @@ const ProjectsList = () => {
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [loading, setLoading] = useState(true);
   const projectsPerPage = 10;
 
   // Mapeo de categorías a colores pasteles
-  const categoryColors: Record<
-    CategoryId,
-    { bg: string; text: string; color: string }
-  > = {
+  const categoryColors: Record<string, { bg: string; text: string; color: string }> = {
     comunales: {
-      bg: "bg-green-100",
+      bg: "bg-green-100", // Verde
       text: "text-green-800",
       color: "#065F46",
     },
     infantiles: {
-      bg: "bg-blue-100",
-      text: "text-blue-800",
-      color: "#1E40AF",
-    },
-    deportivos: {
-      bg: "bg-yellow-100",
+      bg: "bg-yellow-100", // Amarillo
       text: "text-yellow-800",
       color: "#92400E",
     },
-    culturales: {
-      bg: "bg-red-100",
-      text: "text-red-800",
-      color: "#991B1B",
+    juveniles: {
+      bg: "bg-blue-100", // Azul
+      text: "text-blue-800",
+      color: "#1E40AF",
+    },
+    sectoriales: {
+      bg: "bg-orange-100", // Naranja
+      text: "text-orange-800",
+      color: "#efa844",
     },
   };
 
-  // Datos de ejemplo para los proyectos - Corregidos para eliminar duplicados
-  const projectsData = [
-    {
-      id: "C1-1", // ID único
-      title: "Mejoramiento de plazas públicas",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      percentTotal: 19.7,
-      percentCategory: 47.1,
-      votes: 1155,
-      color: "bg-green-500",
-    },
-    {
-      id: "C2-1", // ID único
-      title: "Iluminación LED en calles principales",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      percentTotal: 8.2,
-      percentCategory: 19.6,
-      votes: 481,
-      color: "bg-green-500",
-    },
-    {
-      id: "C3-1", // ID único
-      title: "Creación de áreas verdes",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      percentTotal: 7.3,
-      percentCategory: 17.4,
-      votes: 428,
-      color: "bg-green-500",
-    },
-    {
-      id: "C4-1", // ID único
-      title: "Sistema de seguridad vecinal",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      percentTotal: 6.6,
-      percentCategory: 15.9,
-      votes: 389,
-      color: "bg-green-500",
-    },
-    {
-      id: "I1-1", // ID único
-      title: "Parque infantil inclusivo",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      percentTotal: 11.5,
-      percentCategory: 35.8,
-      votes: 671,
-      color: "bg-blue-500",
-    },
-    {
-      id: "I2-1", // ID único
-      title: "Talleres de arte para niños",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      percentTotal: 8.6,
-      percentCategory: 26.8,
-      votes: 503,
-      color: "bg-blue-500",
-    },
-    {
-      id: "I3-1",
-      title: "Biblioteca infantil comunitaria",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      percentTotal: 5.7,
-      percentCategory: 17.9,
-      votes: 336,
-      color: "bg-blue-500",
-    },
-    {
-      id: "I4-1", // ID único
-      title: "Escuela de verano municipal",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      percentTotal: 3.6,
-      percentCategory: 11.1,
-      votes: 208,
-      color: "bg-blue-500",
-    },
-    {
-      id: "D1-1", // ID único
-      title: "Mejoramiento de canchas deportivas",
-      category: "Proyectos Deportivos",
-      categoryId: "deportivos",
-      percentTotal: 7.0,
-      percentCategory: 41.7,
-      votes: 412,
-      color: "bg-yellow-500",
-    },
-    {
-      id: "D2-1", // ID único
-      title: "Implementación de máquinas de ejercicio",
-      category: "Proyectos Deportivos",
-      categoryId: "deportivos",
-      percentTotal: 4.7,
-      percentCategory: 27.7,
-      votes: 273,
-      color: "bg-yellow-500",
-    },
-    {
-      id: "D3-1", // ID único
-      title: "Escuelas deportivas municipales",
-      category: "Proyectos Deportivos",
-      categoryId: "deportivos",
-      percentTotal: 3.0,
-      percentCategory: 17.5,
-      votes: 173,
-      color: "bg-yellow-500",
-    },
-    {
-      id: "CU1-1", // ID único
-      title: "Festival cultural comunitario",
-      category: "Proyectos Culturales",
-      categoryId: "culturales",
-      percentTotal: 3.6,
-      percentCategory: 39.7,
-      votes: 212,
-      color: "bg-red-500",
-    },
-    {
-      id: "CU2-1", // ID único
-      title: "Talleres de arte y cultura",
-      category: "Proyectos Culturales",
-      categoryId: "culturales",
-      percentTotal: 2.4,
-      percentCategory: 26.8,
-      votes: 143,
-      color: "bg-red-500",
-    },
-    {
-      id: "CU3-1", // ID único
-      title: "Murales comunitarios",
-      category: "Proyectos Culturales",
-      categoryId: "culturales",
-      percentTotal: 1.6,
-      percentCategory: 17.0,
-      votes: 91,
-      color: "bg-red-500",
-    },
-  ];
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setStatisticsData(data.statistics);
+          }
+        }
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, [selectedYear]);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Resetear a la primera página cuando cambia la categoría
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
+
+  if (loading || !statisticsData) {
+    return (
+      <div className="w-full my-4">
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <h2 className="text-xl font-semibold mb-6">Cargando proyectos...</h2>
+          <div className="space-y-4" style={{ minHeight: `${projectsPerPage * 48}px` }}>
+            {Array.from({ length: projectsPerPage }).map((_, index) => (
+              <div key={index} className="flex items-center h-12">
+                <div className="flex-shrink-0 mr-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="bg-gray-200 rounded-full h-10 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Convertir datos de la API al formato esperado por el componente
+  const projectsData: Project[] = statisticsData.projects.map((project) => {
+    const categoryId = project.tipo_proyecto_nombre.toLowerCase();
+    const categoryData = statisticsData.categories.find(
+      (cat) => cat.name.toLowerCase() === project.tipo_proyecto_nombre.toLowerCase()
+    );
+    
+    const percentTotal = statisticsData.totalVotes > 0 
+      ? (project.votos_count / statisticsData.totalVotes) * 100 
+      : 0;
+    
+    const percentCategory = categoryData && categoryData.count > 0 
+      ? (project.votos_count / categoryData.count) * 100 
+      : 0;
+
+    return {
+      id: project.id,
+      id_proyecto: project.id_proyecto, // Agregar el ID visual
+      title: project.nombre,
+      category: `Proyectos ${project.tipo_proyecto_nombre}`,
+      categoryId: categoryId,
+      percentTotal: percentTotal,
+      percentCategory: percentCategory,
+      votes: project.votos_count,
+      color: categoryColors[categoryId]?.color || "#6B7280",
+    };
+  });
 
   // Filtrar proyectos según la categoría seleccionada
   const filteredProjects =
@@ -216,11 +166,10 @@ const ProjectsList = () => {
   const currentProjects = sortedProjects.slice(
     indexOfFirstProject,
     indexOfLastProject
-  ) as Project[]; // Asegurar que currentProjects es de tipo Project[]
+  ) as Project[];
 
   // Rellenar con proyectos vacíos si no hay suficientes para mantener altura constante
   const emptyProjectsNeeded = projectsPerPage - currentProjects.length;
-  // Especificar que projectsWithFillers puede contener null
   const projectsWithFillers: (Project | null)[] = [...currentProjects];
 
   if (emptyProjectsNeeded > 0) {
@@ -232,21 +181,8 @@ const ProjectsList = () => {
   // Cambiar de página
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  useEffect(() => {
-    // Actualizar el ancho de la ventana para hacer el componente responsivo
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize(); // Inicializar
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Resetear a la primera página cuando cambia la categoría
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory]);
-
   // Encontrar el valor máximo para escalar las barras
-  const maxVotes = Math.max(...sortedProjects.map((project) => project.votes));
+  const maxVotes = Math.max(...sortedProjects.map((project) => project.votes), 1);
 
   return (
     <div className="w-full my-4">
@@ -271,11 +207,13 @@ const ProjectsList = () => {
                 if (!project)
                   return <div key={`empty-${index}`} className="h-12"></div>;
 
-                // Usar un ancho fijo del 100% para todas las barras
                 const barWidth = "100%";
-                // Ahora TypeScript sabe que project.categoryId es una clave válida de categoryColors
-                const categoryColor = categoryColors[project.categoryId];
-                const percentage = ((project.votes * 100) / 5850).toFixed(1);
+                const categoryColor = categoryColors[project.categoryId] || {
+                  bg: "bg-gray-100",
+                  text: "text-gray-800",
+                  color: "#6B7280",
+                };
+                const percentage = project.percentTotal.toFixed(1);
 
                 // Calcular el ancho de la barra interna que muestra el progreso real
                 const progressWidth = `${(project.votes / maxVotes) * 100}%`;
@@ -284,7 +222,7 @@ const ProjectsList = () => {
                   <div key={project.id} className="flex items-center h-12">
                     <div className="flex-shrink-0 mr-3">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium">
-                        {project.id.split("-")[0]}
+                        {project.id_proyecto}
                       </div>
                     </div>
 
@@ -324,7 +262,7 @@ const ProjectsList = () => {
               })}
             </div>
 
-            {/* Paginación - Ahora siempre en la misma posición */}
+            {/* Paginación */}
             <div className="flex justify-center mt-6">
               <nav className="flex items-center space-x-2">
                 <button
@@ -342,7 +280,6 @@ const ProjectsList = () => {
                 {Array.from({
                   length: Math.ceil(sortedProjects.length / projectsPerPage),
                 }).map((_, index) => {
-                  // Mostrar solo un rango de páginas alrededor de la página actual
                   if (
                     index + 1 === 1 ||
                     index + 1 ===
