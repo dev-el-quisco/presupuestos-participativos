@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { IconFileExport } from "@tabler/icons-react";
@@ -19,6 +20,29 @@ interface TotalesData {
   total: Record<string, number>;
 }
 
+interface CommunalWinner {
+  id_proyecto: string;
+  nombre: string;
+  total_votos: string; // Cambiado de number a string
+  percent_total: number;
+}
+
+interface SectorWinner {
+  categoria: string;
+  sector: string;
+  proyecto: {
+    id_proyecto: string;
+    nombre: string;
+    total_votos: string; // Cambiado de number a string
+    percent_category: number;
+  };
+}
+
+interface WinnersData {
+  communalWinner: CommunalWinner | null;
+  sectorWinners: Record<string, SectorWinner[]>;
+}
+
 const Banner: React.FC<BannerProps> = ({
   totalVotos,
   years,
@@ -27,6 +51,42 @@ const Banner: React.FC<BannerProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const [winnersData, setWinnersData] = useState<WinnersData>({
+    communalWinner: null,
+    sectorWinners: {},
+  });
+
+  // Función para obtener datos de ganadores
+  const fetchWinners = async () => {
+    try {
+      const response = await fetch(
+        `/api/statistics/winners?periodo=${selectedYear}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener proyectos ganadores");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setWinnersData(data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching winners:", err);
+      setWinnersData({
+        communalWinner: null,
+        sectorWinners: {},
+      });
+    }
+  };
+
+  // Efecto para cargar ganadores cuando cambia el año
+  useEffect(() => {
+    if (selectedYear) {
+      fetchWinners();
+    }
+  }, [selectedYear]);
 
   const exportPollingPlacesData = async () => {
     try {
@@ -341,6 +401,92 @@ const Banner: React.FC<BannerProps> = ({
 
       XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
 
+      // === NUEVA HOJA DE GANADORES ===
+      const ganadoresData = [
+        ["PROYECTOS GANADORES - PERÍODO " + selectedYear],
+        [""],
+        [
+          "Categoría",
+          "Sector",
+          "ID Proyecto",
+          "Nombre Proyecto",
+          "Total Votos",
+          "Porcentaje",
+        ],
+      ];
+
+      // Agregar ganador comunal
+      if (winnersData.communalWinner) {
+        ganadoresData.push([
+          "Proyectos Comunales",
+          "General",
+          winnersData.communalWinner.id_proyecto,
+          winnersData.communalWinner.nombre,
+          winnersData.communalWinner.total_votos,
+          winnersData.communalWinner.percent_total + "%",
+        ]);
+      }
+
+      // Agregar ganadores por sector
+      Object.entries(winnersData.sectorWinners).forEach(
+        ([categoria, winners]) => {
+          winners.forEach((winner) => {
+            ganadoresData.push([
+              categoria,
+              winner.sector,
+              winner.proyecto.id_proyecto,
+              winner.proyecto.nombre,
+              winner.proyecto.total_votos,
+              winner.proyecto.percent_category + "%",
+            ]);
+          });
+        }
+      );
+
+      const wsGanadores = XLSX.utils.aoa_to_sheet(ganadoresData);
+      wsGanadores["!cols"] = [
+        { wch: 20 }, // Categoría
+        { wch: 15 }, // Sector
+        { wch: 15 }, // ID Proyecto
+        { wch: 40 }, // Nombre Proyecto
+        { wch: 12 }, // Total Votos
+        { wch: 12 }, // Porcentaje
+      ];
+
+      // Aplicar estilos a la hoja de ganadores
+      const ganadoresHeaderStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "D4AF37" } }, // Dorado para ganadores
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      // Aplicar estilos a los encabezados de ganadores (fila 3)
+      for (let col = 0; col < 6; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 2, c: col });
+        if (!wsGanadores[cellRef]) wsGanadores[cellRef] = { v: "" };
+        wsGanadores[cellRef].s = ganadoresHeaderStyle;
+      }
+
+      // Aplicar estilos intercalados a las filas de datos de ganadores
+      for (let row = 3; row < ganadoresData.length; row++) {
+        const isEvenRow = (row - 3) % 2 === 0;
+        const rowStyle = isEvenRow ? evenRowStyle : oddRowStyle;
+
+        for (let col = 0; col < 6; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+          if (!wsGanadores[cellRef]) wsGanadores[cellRef] = { v: "" };
+          wsGanadores[cellRef].s = rowStyle;
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsGanadores, "Ganadores");
+
       // === HOJAS ADICIONALES POR CATEGORÍA ===
       // Proyectos Comunales
       if (comunalesKeys.length > 0) {
@@ -495,7 +641,7 @@ const Banner: React.FC<BannerProps> = ({
       }
 
       // Generar y descargar el archivo
-      const fileName = `resultados_sedes_${selectedYear}.xlsx`;
+      const fileName = `resultados_presupuestos_participativos_${selectedYear}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
       toast.success("Datos exportados exitosamente", { id: "export" });

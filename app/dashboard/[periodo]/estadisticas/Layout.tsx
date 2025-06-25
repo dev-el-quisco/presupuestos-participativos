@@ -6,48 +6,44 @@ import Layout from "@/app/dashboard/Layout";
 import Banner from "@/app/components/dashboard/statistics/Banner";
 import TabCategoryFilter from "@/app/components/dashboard/TabCategoryFilter";
 import RoleProtectedRoute from "@/app/components/auth/RoleProtectedRoute";
+import { useYear } from "@/app/context/YearContext";
 
 interface StatisticsLayoutProps {
   children: ReactNode;
 }
 
 export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
-  const params = useParams();
   const [totalVotos, setTotalVotos] = useState<number>(0);
   const [years, setYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>(
-    (params.periodo as string) || ""
-  );
+  
+  // Usar el contexto global de año en lugar del estado local
+  const { selectedYear, setSelectedYear, isYearReady } = useYear();
 
-  // Obtener años disponibles
+  // Generar años disponibles (como en Filter.tsx)
   useEffect(() => {
-    const fetchYears = async () => {
-      try {
-        const response = await fetch("/api/years");
-        const data = await response.json();
-        if (data.success) {
-          setYears(data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching years:", error);
-      }
-    };
+    const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 1;
+    const yearsArray: number[] = [];
 
-    fetchYears();
+    for (let year = 2025; year <= maxYear; year++) {
+      yearsArray.push(year);
+    }
+
+    setYears(yearsArray);
   }, []);
 
-  // Obtener total de votos para el año seleccionado
+  // Obtener total de votos usando la API existente /api/statistics
   useEffect(() => {
     const fetchTotalVotes = async () => {
-      if (!selectedYear) return;
+      if (!selectedYear || !isYearReady) return;
 
       try {
         const response = await fetch(
-          `/api/statistics/total-votes?periodo=${selectedYear}`
+          `/api/statistics?periodo=${selectedYear}`
         );
         const data = await response.json();
         if (data.success) {
-          setTotalVotos(data.data.totalVotos || 0);
+          setTotalVotos(data.statistics.totalVotes || 0);
         }
       } catch (error) {
         console.error("Error fetching total votes:", error);
@@ -56,7 +52,7 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
     };
 
     fetchTotalVotes();
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]);
 
   const statisticsTabs = [
     { name: "Proyectos", path: "/proyectos" },
