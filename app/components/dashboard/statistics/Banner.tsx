@@ -133,7 +133,7 @@ const Banner: React.FC<BannerProps> = ({
 
       // === HOJA PRINCIPAL ===
       const mainData = [
-        ["RESULTADOS POR SEDE Y POR PROYECTO - PERÍODO " + selectedYear],
+        ["RESULTADOS POR SEDE Y POR PROYECTO - PERIODO " + selectedYear],
         [""],
         // Primera fila de encabezado: Solo las categorías
         [
@@ -331,79 +331,79 @@ const Banner: React.FC<BannerProps> = ({
       }
 
       // === HOJA DE RESUMEN ===
-      const resumenData = [
-        ["RESUMEN POR CATEGORÍAS - PERÍODO " + selectedYear],
-        [""],
-        ["Categoría", "Total Votos"],
-        [
-          "Proyectos Comunales",
-          Object.values(
-            totales.proyectosComunales as Record<string, number>
-          ).reduce((a: number, b: number) => a + b, 0),
-        ],
-        [
-          "Proyectos Infantiles",
-          Object.values(
-            totales.proyectosInfantiles as Record<string, number>
-          ).reduce((a: number, b: number) => a + b, 0),
-        ],
-        [
-          "Proyectos Juveniles",
-          Object.values(
-            totales.proyectosJuveniles as Record<string, number>
-          ).reduce((a: number, b: number) => a + b, 0),
-        ],
-        [
-          "Proyectos Sectoriales",
-          Object.values(
-            totales.proyectosSectoriales as Record<string, number>
-          ).reduce((a: number, b: number) => a + b, 0),
-        ],
-        [""],
-        [
-          "TOTAL GENERAL",
-          Object.values(totales.total as Record<string, number>).reduce(
-            (a: number, b: number) => a + b,
-            0
-          ),
-        ],
-      ];
+      // const resumenData = [
+      //   ["RESUMEN POR CATEGORÍAS - PERIODO " + selectedYear],
+      //   [""],
+      //   ["Categoría", "Total Votos"],
+      //   [
+      //     "Proyectos Comunales",
+      //     Object.values(
+      //       totales.proyectosComunales as Record<string, number>
+      //     ).reduce((a: number, b: number) => a + b, 0),
+      //   ],
+      //   [
+      //     "Proyectos Infantiles",
+      //     Object.values(
+      //       totales.proyectosInfantiles as Record<string, number>
+      //     ).reduce((a: number, b: number) => a + b, 0),
+      //   ],
+      //   [
+      //     "Proyectos Juveniles",
+      //     Object.values(
+      //       totales.proyectosJuveniles as Record<string, number>
+      //     ).reduce((a: number, b: number) => a + b, 0),
+      //   ],
+      //   [
+      //     "Proyectos Sectoriales",
+      //     Object.values(
+      //       totales.proyectosSectoriales as Record<string, number>
+      //     ).reduce((a: number, b: number) => a + b, 0),
+      //   ],
+      //   [""],
+      //   [
+      //     "TOTAL GENERAL",
+      //     Object.values(totales.total as Record<string, number>).reduce(
+      //       (a: number, b: number) => a + b,
+      //       0
+      //     ),
+      //   ],
+      // ];
 
-      const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
-      wsResumen["!cols"] = [{ wch: 25 }, { wch: 15 }];
+      // const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+      // wsResumen["!cols"] = [{ wch: 25 }, { wch: 15 }];
 
       // Aplicar estilos al resumen
-      const resumenHeaderStyle = {
-        font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "70AD47" } },
-        alignment: { horizontal: "center", vertical: "center" },
-        border: {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        },
-      };
+      // const resumenHeaderStyle = {
+      //   font: { bold: true, color: { rgb: "FFFFFF" } },
+      //   fill: { fgColor: { rgb: "70AD47" } },
+      //   alignment: { horizontal: "center", vertical: "center" },
+      //   border: {
+      //     top: { style: "thin" },
+      //     bottom: { style: "thin" },
+      //     left: { style: "thin" },
+      //     right: { style: "thin" },
+      //   },
+      // };
 
-      // Aplicar estilos a los encabezados del resumen (fila 3)
-      for (let col = 0; col < 2; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 2, c: col });
-        if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
-        wsResumen[cellRef].s = resumenHeaderStyle;
-      }
+      // // Aplicar estilos a los encabezados del resumen (fila 3)
+      // for (let col = 0; col < 2; col++) {
+      //   const cellRef = XLSX.utils.encode_cell({ r: 2, c: col });
+      //   if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
+      //   wsResumen[cellRef].s = resumenHeaderStyle;
+      // }
 
-      // Aplicar estilos a la fila de total general (fila 9)
-      for (let col = 0; col < 2; col++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 8, c: col });
-        if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
-        wsResumen[cellRef].s = totalRowStyle;
-      }
+      // // Aplicar estilos a la fila de total general (fila 9)
+      // for (let col = 0; col < 2; col++) {
+      //   const cellRef = XLSX.utils.encode_cell({ r: 8, c: col });
+      //   if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
+      //   wsResumen[cellRef].s = totalRowStyle;
+      // }
 
-      XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+      // XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
 
       // === NUEVA HOJA DE GANADORES ===
       const ganadoresData = [
-        ["PROYECTOS GANADORES - PERÍODO " + selectedYear],
+        ["PROYECTOS GANADORES - PERIODO " + selectedYear],
         [""],
         [
           "Categoría",
@@ -491,7 +491,7 @@ const Banner: React.FC<BannerProps> = ({
       // Proyectos Comunales
       if (comunalesKeys.length > 0) {
         const comunalesData = [
-          ["PROYECTOS COMUNALES - PERÍODO " + selectedYear],
+          ["PROYECTOS COMUNALES - PERIODO " + selectedYear],
           [""],
           ["Sede", ...comunalesKeys.sort(), "Total Comunales"],
           ...sedes.map((sede: any) => [
@@ -528,7 +528,7 @@ const Banner: React.FC<BannerProps> = ({
       // Proyectos Infantiles
       if (infantilesKeys.length > 0) {
         const infantilesData = [
-          ["PROYECTOS INFANTILES - PERÍODO " + selectedYear],
+          ["PROYECTOS INFANTILES - PERIODO " + selectedYear],
           [""],
           ["Sede", ...infantilesKeys.sort(), "Total Infantiles"],
           ...sedes.map((sede: any) => [
@@ -565,7 +565,7 @@ const Banner: React.FC<BannerProps> = ({
       // Proyectos Juveniles
       if (juvenilesKeys.length > 0) {
         const juvenilesData = [
-          ["PROYECTOS JUVENILES - PERÍODO " + selectedYear],
+          ["PROYECTOS JUVENILES - PERIODO " + selectedYear],
           [""],
           ["Sede", ...juvenilesKeys.sort(), "Total Juveniles"],
           ...sedes.map((sede: any) => [
@@ -602,7 +602,7 @@ const Banner: React.FC<BannerProps> = ({
       // Proyectos Sectoriales
       if (sectorialesKeys.length > 0) {
         const sectorialesData = [
-          ["PROYECTOS SECTORIALES - PERÍODO " + selectedYear],
+          ["PROYECTOS SECTORIALES - PERIODO " + selectedYear],
           [""],
           ["Sede", ...sectorialesKeys.sort(), "Total Sectoriales"],
           ...sedes.map((sede: any) => [
@@ -653,14 +653,16 @@ const Banner: React.FC<BannerProps> = ({
 
   const handleExport = () => {
     // Verificar si estamos en la página de sedes
-    if (pathname.includes("/sedes")) {
-      exportPollingPlacesData();
-    } else {
-      console.log("Exportando datos para el año:", selectedYear);
-      toast.error(
-        "Funcionalidad de exportación en desarrollo para esta sección"
-      );
-    }
+    exportPollingPlacesData();
+    // if (pathname.includes("/sedes")) {
+    //   exportPollingPlacesData();
+    //   console.log("uwu");
+    // } else {
+    //   console.log("Exportando datos para el año:", selectedYear);
+    //   toast.error(
+    //     "Funcionalidad de exportación en desarrollo para esta sección"
+    //   );
+    // }
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
