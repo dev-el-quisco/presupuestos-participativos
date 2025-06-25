@@ -1,27 +1,108 @@
+"use client";
+
 import { IconTrendingUp } from "@tabler/icons-react";
+import { useYear } from "@/app/context/YearContext";
+import { useState, useEffect } from "react";
+
+interface GeneralInfoData {
+  topProject: {
+    votes: number;
+    name: string;
+    category: string;
+  } | null;
+  topSede: {
+    votes: number;
+    name: string;
+    percentage: number;
+  } | null;
+  topCategory: {
+    votes: number;
+    name: string;
+    percentage: number;
+  } | null;
+}
 
 const GeneralInfo = () => {
-  // Datos para las tarjetas de información general
+  const { selectedYear, isYearReady } = useYear();
+  const [generalInfo, setGeneralInfo] = useState<GeneralInfoData>({
+    topProject: null,
+    topSede: null,
+    topCategory: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchGeneralInfo = async () => {
+    if (!isYearReady || !selectedYear) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/statistics/detailed?periodo=${selectedYear}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener información general");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setGeneralInfo(data.data.generalInfo);
+      } else {
+        throw new Error(data.error || "Error desconocido");
+      }
+    } catch (err) {
+      console.error("Error fetching general info:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGeneralInfo();
+  }, [isYearReady, selectedYear]);
+
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center items-center py-8">
+        <div className="text-gray-600">Cargando información general...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full flex justify-center items-center py-8">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+  // Preparar datos para las tarjetas
   const infoCards = [
     {
       title: "Proyecto Más Votado",
-      value: "1,155",
-      description: "C1: Mejoramiento de plazas públicas",
-      subtext: "Proyectos Comunales",
+      value: generalInfo.topProject?.votes.toLocaleString() || "0",
+      description: generalInfo.topProject?.name || "Sin datos",
+      subtext: generalInfo.topProject?.category || "N/A",
       color: "text-green-600",
     },
     {
       title: "Sede con Mayor Participación",
-      value: "1,294",
-      description: "Ex Hotel Italia",
-      subtext: "22.3% del total",
+      value: generalInfo.topSede?.votes.toLocaleString() || "0",
+      description: generalInfo.topSede?.name || "Sin datos",
+      subtext: generalInfo.topSede ? `${generalInfo.topSede.percentage}% del total` : "N/A",
       color: "text-blue-600",
     },
     {
       title: "Categoría Líder",
-      value: "2,453",
-      description: "Proyectos Comunales",
-      subtext: "42.3% del total",
+      value: generalInfo.topCategory?.votes.toLocaleString() || "0",
+      description: generalInfo.topCategory?.name || "Sin datos",
+      subtext: generalInfo.topCategory ? `${generalInfo.topCategory.percentage}% del total` : "N/A",
       color: "text-green-600",
     },
   ];

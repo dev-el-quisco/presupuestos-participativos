@@ -1,6 +1,7 @@
 import Layout from "@/app/dashboard/[periodo]/estadisticas/Layout";
 import GeneralInfo from "@/app/components/dashboard/statistics/DetailedView/GeneralInfo";
 import Ranking from "@/app/components/dashboard/statistics/DetailedView/Ranking";
+import Winners from "@/app/components/dashboard/statistics/DetailedView/Winners";
 
 export default function DetailedView() {
   return (
@@ -9,6 +10,7 @@ export default function DetailedView() {
         <h1 className="text-2xl">Información Extra</h1>
         <p>Métricas extra en base a los resultados obtenidos</p>
         <GeneralInfo />
+        <Winners />
         <Ranking />
       </div>
     </Layout>

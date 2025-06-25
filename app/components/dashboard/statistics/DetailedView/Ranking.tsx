@@ -1,130 +1,89 @@
+"use client";
+
+import { useYear } from "@/app/context/YearContext";
+import { useState, useEffect } from "react";
+
+interface ProjectRanking {
+  position: number;
+  id: string;
+  title: string;
+  category: string;
+  categoryId: string;
+  votes: number;
+  percentTotal: number;
+  percentCategory: number;
+}
+
 const Ranking = () => {
-  // Datos para el ranking de proyectos
-  const projectsRanking = [
-    {
-      position: 1,
-      id: "C1",
-      title: "Mejoramiento de plazas públicas",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      votes: 1155,
-      percentTotal: 19.7,
-      percentCategory: 47.1,
-    },
-    {
-      position: 2,
-      id: "I1",
-      title: "Instalación de juegos infantiles",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      votes: 687,
-      percentTotal: 11.7,
-      percentCategory: 36.6,
-    },
-    {
-      position: 3,
-      id: "I2",
-      title: "Talleres educativos para niños",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      votes: 542,
-      percentTotal: 9.3,
-      percentCategory: 28.9,
-    },
-    {
-      position: 4,
-      id: "C2",
-      title: "Iluminación LED en calles principales",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      votes: 481,
-      percentTotal: 8.2,
-      percentCategory: 19.6,
-    },
-    {
-      position: 5,
-      id: "D1",
-      title: "Construcción de canchas deportivas",
-      category: "Proyectos Deportivos",
-      categoryId: "deportivos",
-      votes: 456,
-      percentTotal: 7.8,
-      percentCategory: 46.2,
-    },
-    {
-      position: 6,
-      id: "C3",
-      title: "Creación de áreas verdes",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      votes: 428,
-      percentTotal: 7.3,
-      percentCategory: 17.4,
-    },
-    {
-      position: 7,
-      id: "C4",
-      title: "Sistema de seguridad vecinal",
-      category: "Proyectos Comunales",
-      categoryId: "comunales",
-      votes: 389,
-      percentTotal: 6.6,
-      percentCategory: 15.9,
-    },
-    {
-      position: 8,
-      id: "I3",
-      title: "Biblioteca infantil comunitaria",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      votes: 389,
-      percentTotal: 6.6,
-      percentCategory: 20.7,
-    },
-    {
-      position: 9,
-      id: "D2",
-      title: "Equipamiento deportivo comunitario",
-      category: "Proyectos Deportivos",
-      categoryId: "deportivos",
-      votes: 321,
-      percentTotal: 5.5,
-      percentCategory: 32.5,
-    },
-    {
-      position: 10,
-      id: "I4",
-      title: "Programa de actividades recreativas",
-      category: "Proyectos Infantiles",
-      categoryId: "infantiles",
-      votes: 258,
-      percentTotal: 4.4,
-      percentCategory: 13.8,
-    },
-  ];
+  const { selectedYear, isYearReady } = useYear();
+  const [projectsRanking, setProjectsRanking] = useState<ProjectRanking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // 1. Definir tipo para las claves de categorías
-  type CategoryKey = "comunales" | "infantiles" | "deportivos" | "culturales";
+  const fetchRanking = async () => {
+    if (!isYearReady || !selectedYear) return;
 
-  // 2. Mapeo de categorías a colores pasteles con aserción 'as const'
-  const categoryColors = {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `/api/statistics/detailed?periodo=${selectedYear}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener ranking de proyectos");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProjectsRanking(data.data.projectsRanking);
+      } else {
+        throw new Error(data.error || "Error desconocido");
+      }
+    } catch (err) {
+      console.error("Error fetching ranking:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRanking();
+  }, [isYearReady, selectedYear]);
+
+  // Definir tipo para las claves de categorías
+  type CategoryKey = "comunales" | "infantiles" | "deportivos" | "culturales" | "juveniles" | "sectoriales";
+
+  // Mapeo de categorías a colores pasteles
+  const categoryColors: Record<CategoryKey, { bg: string; text: string }> = {
     comunales: {
       bg: "bg-green-100",
       text: "text-green-800",
     },
-    infantiles: {
+    juveniles: {
       bg: "bg-blue-100",
       text: "text-blue-800",
     },
-    deportivos: {
+    infantiles: {
       bg: "bg-yellow-100",
       text: "text-yellow-800",
     },
-    culturales: {
-      bg: "bg-red-100",
-      text: "text-red-800",
+    sectoriales: {
+      bg: "bg-orange-100",
+      text: "text-orange-800",
     },
-  } as const;
+    deportivos: {
+      bg: "bg-blue-100",
+      text: "text-blue-800",
+    },
+    culturales: {
+      bg: "bg-orange-100",
+      text: "text-orange-800",
+    },
+  };
 
   // Color por defecto para categorías no encontradas
   const defaultColor = {
@@ -132,8 +91,35 @@ const Ranking = () => {
     text: "text-gray-800",
   };
 
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center items-center py-8">
+        <div className="text-gray-600">Cargando ranking de proyectos...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full flex justify-center items-center py-8">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+  if (projectsRanking.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mt-6">
+        <h2 className="text-xl mb-4">Ranking Completo de Proyectos</h2>
+        <p className="text-gray-600">
+          No hay proyectos con votos para el año {selectedYear}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mt-6">
       <h2 className="text-xl mb-4">Ranking Completo de Proyectos</h2>
       <p className="text-gray-600 mb-6">
         Todos los proyectos ordenados por cantidad de votos
@@ -153,9 +139,11 @@ const Ranking = () => {
           </thead>
           <tbody className="rounded-lg">
             {projectsRanking.map((project) => {
-              // 3. Verificar si la clave es válida
-              const categoryKey = project.categoryId as CategoryKey;
-              const categoryColor = categoryColors[categoryKey] || defaultColor;
+              // Verificar si la clave es válida y hacer type assertion segura
+              const categoryKey = project.categoryId.toLowerCase() as CategoryKey;
+              const categoryColor = (categoryKey in categoryColors) 
+                ? categoryColors[categoryKey] 
+                : defaultColor;
 
               return (
                 <tr
@@ -180,7 +168,7 @@ const Ranking = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-bold">
-                    {project.votes}
+                    {project.votes.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {project.percentTotal}%
