@@ -18,20 +18,9 @@ const RoleProtectedRoute = ({
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [initialCheckDone, setInitialCheckDone] = useState(false);
-  const [minDelayCompleted, setMinDelayCompleted] = useState(false);
 
   useEffect(() => {
-    // Delay mínimo de 500ms para suavizar la transición
-    const timer = setTimeout(() => {
-      setMinDelayCompleted(true);
-    }, 250);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    // Solo realizar la redirección cuando tanto la carga como el delay mínimo hayan terminado
-    if (!initialCheckDone && !isLoading && minDelayCompleted) {
+    if (!isLoading) {
       if (!isAuthenticated) {
         router.push("/");
         return;
@@ -44,21 +33,12 @@ const RoleProtectedRoute = ({
 
       setInitialCheckDone(true);
     }
-  }, [
-    isAuthenticated,
-    isLoading,
-    user,
-    allowedRoles,
-    redirectTo,
-    router,
-    initialCheckDone,
-    minDelayCompleted,
-  ]);
+  }, [isAuthenticated, isLoading, user, allowedRoles, redirectTo, router]);
 
-  // Mostrar spinner durante la carga inicial o hasta que se complete el delay mínimo
-  if ((isLoading || !minDelayCompleted) && !initialCheckDone) {
+  // Mostrar loading mientras se verifica
+  if (isLoading || !initialCheckDone) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative">
+      <div className="h-dvh flex items-center justify-center relative">
         <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
           <div
             className="absolute inset-0 w-full h-full"
@@ -70,31 +50,6 @@ const RoleProtectedRoute = ({
           ></div>
         </div>
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
-      </div>
-    );
-  }
-
-  // No mostrar mensaje de redirección en navegaciones posteriores
-  if (
-    !initialCheckDone &&
-    (!isAuthenticated || !user?.rol || !allowedRoles.includes(user.rol))
-  ) {
-    return (
-      <div className="min-h-screen flex items-center justify-center relative">
-        <div className="h-full w-full absolute inset-0 -z-10 bg-[#2c3e4a]">
-          <div
-            className="absolute inset-0 w-full h-full"
-            style={{
-              backgroundImage: `repeating-linear-gradient(45deg, #4f4f4f 0, #4f4f4f 2px, transparent 2px, transparent 10px)`,
-              backgroundSize: "14px 14px",
-              opacity: "0.15",
-            }}
-          ></div>
-        </div>
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Redirigiendo...</p>
-        </div>
       </div>
     );
   }

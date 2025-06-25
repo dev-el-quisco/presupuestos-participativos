@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ToasterClient from "@/app/components/ToasterClient";
-import { YearProvider } from "./context/YearContext";
+import { YearProvider } from "@/app/context/YearContext";
+import { AuthProvider } from "@/app/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Presupuestos Participativos | El Quisco",
@@ -17,10 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <YearProvider>
-          {children}
-          <ToasterClient />
-        </YearProvider>
+        <AuthProvider>
+          <YearProvider>
+            {children}
+            <ToasterClient />
+          </YearProvider>
+        </AuthProvider>
       </body>
     </html>
   );

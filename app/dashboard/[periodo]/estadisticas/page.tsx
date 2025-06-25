@@ -5,7 +5,7 @@ import RoleProtectedRoute from "@/app/components/auth/RoleProtectedRoute";
 export default function Statistics() {
   return (
     <RoleProtectedRoute
-      allowedRoles={["Administrador", "Digitador", "Encargado de Local"]}
+      allowedRoles={["Administrador", "Ministro de Fe", "Encargado de Local"]}
     >
       <Layout>
         <div className="my-8 text-center text-gray-700">
