@@ -11,7 +11,7 @@ const Banner = () => {
     { id: "Comunales", name: "Comunales" },
     { id: "Infantiles", name: "Infantiles" },
     { id: "Juveniles", name: "Juveniles" },
-    { id: "Sectoriale", name: "Sectoriales" },
+    { id: "Sectoriales", name: "Sectoriales" },
   ];
 
   const handleCategoryChange = (categoryId: string) => {
