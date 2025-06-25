@@ -1,35 +1,495 @@
 "use client";
 
-import { IconFileExport } from "@tabler/icons-react";
-import { useState, useEffect } from "react";
-import { useYear } from "@/app/context/YearContext";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { IconFileExport } from "@tabler/icons-react";
+import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 
-const Banner = () => {
-  const [years, setYears] = useState<number[]>([]);
+interface BannerProps {
+  totalVotos: number;
+  years: number[];
+  selectedYear: string;
+  setSelectedYear: (year: string) => void;
+}
 
-  const { selectedYear, setSelectedYear } = useYear();
+interface TotalesData {
+  proyectosComunales: Record<string, number>;
+  proyectosInfantiles: Record<string, number>;
+  proyectosJuveniles: Record<string, number>;
+  proyectosSectoriales: Record<string, number>;
+  total: Record<string, number>;
+}
 
+const Banner: React.FC<BannerProps> = ({
+  totalVotos,
+  years,
+  selectedYear,
+  setSelectedYear,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const totalVotos = 5850;
+  const exportPollingPlacesData = async () => {
+    try {
+      toast.loading("Exportando datos...", { id: "export" });
 
-  useEffect(() => {
-    const currentYear = new Date().getFullYear();
-    const maxYear = currentYear + 1;
-    const yearsArray: number[] = [];
+      // Cambiar la URL de /api/polling-places a /api/statistics/polling-places
+      const response = await fetch(`/api/statistics/polling-places?periodo=${selectedYear}`);
+      const data = await response.json();
 
-    for (let year = 2025; year <= maxYear; year++) {
-      yearsArray.push(year);
+      if (!data.success) {
+        throw new Error("Error al obtener los datos");
+      }
+
+      const { sedes, totales } = data.data;
+
+      // Validar que los datos existan
+      if (!sedes || !totales) {
+        throw new Error("Datos incompletos recibidos del servidor");
+      }
+
+      // Obtener todas las claves de proyectos con validaciones adicionales
+      const comunalesKeys = Object.keys(totales?.proyectosComunales || {});
+      const infantilesKeys = Object.keys(totales?.proyectosInfantiles || {});
+      const juvenilesKeys = Object.keys(totales?.proyectosJuveniles || {});
+      const sectorialesKeys = Object.keys(totales?.proyectosSectoriales || {});
+
+      // Validar que al menos tengamos algunos datos
+      if (comunalesKeys.length === 0 && infantilesKeys.length === 0 && 
+          juvenilesKeys.length === 0 && sectorialesKeys.length === 0) {
+        throw new Error("No hay datos de proyectos disponibles para exportar");
+      }
+
+      // Ordenar las claves
+      comunalesKeys.sort();
+      infantilesKeys.sort();
+      juvenilesKeys.sort();
+      sectorialesKeys.sort();
+
+      // === HOJA PRINCIPAL ===
+      const mainData = [
+        ["RESULTADOS POR SEDE Y POR PROYECTO - PERÍODO " + selectedYear],
+        [""],
+        [
+          "SEDE",
+          ...comunalesKeys.map(() => "PROYECTOS"),
+          ...infantilesKeys.map(() => "PROYECTOS"),
+          ...juvenilesKeys.map(() => "PROYECTOS"),
+          ...sectorialesKeys.map(() => "PROYECTOS"),
+          "TOTAL",
+        ],
+        [
+          "",
+          ...comunalesKeys.map(() => "COMUNALES"),
+          ...infantilesKeys.map(() => "INFANTILES"),
+          ...juvenilesKeys.map(() => "JUVENILES"),
+          ...sectorialesKeys.map(() => "SECTORIALES"),
+          "VOTOS",
+        ],
+        [
+          "",
+          ...comunalesKeys,
+          ...infantilesKeys,
+          ...juvenilesKeys,
+          ...sectorialesKeys,
+          "",
+        ],
+        ...sedes.map((sede: any) => [
+          sede.sede,
+          ...comunalesKeys.map((key) => sede.proyectosComunales[key] || 0),
+          ...infantilesKeys.map((key) => sede.proyectosInfantiles[key] || 0),
+          ...juvenilesKeys.map((key) => sede.proyectosJuveniles[key] || 0),
+          ...sectorialesKeys.map((key) => sede.proyectosSectoriales[key] || 0),
+          sede.totalVotos || 0,
+        ]),
+        [""],
+        [
+          "TOTAL",
+          ...comunalesKeys.map((key) => totales.proyectosComunales[key] || 0),
+          ...infantilesKeys.map((key) => totales.proyectosInfantiles[key] || 0),
+          ...juvenilesKeys.map((key) => totales.proyectosJuveniles[key] || 0),
+          ...sectorialesKeys.map(
+            (key) => totales.proyectosSectoriales[key] || 0
+          ),
+          Object.values(totales.total as Record<string, number>).reduce(
+            (a: number, b: number) => a + b,
+            0
+          ),
+        ],
+      ];
+
+      const wsMain = XLSX.utils.aoa_to_sheet(mainData);
+
+      // Configurar anchos de columna dinámicamente
+      const totalColumns =
+        1 +
+        comunalesKeys.length +
+        infantilesKeys.length +
+        juvenilesKeys.length +
+        sectorialesKeys.length +
+        1;
+      wsMain["!cols"] = [
+        { wch: 25 }, // Columna SEDE
+        ...Array(totalColumns - 2).fill({ wch: 12 }), // Columnas de proyectos
+        { wch: 15 }, // Columna TOTAL
+      ];
+
+      // Aplicar estilos a los encabezados y totales
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4472C4" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      const totalRowStyle = {
+        font: { bold: true },
+        fill: { fgColor: { rgb: "E2EFDA" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      // Aplicar estilos a las celdas de encabezado (filas 3, 4, 5)
+      for (let col = 0; col < totalColumns; col++) {
+        const cellRef3 = XLSX.utils.encode_cell({ r: 2, c: col });
+        const cellRef4 = XLSX.utils.encode_cell({ r: 3, c: col });
+        const cellRef5 = XLSX.utils.encode_cell({ r: 4, c: col });
+
+        if (!wsMain[cellRef3]) wsMain[cellRef3] = { v: "" };
+        if (!wsMain[cellRef4]) wsMain[cellRef4] = { v: "" };
+        if (!wsMain[cellRef5]) wsMain[cellRef5] = { v: "" };
+
+        wsMain[cellRef3].s = headerStyle;
+        wsMain[cellRef4].s = headerStyle;
+        wsMain[cellRef5].s = headerStyle;
+      }
+
+      // Aplicar estilos a la fila de totales (última fila)
+      const totalRowIndex = mainData.length - 1;
+      for (let col = 0; col < totalColumns; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: col });
+        if (!wsMain[cellRef]) wsMain[cellRef] = { v: "" };
+        wsMain[cellRef].s = totalRowStyle;
+      }
+
+      // Crear el libro de trabajo
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsMain, "Resultados por Sede");
+
+      // Configurar las celdas combinadas para los encabezados
+      wsMain["!merges"] = [];
+
+      // Combinar celdas para "PROYECTOS COMUNALES"
+      if (comunalesKeys.length > 1) {
+        wsMain["!merges"].push({
+          s: { r: 2, c: 1 },
+          e: { r: 2, c: comunalesKeys.length },
+        });
+        wsMain["!merges"].push({
+          s: { r: 3, c: 1 },
+          e: { r: 3, c: comunalesKeys.length },
+        });
+      }
+
+      // Combinar celdas para "PROYECTOS INFANTILES"
+      if (infantilesKeys.length > 1) {
+        const startCol = 1 + comunalesKeys.length;
+        wsMain["!merges"].push({
+          s: { r: 2, c: startCol },
+          e: { r: 2, c: startCol + infantilesKeys.length - 1 },
+        });
+        wsMain["!merges"].push({
+          s: { r: 3, c: startCol },
+          e: { r: 3, c: startCol + infantilesKeys.length - 1 },
+        });
+      }
+
+      // Combinar celdas para "PROYECTOS JUVENILES"
+      if (juvenilesKeys.length > 1) {
+        const startCol = 1 + comunalesKeys.length + infantilesKeys.length;
+        wsMain["!merges"].push({
+          s: { r: 2, c: startCol },
+          e: { r: 2, c: startCol + juvenilesKeys.length - 1 },
+        });
+        wsMain["!merges"].push({
+          s: { r: 3, c: startCol },
+          e: { r: 3, c: startCol + juvenilesKeys.length - 1 },
+        });
+      }
+
+      // Combinar celdas para "PROYECTOS SECTORIALES"
+      if (sectorialesKeys.length > 1) {
+        const startCol =
+          1 +
+          comunalesKeys.length +
+          infantilesKeys.length +
+          juvenilesKeys.length;
+        wsMain["!merges"].push({
+          s: { r: 2, c: startCol },
+          e: { r: 2, c: startCol + sectorialesKeys.length - 1 },
+        });
+        wsMain["!merges"].push({
+          s: { r: 3, c: startCol },
+          e: { r: 3, c: startCol + sectorialesKeys.length - 1 },
+        });
+      }
+
+      // === HOJA DE RESUMEN ===
+      const resumenData = [
+        ["RESUMEN POR CATEGORÍAS - PERÍODO " + selectedYear],
+        [""],
+        ["Categoría", "Total Votos"],
+        [
+          "Proyectos Comunales",
+          Object.values(
+            totales.proyectosComunales as Record<string, number>
+          ).reduce((a: number, b: number) => a + b, 0),
+        ],
+        [
+          "Proyectos Infantiles",
+          Object.values(
+            totales.proyectosInfantiles as Record<string, number>
+          ).reduce((a: number, b: number) => a + b, 0),
+        ],
+        [
+          "Proyectos Juveniles",
+          Object.values(
+            totales.proyectosJuveniles as Record<string, number>
+          ).reduce((a: number, b: number) => a + b, 0),
+        ],
+        [
+          "Proyectos Sectoriales",
+          Object.values(
+            totales.proyectosSectoriales as Record<string, number>
+          ).reduce((a: number, b: number) => a + b, 0),
+        ],
+        [""],
+        [
+          "TOTAL GENERAL",
+          Object.values(totales.total as Record<string, number>).reduce(
+            (a: number, b: number) => a + b,
+            0
+          ),
+        ],
+      ];
+
+      const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+      wsResumen["!cols"] = [{ wch: 25 }, { wch: 15 }];
+
+      // Aplicar estilos al resumen
+      const resumenHeaderStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "70AD47" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      // Aplicar estilos a los encabezados del resumen (fila 3)
+      for (let col = 0; col < 2; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 2, c: col });
+        if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
+        wsResumen[cellRef].s = resumenHeaderStyle;
+      }
+
+      // Aplicar estilos a la fila de total general (fila 9)
+      for (let col = 0; col < 2; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 8, c: col });
+        if (!wsResumen[cellRef]) wsResumen[cellRef] = { v: "" };
+        wsResumen[cellRef].s = totalRowStyle;
+      }
+
+      XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
+
+      // === HOJAS ADICIONALES POR CATEGORÍA ===
+      // Proyectos Comunales
+      if (comunalesKeys.length > 0) {
+        const comunalesData = [
+          ["PROYECTOS COMUNALES - PERÍODO " + selectedYear],
+          [""],
+          ["Sede", ...comunalesKeys.sort(), "Total Comunales"],
+          ...sedes.map((sede: any) => [
+            sede.sede,
+            ...comunalesKeys
+              .sort()
+              .map((key) => sede.proyectosComunales[key] || 0),
+            comunalesKeys.reduce(
+              (sum, key) => sum + (sede.proyectosComunales[key] || 0),
+              0
+            ),
+          ]),
+          [""],
+          [
+            "TOTALES",
+            ...comunalesKeys
+              .sort()
+              .map((key) => totales.proyectosComunales[key] || 0),
+            Object.values(
+              totales.proyectosComunales as Record<string, number>
+            ).reduce((a: number, b: number) => a + b, 0),
+          ],
+        ];
+
+        const wsComunales = XLSX.utils.aoa_to_sheet(comunalesData);
+        wsComunales["!cols"] = [
+          { wch: 25 },
+          ...comunalesKeys.map(() => ({ wch: 12 })),
+          { wch: 15 },
+        ];
+        XLSX.utils.book_append_sheet(wb, wsComunales, "Proyectos Comunales");
+      }
+
+      // Proyectos Infantiles
+      if (infantilesKeys.length > 0) {
+        const infantilesData = [
+          ["PROYECTOS INFANTILES - PERÍODO " + selectedYear],
+          [""],
+          ["Sede", ...infantilesKeys.sort(), "Total Infantiles"],
+          ...sedes.map((sede: any) => [
+            sede.sede,
+            ...infantilesKeys
+              .sort()
+              .map((key) => sede.proyectosInfantiles[key] || 0),
+            infantilesKeys.reduce(
+              (sum, key) => sum + (sede.proyectosInfantiles[key] || 0),
+              0
+            ),
+          ]),
+          [""],
+          [
+            "TOTALES",
+            ...infantilesKeys
+              .sort()
+              .map((key) => totales.proyectosInfantiles[key] || 0),
+            Object.values(
+              totales.proyectosInfantiles as Record<string, number>
+            ).reduce((a: number, b: number) => a + b, 0),
+          ],
+        ];
+
+        const wsInfantiles = XLSX.utils.aoa_to_sheet(infantilesData);
+        wsInfantiles["!cols"] = [
+          { wch: 25 },
+          ...infantilesKeys.map(() => ({ wch: 12 })),
+          { wch: 15 },
+        ];
+        XLSX.utils.book_append_sheet(wb, wsInfantiles, "Proyectos Infantiles");
+      }
+
+      // Proyectos Juveniles
+      if (juvenilesKeys.length > 0) {
+        const juvenilesData = [
+          ["PROYECTOS JUVENILES - PERÍODO " + selectedYear],
+          [""],
+          ["Sede", ...juvenilesKeys.sort(), "Total Juveniles"],
+          ...sedes.map((sede: any) => [
+            sede.sede,
+            ...juvenilesKeys
+              .sort()
+              .map((key) => sede.proyectosJuveniles[key] || 0),
+            juvenilesKeys.reduce(
+              (sum, key) => sum + (sede.proyectosJuveniles[key] || 0),
+              0
+            ),
+          ]),
+          [""],
+          [
+            "TOTALES",
+            ...juvenilesKeys
+              .sort()
+              .map((key) => totales.proyectosJuveniles[key] || 0),
+            Object.values(
+              totales.proyectosJuveniles as Record<string, number>
+            ).reduce((a: number, b: number) => a + b, 0),
+          ],
+        ];
+
+        const wsJuveniles = XLSX.utils.aoa_to_sheet(juvenilesData);
+        wsJuveniles["!cols"] = [
+          { wch: 25 },
+          ...juvenilesKeys.map(() => ({ wch: 12 })),
+          { wch: 15 },
+        ];
+        XLSX.utils.book_append_sheet(wb, wsJuveniles, "Proyectos Juveniles");
+      }
+
+      // Proyectos Sectoriales
+      if (sectorialesKeys.length > 0) {
+        const sectorialesData = [
+          ["PROYECTOS SECTORIALES - PERÍODO " + selectedYear],
+          [""],
+          ["Sede", ...sectorialesKeys.sort(), "Total Sectoriales"],
+          ...sedes.map((sede: any) => [
+            sede.sede,
+            ...sectorialesKeys
+              .sort()
+              .map((key) => sede.proyectosSectoriales[key] || 0),
+            sectorialesKeys.reduce(
+              (sum, key) => sum + (sede.proyectosSectoriales[key] || 0),
+              0
+            ),
+          ]),
+          [""],
+          [
+            "TOTALES",
+            ...sectorialesKeys
+              .sort()
+              .map((key) => totales.proyectosSectoriales[key] || 0),
+            Object.values(
+              totales.proyectosSectoriales as Record<string, number>
+            ).reduce((a: number, b: number) => a + b, 0),
+          ],
+        ];
+
+        const wsSectoriales = XLSX.utils.aoa_to_sheet(sectorialesData);
+        wsSectoriales["!cols"] = [
+          { wch: 25 },
+          ...sectorialesKeys.map(() => ({ wch: 12 })),
+          { wch: 15 },
+        ];
+        XLSX.utils.book_append_sheet(
+          wb,
+          wsSectoriales,
+          "Proyectos Sectoriales"
+        );
+      }
+
+      // Generar y descargar el archivo
+      const fileName = `resultados_sedes_${selectedYear}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success("Datos exportados exitosamente", { id: "export" });
+    } catch (error) {
+      console.error("Error al exportar:", error);
+      toast.error("Error al exportar los datos", { id: "export" });
     }
-
-    setYears(yearsArray);
-  }, []);
+  };
 
   const handleExport = () => {
-    console.log("Exportando datos para el año:", selectedYear);
+    // Verificar si estamos en la página de sedes
+    if (pathname.includes("/sedes")) {
+      exportPollingPlacesData();
+    } else {
+      console.log("Exportando datos para el año:", selectedYear);
+      toast.error(
+        "Funcionalidad de exportación en desarrollo para esta sección"
+      );
+    }
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
