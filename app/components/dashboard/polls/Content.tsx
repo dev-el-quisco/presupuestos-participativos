@@ -11,6 +11,7 @@ import {
 import Portal from "@/app/components/ui/Portal";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useYear } from "@/app/context/YearContext";
+import { useVotacionesData } from '@/app/hooks/useVotacionesData';
 import toast from "react-hot-toast";
 
 interface Mesa {
@@ -88,13 +89,11 @@ const getCategoryColors = (categoria: string) => {
 
 const Content = () => {
   const { user } = useAuth();
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear();
+  const { mesas, proyectos, loading, setMesas, refetchMesas } = useVotacionesData();
   const [showVotosModal, setShowVotosModal] = useState<boolean>(false);
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
-  const [mesas, setMesas] = useState<Mesa[]>([]);
-  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [loading, setLoading] = useState(true);
   const [rutError, setRutError] = useState<string>("");
 
   // Función para validar RUT chileno
@@ -215,63 +214,7 @@ const Content = () => {
 
   const [votoForm, setVotoForm] = useState<VotoForm>({});
 
-  // Cargar mesas según permisos del usuario
-  const fetchMesas = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("auth_token");
-      const response = await fetch(
-        `/api/mesas/user-permissions?periodo=${selectedYear}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
 
-      if (response.ok) {
-        const data = await response.json();
-        // Ordenar mesas por sede y luego por nombre de mesa
-        const mesasOrdenadas = data.data.sort((a: Mesa, b: Mesa) => {
-          // Primero ordenar por sede
-          const sedeComparison = a.sede_nombre.localeCompare(b.sede_nombre);
-          if (sedeComparison !== 0) {
-            return sedeComparison;
-          }
-          // Si la sede es la misma, ordenar por nombre de mesa
-          return a.nombre.localeCompare(b.nombre);
-        });
-        setMesas(mesasOrdenadas);
-      } else {
-        toast.error("Error al cargar las mesas");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Error al cargar las mesas");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Cargar proyectos del año seleccionado
-  const fetchProyectos = async () => {
-    try {
-      const response = await fetch(`/api/projects?periodo=${selectedYear}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProyectos(data.projects); // Cambiar de data.data a data.projects
-      }
-    } catch (error) {
-      console.error("Error al cargar proyectos:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedYear && user) {
-      fetchMesas();
-      fetchProyectos();
-    }
-  }, [selectedYear, user]);
 
   // Controlar el overflow del body cuando los modales están abiertos
   useEffect(() => {
@@ -537,7 +480,7 @@ const Content = () => {
       if (response.ok) {
         toast.success("Votos registrados exitosamente");
         setShowVotosModal(false);
-        fetchMesas(); // Recargar para actualizar conteo
+        refetchMesas(); // Recargar para actualizar conteo
       } else {
         const error = await response.json();
         toast.error(error.error || "Error al registrar votos");

@@ -28,20 +28,24 @@ const Filter = () => {
     const newYear = e.target.value;
     setSelectedYear(newYear);
 
+    // Extraer el año actual de la URL en lugar de usar selectedYear
     const pathSegments = pathname.split("/").filter(Boolean);
-    const yearIndex = pathSegments.indexOf(selectedYear);
-
+    const currentYearInUrl = pathSegments.find(segment => /^[0-9]{4}$/.test(segment));
+    
     let newPath = pathname;
 
-    if (yearIndex !== -1) {
-      const updatedPathSegments = [...pathSegments];
-      updatedPathSegments[yearIndex] = newYear;
-      newPath = "/" + updatedPathSegments.join("/");
+    if (currentYearInUrl) {
+      // Reemplazar el año actual en la URL con el nuevo año
+      newPath = pathname.replace(`/${currentYearInUrl}`, `/${newYear}`);
     } else {
+      // Si no hay año en la URL, agregarlo después de /dashboard
       const parts = pathname.split("/");
       if (parts[1] === "dashboard" && parts.length > 2) {
         parts[2] = newYear;
         newPath = parts.join("/");
+      } else if (parts[1] === "dashboard") {
+        // Si es solo /dashboard, agregar el año
+        newPath = `/dashboard/${newYear}`;
       } else {
         console.warn(
           "Año no encontrado en la ruta actual para reemplazar. Manteniendo la ruta original con el año actualizado en contexto."
