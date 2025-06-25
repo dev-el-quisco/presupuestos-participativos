@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
-import { useState, useEffect } from "react";
 
 interface ProjectWithVotes {
   id: string;
@@ -32,7 +32,7 @@ type Project = {
 };
 
 const ProjectsList = () => {
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,6 +66,8 @@ const ProjectsList = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
+      if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+      
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -83,7 +85,7 @@ const ProjectsList = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);

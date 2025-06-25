@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import {
   IconMoodSmile,
   IconBallAmericanFootball,
@@ -8,6 +7,7 @@ import {
   IconX,
   IconLocationPin,
 } from "@tabler/icons-react";
+import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
 
 interface CategoryData {
@@ -17,7 +17,7 @@ interface CategoryData {
 }
 
 const Category = () => {
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +54,8 @@ const Category = () => {
   ];
 
   const fetchCategoryData = async () => {
+    if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+
     try {
       setLoading(true);
       const response = await fetch(
@@ -64,12 +66,10 @@ const Category = () => {
       if (data.success && data.categories) {
         setCategories(data.categories);
       } else {
-        // Usar datos estáticos si no hay datos de la API
         setCategories(staticCategories);
       }
     } catch (error) {
       console.error("Error al cargar categorías:", error);
-      // Usar datos estáticos en caso de error
       setCategories(staticCategories);
     } finally {
       setLoading(false);
@@ -77,19 +77,20 @@ const Category = () => {
   };
 
   useEffect(() => {
-    if (selectedYear) {
+    if (isYearReady && selectedYear) {
+      // Verificar isYearReady
       fetchCategoryData();
     }
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   // Exponer función globalmente para actualizar desde otros componentes
   useEffect(() => {
-    (window as any).updateCategories = fetchCategoryData;
+    (window as any).updateCategoryData = fetchCategoryData;
 
     return () => {
-      delete (window as any).updateCategories;
+      delete (window as any).updateCategoryData;
     };
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   // Escuchar eventos personalizados para actualizar automáticamente
   useEffect(() => {

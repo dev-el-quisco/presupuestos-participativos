@@ -20,12 +20,10 @@ interface StatisticsData {
 }
 
 const MostVoted = () => {
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
-    null
-  );
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Mapeo de colores por categoría
@@ -42,6 +40,8 @@ const MostVoted = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
+      if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+      
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -59,7 +59,7 @@ const MostVoted = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);

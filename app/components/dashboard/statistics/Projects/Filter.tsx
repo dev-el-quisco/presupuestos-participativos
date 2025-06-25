@@ -1,8 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
-import { useState, useEffect } from "react";
 
 interface CategoryData {
   id: string;
@@ -19,11 +19,9 @@ interface StatisticsData {
 }
 
 const Filter = () => {
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory, setSelectedCategory } = useFilter();
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
-    null
-  );
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Mapeo de colores por tipo de proyecto
@@ -67,6 +65,8 @@ const Filter = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
+      if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+      
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -84,7 +84,7 @@ const Filter = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   const handleCategorySelect = (category: string) => {
     if (selectedCategory === category) {

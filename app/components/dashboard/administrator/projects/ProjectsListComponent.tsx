@@ -30,7 +30,7 @@ interface Sector {
 }
 
 const ProjectsListComponent = () => {
-  const { selectedYear } = useYear();
+  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
@@ -77,6 +77,8 @@ const ProjectsListComponent = () => {
 
   // Función para obtener proyectos
   const fetchProjects = async () => {
+    if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+    
     try {
       setLoading(true);
       const response = await fetch(`/api/projects?periodo=${selectedYear}`);
@@ -157,12 +159,12 @@ const ProjectsListComponent = () => {
   };
 
   useEffect(() => {
-    if (selectedYear) {
+    if (isYearReady && selectedYear) { // Verificar isYearReady
       fetchProjects();
     }
     fetchProjectTypes();
     fetchSectors();
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   // Aplicar filtro cuando cambian los proyectos
   useEffect(() => {
@@ -212,7 +214,15 @@ const ProjectsListComponent = () => {
     return () => {
       delete (window as any).updateProjectsList;
     };
-  }, [selectedYear]);
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
+
+  useEffect(() => {
+    (window as any).updateProjectsList = fetchProjects;
+
+    return () => {
+      delete (window as any).updateProjectsList;
+    };
+  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
 
   // Handlers para crear proyecto
   const handleCreateInputChange = (
