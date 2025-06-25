@@ -55,7 +55,13 @@ const Ranking = () => {
   }, [isYearReady, selectedYear]);
 
   // Definir tipo para las claves de categorías
-  type CategoryKey = "comunales" | "infantiles" | "deportivos" | "culturales" | "juveniles" | "sectoriales";
+  type CategoryKey =
+    | "comunales"
+    | "infantiles"
+    | "deportivos"
+    | "culturales"
+    | "juveniles"
+    | "sectoriales";
 
   // Mapeo de categorías a colores pasteles
   const categoryColors: Record<CategoryKey, { bg: string; text: string }> = {
@@ -140,10 +146,12 @@ const Ranking = () => {
           <tbody className="rounded-lg">
             {projectsRanking.map((project) => {
               // Verificar si la clave es válida y hacer type assertion segura
-              const categoryKey = project.categoryId.toLowerCase() as CategoryKey;
-              const categoryColor = (categoryKey in categoryColors) 
-                ? categoryColors[categoryKey] 
-                : defaultColor;
+              const categoryKey =
+                project.categoryId.toLowerCase() as CategoryKey;
+              const categoryColor =
+                categoryKey in categoryColors
+                  ? categoryColors[categoryKey]
+                  : defaultColor;
 
               return (
                 <tr

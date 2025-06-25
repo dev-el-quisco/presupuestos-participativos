@@ -16,7 +16,7 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   const [totalVotos, setTotalVotos] = useState<number>(0);
   const [years, setYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>(
-    params.periodo as string || ""
+    (params.periodo as string) || ""
   );
 
   // Obtener años disponibles

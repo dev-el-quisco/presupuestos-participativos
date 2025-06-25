@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { IconFileExport } from "@tabler/icons-react";
@@ -35,7 +33,9 @@ const Banner: React.FC<BannerProps> = ({
       toast.loading("Exportando datos...", { id: "export" });
 
       // Cambiar la URL de /api/polling-places a /api/statistics/polling-places
-      const response = await fetch(`/api/statistics/polling-places?periodo=${selectedYear}`);
+      const response = await fetch(
+        `/api/statistics/polling-places?periodo=${selectedYear}`
+      );
       const data = await response.json();
 
       if (!data.success) {
@@ -56,8 +56,12 @@ const Banner: React.FC<BannerProps> = ({
       const sectorialesKeys = Object.keys(totales?.proyectosSectoriales || {});
 
       // Validar que al menos tengamos algunos datos
-      if (comunalesKeys.length === 0 && infantilesKeys.length === 0 && 
-          juvenilesKeys.length === 0 && sectorialesKeys.length === 0) {
+      if (
+        comunalesKeys.length === 0 &&
+        infantilesKeys.length === 0 &&
+        juvenilesKeys.length === 0 &&
+        sectorialesKeys.length === 0
+      ) {
         throw new Error("No hay datos de proyectos disponibles para exportar");
       }
 
@@ -71,29 +75,23 @@ const Banner: React.FC<BannerProps> = ({
       const mainData = [
         ["RESULTADOS POR SEDE Y POR PROYECTO - PERÍODO " + selectedYear],
         [""],
+        // Primera fila de encabezado: Solo las categorías
         [
           "SEDE",
-          ...comunalesKeys.map(() => "PROYECTOS"),
-          ...infantilesKeys.map(() => "PROYECTOS"),
-          ...juvenilesKeys.map(() => "PROYECTOS"),
-          ...sectorialesKeys.map(() => "PROYECTOS"),
-          "TOTAL",
+          ...Array(comunalesKeys.length).fill("PROYECTOS COMUNALES"),
+          ...Array(infantilesKeys.length).fill("PROYECTOS INFANTILES"),
+          ...Array(juvenilesKeys.length).fill("PROYECTOS JUVENILES"),
+          ...Array(sectorialesKeys.length).fill("PROYECTOS SECTORIALES"),
+          "TOTAL VOTOS",
         ],
+        // Segunda fila de encabezado: Solo los nombres de proyectos
         [
-          "",
-          ...comunalesKeys.map(() => "COMUNALES"),
-          ...infantilesKeys.map(() => "INFANTILES"),
-          ...juvenilesKeys.map(() => "JUVENILES"),
-          ...sectorialesKeys.map(() => "SECTORIALES"),
-          "VOTOS",
-        ],
-        [
-          "",
+          "", // Celda vacía debajo de SEDE
           ...comunalesKeys,
           ...infantilesKeys,
           ...juvenilesKeys,
           ...sectorialesKeys,
-          "",
+          "", // Celda vacía debajo de TOTAL VOTOS
         ],
         ...sedes.map((sede: any) => [
           sede.sede,
@@ -131,14 +129,36 @@ const Banner: React.FC<BannerProps> = ({
         1;
       wsMain["!cols"] = [
         { wch: 25 }, // Columna SEDE
-        ...Array(totalColumns - 2).fill({ wch: 12 }), // Columnas de proyectos
+        ...Array(totalColumns - 2).fill({ wch: 18 }), // Columnas de proyectos más anchas
         { wch: 15 }, // Columna TOTAL
       ];
 
-      // Aplicar estilos a los encabezados y totales
+      // Estilos mejorados con colores
       const headerStyle = {
         font: { bold: true, color: { rgb: "FFFFFF" } },
-        fill: { fgColor: { rgb: "4472C4" } },
+        fill: { fgColor: { rgb: "2E75B6" } }, // Azul más oscuro
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      const evenRowStyle = {
+        fill: { fgColor: { rgb: "FFFFFF" } }, // Blanco
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        },
+      };
+
+      const oddRowStyle = {
+        fill: { fgColor: { rgb: "E8F1FF" } }, // Azul muy claro
         alignment: { horizontal: "center", vertical: "center" },
         border: {
           top: { style: "thin" },
@@ -149,8 +169,8 @@ const Banner: React.FC<BannerProps> = ({
       };
 
       const totalRowStyle = {
-        font: { bold: true },
-        fill: { fgColor: { rgb: "E2EFDA" } },
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "2E75B6" } }, // Mismo color que encabezado
         alignment: { horizontal: "center", vertical: "center" },
         border: {
           top: { style: "thin" },
@@ -160,19 +180,28 @@ const Banner: React.FC<BannerProps> = ({
         },
       };
 
-      // Aplicar estilos a las celdas de encabezado (filas 3, 4, 5)
-      for (let col = 0; col < totalColumns; col++) {
-        const cellRef3 = XLSX.utils.encode_cell({ r: 2, c: col });
-        const cellRef4 = XLSX.utils.encode_cell({ r: 3, c: col });
-        const cellRef5 = XLSX.utils.encode_cell({ r: 4, c: col });
+      // Aplicar estilos a las filas de encabezado (filas 3 y 4, índices 2 y 3)
+      for (let headerRow = 2; headerRow <= 3; headerRow++) {
+        for (let col = 0; col < totalColumns; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: headerRow, c: col });
+          if (!wsMain[cellRef]) wsMain[cellRef] = { v: "" };
+          wsMain[cellRef].s = headerStyle;
+        }
+      }
 
-        if (!wsMain[cellRef3]) wsMain[cellRef3] = { v: "" };
-        if (!wsMain[cellRef4]) wsMain[cellRef4] = { v: "" };
-        if (!wsMain[cellRef5]) wsMain[cellRef5] = { v: "" };
+      // Aplicar estilos intercalados a las filas de datos
+      const dataStartRow = 4; // Después de las dos filas de encabezado
+      const dataEndRow = mainData.length - 3; // Antes de la fila vacía y total
 
-        wsMain[cellRef3].s = headerStyle;
-        wsMain[cellRef4].s = headerStyle;
-        wsMain[cellRef5].s = headerStyle;
+      for (let row = dataStartRow; row <= dataEndRow; row++) {
+        const isEvenRow = (row - dataStartRow) % 2 === 0;
+        const rowStyle = isEvenRow ? evenRowStyle : oddRowStyle;
+
+        for (let col = 0; col < totalColumns; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+          if (!wsMain[cellRef]) wsMain[cellRef] = { v: "" };
+          wsMain[cellRef].s = rowStyle;
+        }
       }
 
       // Aplicar estilos a la fila de totales (última fila)
@@ -187,61 +216,57 @@ const Banner: React.FC<BannerProps> = ({
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, wsMain, "Resultados por Sede");
 
-      // Configurar las celdas combinadas para los encabezados
+      // Configurar combinaciones de celdas
       wsMain["!merges"] = [];
 
-      // Combinar celdas para "PROYECTOS COMUNALES"
+      // Combinar celda SEDE verticalmente (filas 3 y 4)
+      wsMain["!merges"].push({
+        s: { r: 2, c: 0 },
+        e: { r: 3, c: 0 },
+      });
+
+      // Combinar celda TOTAL VOTOS verticalmente (filas 3 y 4)
+      const totalVotosCol = totalColumns - 1;
+      wsMain["!merges"].push({
+        s: { r: 2, c: totalVotosCol },
+        e: { r: 3, c: totalVotosCol },
+      });
+
+      // Combinar celdas horizontalmente para cada categoría en la primera fila de encabezado
+      let currentCol = 1;
+
+      // PROYECTOS COMUNALES
       if (comunalesKeys.length > 1) {
         wsMain["!merges"].push({
-          s: { r: 2, c: 1 },
-          e: { r: 2, c: comunalesKeys.length },
-        });
-        wsMain["!merges"].push({
-          s: { r: 3, c: 1 },
-          e: { r: 3, c: comunalesKeys.length },
+          s: { r: 2, c: currentCol },
+          e: { r: 2, c: currentCol + comunalesKeys.length - 1 },
         });
       }
+      currentCol += comunalesKeys.length;
 
-      // Combinar celdas para "PROYECTOS INFANTILES"
+      // PROYECTOS INFANTILES
       if (infantilesKeys.length > 1) {
-        const startCol = 1 + comunalesKeys.length;
         wsMain["!merges"].push({
-          s: { r: 2, c: startCol },
-          e: { r: 2, c: startCol + infantilesKeys.length - 1 },
-        });
-        wsMain["!merges"].push({
-          s: { r: 3, c: startCol },
-          e: { r: 3, c: startCol + infantilesKeys.length - 1 },
+          s: { r: 2, c: currentCol },
+          e: { r: 2, c: currentCol + infantilesKeys.length - 1 },
         });
       }
+      currentCol += infantilesKeys.length;
 
-      // Combinar celdas para "PROYECTOS JUVENILES"
+      // PROYECTOS JUVENILES
       if (juvenilesKeys.length > 1) {
-        const startCol = 1 + comunalesKeys.length + infantilesKeys.length;
         wsMain["!merges"].push({
-          s: { r: 2, c: startCol },
-          e: { r: 2, c: startCol + juvenilesKeys.length - 1 },
-        });
-        wsMain["!merges"].push({
-          s: { r: 3, c: startCol },
-          e: { r: 3, c: startCol + juvenilesKeys.length - 1 },
+          s: { r: 2, c: currentCol },
+          e: { r: 2, c: currentCol + juvenilesKeys.length - 1 },
         });
       }
+      currentCol += juvenilesKeys.length;
 
-      // Combinar celdas para "PROYECTOS SECTORIALES"
+      // PROYECTOS SECTORIALES
       if (sectorialesKeys.length > 1) {
-        const startCol =
-          1 +
-          comunalesKeys.length +
-          infantilesKeys.length +
-          juvenilesKeys.length;
         wsMain["!merges"].push({
-          s: { r: 2, c: startCol },
-          e: { r: 2, c: startCol + sectorialesKeys.length - 1 },
-        });
-        wsMain["!merges"].push({
-          s: { r: 3, c: startCol },
-          e: { r: 3, c: startCol + sectorialesKeys.length - 1 },
+          s: { r: 2, c: currentCol },
+          e: { r: 2, c: currentCol + sectorialesKeys.length - 1 },
         });
       }
 

@@ -95,14 +95,18 @@ const GeneralInfo = () => {
       title: "Sede con Mayor Participación",
       value: generalInfo.topSede?.votes.toLocaleString() || "0",
       description: generalInfo.topSede?.name || "Sin datos",
-      subtext: generalInfo.topSede ? `${generalInfo.topSede.percentage}% del total` : "N/A",
+      subtext: generalInfo.topSede
+        ? `${generalInfo.topSede.percentage}% del total`
+        : "N/A",
       color: "text-blue-600",
     },
     {
       title: "Categoría Líder",
       value: generalInfo.topCategory?.votes.toLocaleString() || "0",
       description: generalInfo.topCategory?.name || "Sin datos",
-      subtext: generalInfo.topCategory ? `${generalInfo.topCategory.percentage}% del total` : "N/A",
+      subtext: generalInfo.topCategory
+        ? `${generalInfo.topCategory.percentage}% del total`
+        : "N/A",
       color: "text-green-600",
     },
   ];

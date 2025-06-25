@@ -83,9 +83,10 @@ export async function GET(request: NextRequest) {
       ORDER BY pv.total_votos DESC
     `;
 
-    const projectsRanking = await executeQuery<ProjectRanking>(projectsRankingQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const projectsRanking = await executeQuery<ProjectRanking>(
+      projectsRankingQuery,
+      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+    );
 
     // 2. Obtener sede con mayor participación
     const sedeParticipationQuery = `
@@ -115,9 +116,10 @@ export async function GET(request: NextRequest) {
       ORDER BY sv.total_votos DESC
     `;
 
-    const sedeParticipation = await executeQuery<SedeParticipation>(sedeParticipationQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const sedeParticipation = await executeQuery<SedeParticipation>(
+      sedeParticipationQuery,
+      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+    );
 
     // 3. Obtener categoría líder
     const categoryLeaderQuery = `
@@ -147,9 +149,10 @@ export async function GET(request: NextRequest) {
       ORDER BY cv.total_votos DESC
     `;
 
-    const categoryLeader = await executeQuery<CategoryLeader>(categoryLeaderQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const categoryLeader = await executeQuery<CategoryLeader>(
+      categoryLeaderQuery,
+      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+    );
 
     // Obtener proyecto más votado
     const topProject = projectsRanking.length > 0 ? projectsRanking[0] : null;
@@ -168,21 +171,29 @@ export async function GET(request: NextRequest) {
           percentCategory: project.percent_category,
         })),
         generalInfo: {
-          topProject: topProject ? {
-            votes: topProject.total_votos,
-            name: `${topProject.id_proyecto}: ${topProject.nombre}`,
-            category: `Proyectos ${topProject.tipo_proyecto_nombre}`,
-          } : null,
-          topSede: sedeParticipation.length > 0 ? {
-            votes: sedeParticipation[0].total_votos,
-            name: sedeParticipation[0].sede_nombre,
-            percentage: sedeParticipation[0].percent_total,
-          } : null,
-          topCategory: categoryLeader.length > 0 ? {
-            votes: categoryLeader[0].total_votos,
-            name: `Proyectos ${categoryLeader[0].tipo_proyecto_nombre}`,
-            percentage: categoryLeader[0].percent_total,
-          } : null,
+          topProject: topProject
+            ? {
+                votes: topProject.total_votos,
+                name: `${topProject.id_proyecto}: ${topProject.nombre}`,
+                category: `Proyectos ${topProject.tipo_proyecto_nombre}`,
+              }
+            : null,
+          topSede:
+            sedeParticipation.length > 0
+              ? {
+                  votes: sedeParticipation[0].total_votos,
+                  name: sedeParticipation[0].sede_nombre,
+                  percentage: sedeParticipation[0].percent_total,
+                }
+              : null,
+          topCategory:
+            categoryLeader.length > 0
+              ? {
+                  votes: categoryLeader[0].total_votos,
+                  name: `Proyectos ${categoryLeader[0].tipo_proyecto_nombre}`,
+                  percentage: categoryLeader[0].percent_total,
+                }
+              : null,
         },
       },
     });

@@ -140,27 +140,41 @@ const PollingPlaces = () => {
                 Proyectos Sectoriales
               </th>
             )}
-            <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">Total</th>
+            <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">
+              Total
+            </th>
           </tr>
           <tr>
             <th className="px-4 py-2 whitespace-nowrap"></th>
             {comunalesKeys.map((key) => (
-              <th key={key} className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]">
+              <th
+                key={key}
+                className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]"
+              >
                 {key}
               </th>
             ))}
             {infantilesKeys.map((key) => (
-              <th key={key} className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]">
+              <th
+                key={key}
+                className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]"
+              >
                 {key}
               </th>
             ))}
             {juvenilesKeys.map((key) => (
-              <th key={key} className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]">
+              <th
+                key={key}
+                className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]"
+              >
                 {key}
               </th>
             ))}
             {sectorialesKeys.map((key) => (
-              <th key={key} className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]">
+              <th
+                key={key}
+                className="px-2 py-2 text-center whitespace-nowrap min-w-[80px]"
+              >
                 {key}
               </th>
             ))}
@@ -173,28 +187,44 @@ const PollingPlaces = () => {
               key={index}
               className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
             >
-              <td className="px-4 py-3 font-medium whitespace-nowrap">{sede.sede}</td>
+              <td className="px-4 py-3 font-medium whitespace-nowrap">
+                {sede.sede}
+              </td>
               {comunalesKeys.map((key) => (
-                <td key={key} className="px-2 py-2 text-center whitespace-nowrap">
+                <td
+                  key={key}
+                  className="px-2 py-2 text-center whitespace-nowrap"
+                >
                   {sede.proyectosComunales[key] || 0}
                 </td>
               ))}
               {infantilesKeys.map((key) => (
-                <td key={key} className="px-2 py-2 text-center whitespace-nowrap">
+                <td
+                  key={key}
+                  className="px-2 py-2 text-center whitespace-nowrap"
+                >
                   {sede.proyectosInfantiles[key] || 0}
                 </td>
               ))}
               {juvenilesKeys.map((key) => (
-                <td key={key} className="px-2 py-2 text-center whitespace-nowrap">
+                <td
+                  key={key}
+                  className="px-2 py-2 text-center whitespace-nowrap"
+                >
                   {sede.proyectosJuveniles[key] || 0}
                 </td>
               ))}
               {sectorialesKeys.map((key) => (
-                <td key={key} className="px-2 py-2 text-center whitespace-nowrap">
+                <td
+                  key={key}
+                  className="px-2 py-2 text-center whitespace-nowrap"
+                >
                   {sede.proyectosSectoriales[key] || 0}
                 </td>
               ))}
-              <td className="px-2 py-2 text-center font-bold whitespace-nowrap">{sede.total}</td>
+              <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
+                {sede.total}
+              </td>
             </tr>
           ))}
           {/* Fila de totales */}
@@ -220,7 +250,9 @@ const PollingPlaces = () => {
                 {totales.proyectosSectoriales[key] || 0}
               </td>
             ))}
-            <td className="px-2 py-2 text-center font-bold whitespace-nowrap">{totales.total}</td>
+            <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
+              {totales.total}
+            </td>
           </tr>
         </tbody>
       </table>
