@@ -91,10 +91,34 @@ const Ranking = () => {
     },
   };
 
+  // Mapeo de categorías a nombres cortos (sin "Proyectos")
+  const categoryShortNames: Record<CategoryKey, string> = {
+    comunales: "Comunales",
+    juveniles: "Juveniles",
+    infantiles: "Infantiles",
+    sectoriales: "Sectoriales",
+    deportivos: "Deportivos",
+    culturales: "Culturales",
+  };
+
   // Color por defecto para categorías no encontradas
   const defaultColor = {
     bg: "bg-gray-100",
     text: "text-gray-800",
+  };
+
+  // Función para obtener el color de la posición (oro, plata, bronce)
+  const getPositionColor = (position: number) => {
+    switch (position) {
+      case 1:
+        return "bg-yellow-500"; // Oro
+      case 2:
+        return "bg-gray-400"; // Plata
+      case 3:
+        return "bg-amber-600"; // Bronce
+      default:
+        return "bg-gray-200";
+    }
   };
 
   if (loading) {
@@ -125,9 +149,9 @@ const Ranking = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mt-6">
-      <h2 className="text-xl mb-4">Ranking Completo de Proyectos</h2>
-      <p className="text-gray-600 mb-6">
+    <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6 border border-gray-200 mt-6">
+      <h2 className="text-lg sm:text-xl mb-4">Ranking Completo de Proyectos</h2>
+      <p className="text-gray-600 mb-6 text-sm sm:text-base">
         Todos los proyectos ordenados por cantidad de votos
       </p>
 
@@ -135,12 +159,12 @@ const Ranking = () => {
         <table className="w-full text-sm text-left border border-gray-200 rounded-lg">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 rounded-lg border border-gray-200">
             <tr className="rounded-lg">
-              <th className="px-4 py-3 text-center">Posición</th>
-              <th className="px-4 py-3">Proyecto</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3 text-right">Votos</th>
-              <th className="px-4 py-3 text-right">% del Total</th>
-              <th className="px-4 py-3 text-right">% de Categoría</th>
+              <th className="px-2 sm:px-4 py-3 text-center">Pos.</th>
+              <th className="px-2 sm:px-4 py-3">Proyecto</th>
+              <th className="px-2 sm:px-4 py-3">Categoría</th>
+              <th className="px-2 sm:px-4 py-3 text-right">Votos</th>
+              <th className="px-2 sm:px-4 py-3 text-right hidden sm:table-cell">% Total</th>
+              <th className="px-2 sm:px-4 py-3 text-right hidden md:table-cell">% Cat.</th>
             </tr>
           </thead>
           <tbody className="rounded-lg">
@@ -152,36 +176,46 @@ const Ranking = () => {
                 categoryKey in categoryColors
                   ? categoryColors[categoryKey]
                   : defaultColor;
+              
+              // Obtener el nombre corto de la categoría
+              const categoryShortName =
+                categoryKey in categoryShortNames
+                  ? categoryShortNames[categoryKey]
+                  : project.category;
 
               return (
                 <tr
                   key={project.id}
                   className="border-b hover:bg-gray-50 border border-gray-200"
                 >
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-2 sm:px-4 py-3 text-center">
                     <div
-                      className={`w-8 h-8 rounded-full ${
-                        project.position <= 3 ? "bg-blue-500" : "bg-gray-200"
-                      } flex items-center justify-center mx-auto text-white font-medium`}
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${
+                        getPositionColor(project.position)
+                      } flex items-center justify-center mx-auto text-white font-medium text-xs sm:text-sm`}
                     >
                       {project.position}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium">{project.title}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 sm:px-4 py-3 font-medium text-xs sm:text-sm">
+                    <div className="truncate max-w-[120px] sm:max-w-none" title={project.title}>
+                      {project.title}
+                    </div>
+                  </td>
+                  <td className="px-2 sm:px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${categoryColor.bg} ${categoryColor.text}`}
+                      className={`px-1 sm:px-2 py-1 rounded-full text-xs ${categoryColor.bg} ${categoryColor.text} whitespace-nowrap`}
                     >
-                      {project.category}
+                      {categoryShortName}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right font-bold">
+                  <td className="px-2 sm:px-4 py-3 text-right font-bold text-xs sm:text-sm">
                     {project.votes.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 sm:px-4 py-3 text-right text-xs sm:text-sm hidden sm:table-cell">
                     {project.percentTotal}%
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 sm:px-4 py-3 text-right text-xs sm:text-sm hidden md:table-cell">
                     {project.percentCategory}%
                   </td>
                 </tr>
