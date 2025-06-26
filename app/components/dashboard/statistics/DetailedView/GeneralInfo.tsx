@@ -68,16 +68,16 @@ const GeneralInfo = () => {
 
   if (loading) {
     return (
-      <div className="w-full flex justify-center items-center py-8">
-        <div className="text-gray-600">Cargando información general...</div>
+      <div className="w-full flex justify-center items-center py-4 sm:py-8">
+        <div className="text-gray-600 text-sm sm:text-base">Cargando información general...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full flex justify-center items-center py-8">
-        <div className="text-red-600">Error: {error}</div>
+      <div className="w-full flex justify-center items-center py-4 sm:py-8">
+        <div className="text-red-600 text-sm sm:text-base">Error: {error}</div>
       </div>
     );
   }
@@ -86,47 +86,53 @@ const GeneralInfo = () => {
   const infoCards = [
     {
       title: "Proyecto Más Votado",
-      value: generalInfo.topProject?.votes.toLocaleString() || "0",
+      value: `${(generalInfo.topProject?.votes ?? 0).toLocaleString()} ${
+        generalInfo.topProject?.votes === 1 ? "voto" : "votos"
+      }`,
       description: generalInfo.topProject?.name || "Sin datos",
       subtext: generalInfo.topProject?.category || "N/A",
       color: "text-green-600",
     },
     {
       title: "Sede con Mayor Participación",
-      value: generalInfo.topSede?.votes.toLocaleString() || "0",
+      value: `${(generalInfo.topSede?.votes ?? 0).toLocaleString()} ${
+        generalInfo.topSede?.votes === 1 ? "votante" : "votantes"
+      }`,
       description: generalInfo.topSede?.name || "Sin datos",
       subtext: generalInfo.topSede
-        ? `${generalInfo.topSede.percentage}% del total`
+        ? `${generalInfo.topSede.percentage}% del total de votantes`
         : "N/A",
       color: "text-blue-600",
     },
     {
       title: "Categoría Líder",
-      value: generalInfo.topCategory?.votes.toLocaleString() || "0",
+      value: `${(generalInfo.topCategory?.votes ?? 0).toLocaleString()} ${
+        generalInfo.topCategory?.votes === 1 ? "voto" : "votos"
+      }`,
       description: generalInfo.topCategory?.name || "Sin datos",
       subtext: generalInfo.topCategory
-        ? `${generalInfo.topCategory.percentage}% del total`
+        ? `${generalInfo.topCategory.percentage}% del total de votos`
         : "N/A",
       color: "text-green-600",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 my-4 sm:my-6">
       {infoCards.map((card, index) => (
         <div
           key={index}
-          className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 flex flex-col"
+          className="bg-white rounded-lg shadow-sm p-3 sm:p-6 border border-gray-200 flex flex-col"
         >
-          <h3 className="text-lg font-semibold mb-2 flex items-center">
-            <IconTrendingUp className="mr-2" size={20} />
-            {card.title}
+          <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-2 flex items-center">
+            <IconTrendingUp className="mr-1 sm:mr-2" size={16} />
+            <span className="text-xs sm:text-base leading-tight">{card.title}</span>
           </h3>
-          <div className={`text-3xl font-bold ${card.color} my-2`}>
+          <div className={`text-xl sm:text-3xl font-bold ${card.color} my-1 sm:my-2`}>
             {card.value}
           </div>
-          <div className="text-md font-medium">{card.description}</div>
-          <div className="text-sm text-gray-500 mt-1">{card.subtext}</div>
+          <div className="text-sm sm:text-md font-medium leading-tight">{card.description}</div>
+          <div className="text-xs sm:text-sm text-gray-500 mt-1">{card.subtext}</div>
         </div>
       ))}
     </div>
