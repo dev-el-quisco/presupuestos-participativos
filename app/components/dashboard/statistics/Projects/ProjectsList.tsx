@@ -36,12 +36,17 @@ const ProjectsList = () => {
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const projectsPerPage = 10;
 
   // Mapeo de categorías a colores pasteles
-  const categoryColors: Record<string, { bg: string; text: string; color: string }> = {
+  const categoryColors: Record<
+    string,
+    { bg: string; text: string; color: string }
+  > = {
     comunales: {
       bg: "bg-green-100", // Verde
       text: "text-green-800",
@@ -67,7 +72,7 @@ const ProjectsList = () => {
   useEffect(() => {
     const fetchStatistics = async () => {
       if (!isYearReady || !selectedYear) return; // Verificar isYearReady
-      
+
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -101,10 +106,13 @@ const ProjectsList = () => {
 
   if (loading || !statisticsData) {
     return (
-      <div className="w-full my-4">
+      <div className="w-full pt-6">
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <h2 className="text-xl font-semibold mb-6">Cargando proyectos...</h2>
-          <div className="space-y-4" style={{ minHeight: `${projectsPerPage * 48}px` }}>
+          <div
+            className="space-y-4"
+            style={{ minHeight: `${projectsPerPage * 48}px` }}
+          >
             {Array.from({ length: projectsPerPage }).map((_, index) => (
               <div key={index} className="flex items-center h-12">
                 <div className="flex-shrink-0 mr-3">
@@ -125,16 +133,19 @@ const ProjectsList = () => {
   const projectsData: Project[] = statisticsData.projects.map((project) => {
     const categoryId = project.tipo_proyecto_nombre.toLowerCase();
     const categoryData = statisticsData.categories.find(
-      (cat) => cat.name.toLowerCase() === project.tipo_proyecto_nombre.toLowerCase()
+      (cat) =>
+        cat.name.toLowerCase() === project.tipo_proyecto_nombre.toLowerCase()
     );
-    
-    const percentTotal = statisticsData.totalVotes > 0 
-      ? (project.votos_count / statisticsData.totalVotes) * 100 
-      : 0;
-    
-    const percentCategory = categoryData && categoryData.count > 0 
-      ? (project.votos_count / categoryData.count) * 100 
-      : 0;
+
+    const percentTotal =
+      statisticsData.totalVotes > 0
+        ? (project.votos_count / statisticsData.totalVotes) * 100
+        : 0;
+
+    const percentCategory =
+      categoryData && categoryData.count > 0
+        ? (project.votos_count / categoryData.count) * 100
+        : 0;
 
     return {
       id: project.id,
@@ -184,7 +195,10 @@ const ProjectsList = () => {
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   // Encontrar el valor máximo para escalar las barras
-  const maxVotes = Math.max(...sortedProjects.map((project) => project.votes), 1);
+  const maxVotes = Math.max(
+    ...sortedProjects.map((project) => project.votes),
+    1
+  );
 
   return (
     <div className="w-full my-4">

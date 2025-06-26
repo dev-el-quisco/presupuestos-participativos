@@ -23,7 +23,9 @@ const MostVoted = () => {
   const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   // Mapeo de colores por categoría
@@ -41,7 +43,7 @@ const MostVoted = () => {
   useEffect(() => {
     const fetchStatistics = async () => {
       if (!isYearReady || !selectedYear) return; // Verificar isYearReady
-      
+
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -70,8 +72,8 @@ const MostVoted = () => {
 
   if (loading || !statisticsData) {
     return (
-      <div className="w-full p-4">
-        <div className="bg-white rounded-lg shadow-sm p-6 h-full border border-gray-200">
+      <div className="w-full pt-6 md:p-4">
+        <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
           <h2 className="text-xl font-semibold">Proyectos Más Votados</h2>
           <p className="mb-6 font-light">Top 5 con más votos</p>
           <div className="space-y-5">
@@ -128,7 +130,7 @@ const MostVoted = () => {
   };
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full pt-6 md:pt-0 md:p-4">
       <div className="bg-white rounded-lg shadow-sm p-6 h-full border border-gray-200">
         <h2 className="text-xl font-semibold">{getCategoryTitle()}</h2>
         <p className="mb-6 font-light">Top 5 con más votos</p>

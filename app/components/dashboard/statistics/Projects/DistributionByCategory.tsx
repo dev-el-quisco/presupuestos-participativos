@@ -22,7 +22,9 @@ const DistributionByCategory = () => {
   const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   // Mapeo de colores por categoría
@@ -65,7 +67,7 @@ const DistributionByCategory = () => {
   useEffect(() => {
     const fetchStatistics = async () => {
       if (!isYearReady || !selectedYear) return; // Verificar isYearReady
-      
+
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -94,7 +96,7 @@ const DistributionByCategory = () => {
 
   if (loading || !statisticsData) {
     return (
-      <div className="w-full p-4">
+      <div className="w-full pt-6 md:p-4">
         <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
           <h2 className="text-xl font-semibold mb-4">
             Distribución por Categoría
@@ -160,7 +162,7 @@ const DistributionByCategory = () => {
   });
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full pt-6 md:p-4">
       <div className="bg-white rounded-lg shadow-sm p-4 h-full border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">
           Distribución por Categoría
