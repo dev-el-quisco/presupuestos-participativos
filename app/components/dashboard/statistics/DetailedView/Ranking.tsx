@@ -55,13 +55,7 @@ const Ranking = () => {
   }, [isYearReady, selectedYear]);
 
   // Definir tipo para las claves de categorías
-  type CategoryKey =
-    | "comunales"
-    | "infantiles"
-    | "deportivos"
-    | "culturales"
-    | "juveniles"
-    | "sectoriales";
+  type CategoryKey = "comunales" | "infantiles" | "juveniles" | "sectoriales";
 
   // Mapeo de categorías a colores pasteles
   const categoryColors: Record<CategoryKey, { bg: string; text: string }> = {
@@ -81,14 +75,6 @@ const Ranking = () => {
       bg: "bg-orange-100",
       text: "text-orange-800",
     },
-    deportivos: {
-      bg: "bg-blue-100",
-      text: "text-blue-800",
-    },
-    culturales: {
-      bg: "bg-orange-100",
-      text: "text-orange-800",
-    },
   };
 
   // Mapeo de categorías a nombres cortos (sin "Proyectos")
@@ -97,8 +83,6 @@ const Ranking = () => {
     juveniles: "Juveniles",
     infantiles: "Infantiles",
     sectoriales: "Sectoriales",
-    deportivos: "Deportivos",
-    culturales: "Culturales",
   };
 
   // Color por defecto para categorías no encontradas
@@ -163,8 +147,12 @@ const Ranking = () => {
               <th className="px-2 sm:px-4 py-3">Proyecto</th>
               <th className="px-2 sm:px-4 py-3">Categoría</th>
               <th className="px-2 sm:px-4 py-3 text-right">Votos</th>
-              <th className="px-2 sm:px-4 py-3 text-right hidden sm:table-cell">% Total</th>
-              <th className="px-2 sm:px-4 py-3 text-right hidden md:table-cell">% Cat.</th>
+              <th className="px-2 sm:px-4 py-3 text-right hidden sm:table-cell">
+                % Total
+              </th>
+              <th className="px-2 sm:px-4 py-3 text-right hidden md:table-cell">
+                % Cat.
+              </th>
             </tr>
           </thead>
           <tbody className="rounded-lg">
@@ -176,7 +164,7 @@ const Ranking = () => {
                 categoryKey in categoryColors
                   ? categoryColors[categoryKey]
                   : defaultColor;
-              
+
               // Obtener el nombre corto de la categoría
               const categoryShortName =
                 categoryKey in categoryShortNames
@@ -190,15 +178,18 @@ const Ranking = () => {
                 >
                   <td className="px-2 sm:px-4 py-3 text-center">
                     <div
-                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${
-                        getPositionColor(project.position)
-                      } flex items-center justify-center mx-auto text-white font-medium text-xs sm:text-sm`}
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${getPositionColor(
+                        project.position
+                      )} flex items-center justify-center mx-auto text-white font-medium text-xs sm:text-sm`}
                     >
                       {project.position}
                     </div>
                   </td>
                   <td className="px-2 sm:px-4 py-3 font-medium text-xs sm:text-sm">
-                    <div className="truncate max-w-[120px] sm:max-w-none" title={project.title}>
+                    <div
+                      className="truncate max-w-[120px] sm:max-w-none"
+                      title={project.title}
+                    >
                       {project.title}
                     </div>
                   </td>
