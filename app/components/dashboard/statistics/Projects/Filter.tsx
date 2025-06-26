@@ -21,7 +21,9 @@ interface StatisticsData {
 const Filter = () => {
   const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
   const { selectedCategory, setSelectedCategory } = useFilter();
-  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   // Mapeo de colores por tipo de proyecto
@@ -66,7 +68,7 @@ const Filter = () => {
   useEffect(() => {
     const fetchStatistics = async () => {
       if (!isYearReady || !selectedYear) return; // Verificar isYearReady
-      
+
       try {
         setLoading(true);
         const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
@@ -162,12 +164,12 @@ const Filter = () => {
               }}
             >
               <div
-                className={`p-4 ${selectedBottomBorder} flex flex-col justify-between`}
+                className={`p-4 ${selectedBottomBorder} flex flex-row md:flex-col items-center md:items-stretch justify-between`}
               >
                 <h3 className={`font-medium ${data.textColor}`}>
                   {data.title}
                 </h3>
-                <div className="flex items-baseline mt-2">
+                <div className="flex items-baseline md:mt-2 space-x-2 md:space-x-0">
                   <span className="text-3xl font-bold">
                     {typeof window !== "undefined"
                       ? data.count.toLocaleString()
