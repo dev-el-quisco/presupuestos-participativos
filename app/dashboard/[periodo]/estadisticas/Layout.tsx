@@ -15,7 +15,7 @@ interface StatisticsLayoutProps {
 export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   const [totalVotos, setTotalVotos] = useState<number>(0);
   const [years, setYears] = useState<number[]>([]);
-  
+
   // Usar el contexto global de año en lugar del estado local
   const { selectedYear, setSelectedYear, isYearReady } = useYear();
 
@@ -38,9 +38,7 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
       if (!selectedYear || !isYearReady) return;
 
       try {
-        const response = await fetch(
-          `/api/statistics?periodo=${selectedYear}`
-        );
+        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
         const data = await response.json();
         if (data.success) {
           setTotalVotos(data.statistics.totalVotes || 0);
@@ -56,8 +54,8 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
 
   const statisticsTabs = [
     { name: "Proyectos", path: "/proyectos" },
-    { name: "Por Sedes", path: "/sedes" },
-    { name: "Vista Detallada", path: "/vista-detallada" },
+    { name: "Sedes", path: "/sedes" },
+    { name: "Detallada", path: "/vista-detallada" },
   ];
 
   return (
