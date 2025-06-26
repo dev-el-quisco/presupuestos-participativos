@@ -21,7 +21,7 @@ interface StatisticsData {
 
 type Project = {
   id: string;
-  id_proyecto: string; // Agregar el ID visual
+  id_proyecto: string;
   title: string;
   category: string;
   categoryId: string;
@@ -32,7 +32,7 @@ type Project = {
 };
 
 const ProjectsList = () => {
-  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
+  const { selectedYear, isYearReady } = useYear();
   const { selectedCategory } = useFilter();
   const [windowWidth, setWindowWidth] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,22 +48,22 @@ const ProjectsList = () => {
     { bg: string; text: string; color: string }
   > = {
     comunales: {
-      bg: "bg-green-100", // Verde
+      bg: "bg-green-100",
       text: "text-green-800",
       color: "#065F46",
     },
     infantiles: {
-      bg: "bg-yellow-100", // Amarillo
+      bg: "bg-yellow-100",
       text: "text-yellow-800",
       color: "#92400E",
     },
     juveniles: {
-      bg: "bg-blue-100", // Azul
+      bg: "bg-blue-100",
       text: "text-blue-800",
       color: "#1E40AF",
     },
     sectoriales: {
-      bg: "bg-orange-100", // Naranja
+      bg: "bg-orange-100",
       text: "text-orange-800",
       color: "#efa844",
     },
@@ -71,7 +71,7 @@ const ProjectsList = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
-      if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+      if (!isYearReady || !selectedYear) return;
 
       try {
         setLoading(true);
@@ -90,7 +90,7 @@ const ProjectsList = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
+  }, [selectedYear, isYearReady]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -149,7 +149,7 @@ const ProjectsList = () => {
 
     return {
       id: project.id,
-      id_proyecto: project.id_proyecto, // Agregar el ID visual
+      id_proyecto: project.id_proyecto,
       title: project.nombre,
       category: `Proyectos ${project.tipo_proyecto_nombre}`,
       categoryId: categoryId,
@@ -202,8 +202,8 @@ const ProjectsList = () => {
 
   return (
     <div className="w-full my-4">
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-6">
+      <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6 border border-gray-200">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
           {selectedCategory && selectedCategory !== "todos"
             ? `Proyectos ${
                 selectedCategory.charAt(0).toUpperCase() +
@@ -216,7 +216,7 @@ const ProjectsList = () => {
           <div>
             {/* Contenedor con altura fija para mantener consistencia */}
             <div
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
               style={{ minHeight: `${projectsPerPage * 48}px` }}
             >
               {projectsWithFillers.map((project, index) => {
@@ -235,16 +235,21 @@ const ProjectsList = () => {
                 const progressWidth = `${(project.votes / maxVotes) * 100}%`;
 
                 return (
-                  <div key={project.id} className="flex items-center h-12">
-                    <div className="flex-shrink-0 mr-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium">
+                  <div
+                    key={project.id}
+                    className="flex items-center h-12 gap-2 sm:gap-3"
+                  >
+                    <div className="flex-shrink-0">
+                      <div
+                        className={`w-8 h-8 rounded-full ${categoryColor.bg} flex items-center justify-center text-gray-800 text-xs sm:text-sm font-medium`}
+                      >
                         {project.id_proyecto}
                       </div>
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="relative">
-                        <div className="flex-1 bg-gray-100 rounded-full h-10 overflow-hidden">
+                        <div className="bg-gray-100 rounded-full h-10 overflow-hidden">
                           {/* Barra de fondo completa (gris) */}
                           <div
                             className="bg-gray-200 h-full rounded-full flex items-center relative"
@@ -257,16 +262,21 @@ const ProjectsList = () => {
                             ></div>
 
                             {/* Contenido siempre visible */}
-                            <div className="flex justify-between items-center w-full px-3 z-10">
-                              <span className="text-sm font-medium text-gray-800 truncate max-w-[60%]">
+                            <div className="flex justify-between items-center w-full px-2 sm:px-3 z-10">
+                              <span className="text-xs sm:text-sm font-medium text-gray-800 truncate flex-1 mr-2">
                                 {project.title}
                               </span>
-                              <span className="text-sm font-bold text-gray-800">
-                                {project.votes}{" "}
-                                <span className="text-xs font-light">
-                                  votos
-                                </span>{" "}
-                                | {percentage}%
+                              <span className="text-xs sm:text-sm font-bold text-gray-800 whitespace-nowrap">
+                                <span className="hidden sm:inline">
+                                  {project.votes}{" "}
+                                  <span className="text-xs font-light">
+                                    votos
+                                  </span>{" "}
+                                  | {percentage}%
+                                </span>
+                                <span className="sm:hidden">
+                                  {project.votes} | {percentage}%
+                                </span>
                               </span>
                             </div>
                           </div>
@@ -279,12 +289,12 @@ const ProjectsList = () => {
             </div>
 
             {/* Paginación */}
-            <div className="flex justify-center mt-6">
-              <nav className="flex items-center space-x-2">
+            <div className="flex justify-center mt-4 sm:mt-6">
+              <nav className="flex items-center space-x-1 sm:space-x-2">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${
                     currentPage === 1
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                       : "bg-gray-300 text-gray-700 hover:bg-gray-400"
@@ -307,7 +317,7 @@ const ProjectsList = () => {
                       <button
                         key={index}
                         onClick={() => paginate(index + 1)}
-                        className={`px-3 py-1 rounded ${
+                        className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${
                           currentPage === index + 1
                             ? "bg-blue-500 text-white"
                             : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -320,7 +330,11 @@ const ProjectsList = () => {
                     index + 1 === currentPage - 3 ||
                     index + 1 === currentPage + 3
                   ) {
-                    return <span key={index}>...</span>;
+                    return (
+                      <span key={index} className="text-xs sm:text-sm">
+                        ...
+                      </span>
+                    );
                   }
                   return null;
                 })}
@@ -331,7 +345,7 @@ const ProjectsList = () => {
                     currentPage ===
                     Math.ceil(sortedProjects.length / projectsPerPage)
                   }
-                  className={`px-3 py-1 rounded ${
+                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm ${
                     currentPage ===
                     Math.ceil(sortedProjects.length / projectsPerPage)
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
@@ -344,7 +358,7 @@ const ProjectsList = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
             No hay proyectos disponibles para esta categoría
           </div>
         )}

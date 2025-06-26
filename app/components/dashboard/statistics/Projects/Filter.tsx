@@ -169,13 +169,18 @@ const Filter = () => {
                 <h3 className={`font-medium ${data.textColor}`}>
                   {data.title}
                 </h3>
-                <div className="flex items-baseline md:mt-2 space-x-2 md:space-x-0">
-                  <span className="text-3xl font-bold">
-                    {typeof window !== "undefined"
-                      ? data.count.toLocaleString()
-                      : data.count}
-                    <span className="text-sm font-light"> votos</span>
-                  </span>
+                <div className="flex items-baseline md:mt-2 flex-col md:flex-row space-x-3">
+                  <div className="flex flex-row items-center justify-end space-x-1 mr-auto">
+                    <span className="text-3xl font-bold ">
+                      {typeof window !== "undefined"
+                        ? data.count.toLocaleString()
+                        : data.count}
+                    </span>
+                    <span className="text-sm font-light">
+                      {" "}
+                      {data.count == 1 ? "voto" : "votos"}
+                    </span>
+                  </div>
                   <span className="ml-auto text-md text-gray-700">
                     {data.percentage.toFixed(1)}%
                   </span>
