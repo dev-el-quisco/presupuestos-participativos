@@ -475,8 +475,10 @@ const Content = () => {
   // Verificar permisos según rol
   const canChangeState =
     user?.rol === "Encargado de Local" || user?.rol === "Administrador";
-  const canRegisterVotes = user?.rol !== "Ministro de Fe";
-  const canRegisterVoters = user?.rol !== "Ministro de Fe";
+  const canRegisterVotes = 
+    user?.rol === "Encargado de Local" || user?.rol === "Administrador";
+  const canRegisterVoters = 
+    user?.rol === "Digitador" || user?.rol === "Encargado de Local" || user?.rol === "Administrador";
 
   // Función para verificar si se pueden realizar acciones en una mesa específica
   const canPerformAction = (mesa: any, action: "vote" | "voter") => {
@@ -551,24 +553,26 @@ const Content = () => {
                   <td className="px-2 py-4 whitespace-nowrap text-center">
                     {/* Botones para desktop */}
                     <div className="hidden lg:flex items-center justify-center space-x-2">
-                      <button
-                        onClick={() => handleRegistrarVotante(mesa)}
-                        disabled={!canPerformAction(mesa, "voter")}
-                        className="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votante"
-                      >
-                        <IconUserPlus size={14} className="mr-1" />
-                        Votante
-                      </button>
-                      <button
-                        onClick={() => handleRegistrarVotos(mesa)}
-                        disabled={!canPerformAction(mesa, "vote")}
-                        className="flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votos"
-                      >
-                        <IconClipboardText size={14} className="mr-1" />
-                        Votos
-                      </button>
+                      {canPerformAction(mesa, "voter") && (
+                        <button
+                          onClick={() => handleRegistrarVotante(mesa)}
+                          className="flex items-center px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                          title="Registrar Votante"
+                        >
+                          <IconUserPlus size={14} className="mr-1" />
+                          Votante
+                        </button>
+                      )}
+                      {canPerformAction(mesa, "vote") && (
+                        <button
+                          onClick={() => handleRegistrarVotos(mesa)}
+                          className="flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                          title="Registrar Votos"
+                        >
+                          <IconClipboardText size={14} className="mr-1" />
+                          Votos
+                        </button>
+                      )}
                       {(user?.rol === "Encargado de Local" ||
                         user?.rol === "Administrador") && (
                         <button
@@ -601,22 +605,24 @@ const Content = () => {
 
                     {/* Botones para tablet */}
                     <div className="hidden md:flex lg:hidden items-center justify-center space-x-1">
-                      <button
-                        onClick={() => handleRegistrarVotante(mesa)}
-                        disabled={!canPerformAction(mesa, "voter")}
-                        className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votante"
-                      >
-                        <IconUserPlus size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleRegistrarVotos(mesa)}
-                        disabled={!canPerformAction(mesa, "vote")}
-                        className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-md hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votos"
-                      >
-                        <IconClipboardText size={16} />
-                      </button>
+                      {canPerformAction(mesa, "voter") && (
+                        <button
+                          onClick={() => handleRegistrarVotante(mesa)}
+                          className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                          title="Registrar Votante"
+                        >
+                          <IconUserPlus size={16} />
+                        </button>
+                      )}
+                      {canPerformAction(mesa, "vote") && (
+                        <button
+                          onClick={() => handleRegistrarVotos(mesa)}
+                          className="flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                          title="Registrar Votos"
+                        >
+                          <IconClipboardText size={16} />
+                        </button>
+                      )}
                       {(user?.rol === "Encargado de Local" ||
                         user?.rol === "Administrador") && (
                         <button
@@ -648,22 +654,24 @@ const Content = () => {
 
                     {/* Botones para móvil - layout horizontal */}
                     <div className="flex md:hidden items-center justify-center space-x-1">
-                      <button
-                        onClick={() => handleRegistrarVotante(mesa)}
-                        disabled={!canPerformAction(mesa, "voter")}
-                        className="flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votante"
-                      >
-                        <IconUserPlus size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleRegistrarVotos(mesa)}
-                        disabled={!canPerformAction(mesa, "vote")}
-                        className="flex items-center justify-center w-7 h-7 bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                        title="Registrar Votos"
-                      >
-                        <IconClipboardText size={14} />
-                      </button>
+                      {canPerformAction(mesa, "voter") && (
+                        <button
+                          onClick={() => handleRegistrarVotante(mesa)}
+                          className="flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          title="Registrar Votante"
+                        >
+                          <IconUserPlus size={14} />
+                        </button>
+                      )}
+                      {canPerformAction(mesa, "vote") && (
+                        <button
+                          onClick={() => handleRegistrarVotos(mesa)}
+                          className="flex items-center justify-center w-7 h-7 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                          title="Registrar Votos"
+                        >
+                          <IconClipboardText size={14} />
+                        </button>
+                      )}
                       {(user?.rol === "Encargado de Local" ||
                         user?.rol === "Administrador") && (
                         <button
