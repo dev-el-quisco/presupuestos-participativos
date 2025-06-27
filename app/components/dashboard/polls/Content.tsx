@@ -1283,19 +1283,19 @@ const Content = () => {
                   Resumen de la Mesa:
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
-                  <div className="flex justify-between">
+                  <div className="flex flex-row- items-start gap-1">
                     <span>Votantes registrados:</span>
                     <span className="font-medium text-slate-800">
                       {selectedMesa?.votantes_count || 0}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex flex-row- items-start gap-1">
                     <span>Votos actuales:</span>
                     <span className="font-medium text-slate-800">
                       {selectedMesa?.votos_count || 0}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex flex-row- items-start gap-1">
                     <span>Nuevos votos:</span>
                     <span className="font-medium text-blue-600">
                       {Object.values(votoForm).reduce(
@@ -1306,7 +1306,7 @@ const Content = () => {
                   </div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-slate-200">
-                  <div className="flex justify-between text-xs">
+                  <div className="flex flex-row- items-start gap-1 text-xs">
                     <span className="text-slate-600">
                       Total votos después de guardar:
                     </span>
