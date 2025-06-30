@@ -475,10 +475,12 @@ const Content = () => {
   // Verificar permisos según rol
   const canChangeState =
     user?.rol === "Encargado de Local" || user?.rol === "Administrador";
-  const canRegisterVotes = 
+  const canRegisterVotes =
     user?.rol === "Encargado de Local" || user?.rol === "Administrador";
-  const canRegisterVoters = 
-    user?.rol === "Digitador" || user?.rol === "Encargado de Local" || user?.rol === "Administrador";
+  const canRegisterVoters =
+    user?.rol === "Digitador" ||
+    user?.rol === "Encargado de Local" ||
+    user?.rol === "Administrador";
 
   // Función para verificar si se pueden realizar acciones en una mesa específica
   const canPerformAction = (mesa: any, action: "vote" | "voter") => {
@@ -809,14 +811,18 @@ const Content = () => {
                           <div className="flex items-center justify-center space-x-1">
                             <button
                               onClick={() => {
-                                if (votosNuevos > 0) {
+                                const currentValue =
+                                  votoForm[proyecto.id_proyecto] || 0;
+                                if (currentValue > 0) {
                                   setVotoForm((prev) => ({
                                     ...prev,
-                                    [proyecto.id_proyecto]: votosNuevos - 1,
+                                    [proyecto.id_proyecto]: currentValue - 1,
                                   }));
                                 }
                               }}
-                              disabled={votosNuevos <= 0}
+                              disabled={
+                                (votoForm[proyecto.id_proyecto] || 0) <= 0
+                              }
                               className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
                             >
                               −
@@ -826,9 +832,11 @@ const Content = () => {
                             </span>
                             <button
                               onClick={() => {
+                                const currentValue =
+                                  votoForm[proyecto.id_proyecto] || 0;
                                 setVotoForm((prev) => ({
                                   ...prev,
-                                  [proyecto.id_proyecto]: votosNuevos + 1,
+                                  [proyecto.id_proyecto]: currentValue + 1,
                                 }));
                               }}
                               className="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
@@ -899,14 +907,18 @@ const Content = () => {
                           <div className="flex items-center space-x-1">
                             <button
                               onClick={() => {
-                                if (votosNuevos > 0) {
+                                const currentValue =
+                                  votoForm[proyecto.id_proyecto] || 0;
+                                if (currentValue > 0) {
                                   setVotoForm((prev) => ({
                                     ...prev,
-                                    [proyecto.id_proyecto]: votosNuevos - 1,
+                                    [proyecto.id_proyecto]: currentValue - 1,
                                   }));
                                 }
                               }}
-                              disabled={votosNuevos <= 0}
+                              disabled={
+                                (votoForm[proyecto.id_proyecto] || 0) <= 0
+                              }
                               className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
                             >
                               −
@@ -916,9 +928,11 @@ const Content = () => {
                             </span>
                             <button
                               onClick={() => {
+                                const currentValue =
+                                  votoForm[proyecto.id_proyecto] || 0;
                                 setVotoForm((prev) => ({
                                   ...prev,
-                                  [proyecto.id_proyecto]: votosNuevos + 1,
+                                  [proyecto.id_proyecto]: currentValue + 1,
                                 }));
                               }}
                               className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
@@ -1064,37 +1078,10 @@ const Content = () => {
                               (votoForm["Blanco"] || 0)}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Blanco: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Blanco"] || 0) <= 0}
-                            className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center text-xs font-medium text-slate-700">
-                            {votoForm["Blanco"] || 0}
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-medium text-slate-700">
+                            Nuevos: {votoForm["Blanco"] || 0}
                           </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Blanco: currentValue + 1,
-                              }));
-                            }}
-                            className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            +
-                          </button>
                           <input
                             type="number"
                             min="0"
@@ -1113,7 +1100,7 @@ const Content = () => {
                                 Blanco: nuevosVotosCalculados,
                               }));
                             }}
-                            className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-16 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           />
                         </div>
                       </div>
@@ -1145,37 +1132,10 @@ const Content = () => {
                         </span>
                       </div>
                       <div className="col-span-3">
-                        <div className="flex items-center justify-center space-x-1">
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Nulo: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Nulo"] || 0) <= 0}
-                            className="w-7 h-7 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-8 text-center text-sm font-medium text-slate-700">
-                            {votoForm["Nulo"] || 0}
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm font-medium text-slate-700">
+                            Nuevos: {votoForm["Nulo"] || 0}
                           </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Nulo: currentValue + 1,
-                              }));
-                            }}
-                            className="w-7 h-7 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            +
-                          </button>
                         </div>
                       </div>
                       <div className="col-span-2">
