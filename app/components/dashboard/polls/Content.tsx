@@ -740,7 +740,6 @@ const Content = () => {
                   <div className="col-span-4">Proyecto</div>
                   <div className="col-span-1 text-center">Actual</div>
                   <div className="col-span-1 text-center">Total</div>
-                  <div className="col-span-3 text-center">Acciones</div>
                   <div className="col-span-2 text-center">Total Manual</div>
                 </div>
                 <div className="sm:hidden text-xs font-medium text-slate-600 uppercase text-center">
@@ -807,7 +806,7 @@ const Content = () => {
                         </div>
 
                         {/* Controles para votos nuevos */}
-                        <div className="col-span-3">
+                        {/* <div className="col-span-3">
                           <div className="flex items-center justify-center space-x-2">
                             <button
                               onClick={() => {
@@ -840,7 +839,7 @@ const Content = () => {
                               +
                             </button>
                           </div>
-                        </div>
+                        </div> */}
 
                         {/* Input manual para total */}
                         <div className="col-span-2">
@@ -901,7 +900,7 @@ const Content = () => {
                           </div>
 
                           <div className="flex items-center space-x-1">
-                            <button
+                            {/* <button
                               onClick={() => {
                                 const currentValue = votosNuevos;
                                 if (currentValue > 0) {
@@ -930,7 +929,7 @@ const Content = () => {
                               className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
                             >
                               +
-                            </button>
+                            </button> */}
                             <input
                               type="number"
                               min="0"
@@ -987,7 +986,7 @@ const Content = () => {
                             (votoForm["Blanco"] || 0)}
                         </span>
                       </div>
-                      <div className="col-span-3">
+                      {/* <div className="col-span-3">
                         <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => {
@@ -1020,7 +1019,7 @@ const Content = () => {
                             +
                           </button>
                         </div>
-                      </div>
+                      </div> */}
                       <div className="col-span-2">
                         <input
                           type="number"
@@ -1071,7 +1070,7 @@ const Content = () => {
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <button
+                          {/* <button
                             onClick={() => {
                               const currentValue = votoForm["Blanco"] || 0;
                               if (currentValue > 0) {
@@ -1100,7 +1099,7 @@ const Content = () => {
                             className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
                           >
                             +
-                          </button>
+                          </button> */}
                           <input
                             type="number"
                             min="0"
@@ -1150,7 +1149,7 @@ const Content = () => {
                             (votoForm["Nulo"] || 0)}
                         </span>
                       </div>
-                      <div className="col-span-3">
+                      {/* <div className="col-span-3">
                         <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => {
@@ -1183,7 +1182,7 @@ const Content = () => {
                             +
                           </button>
                         </div>
-                      </div>
+                      </div> */}
                       <div className="col-span-2">
                         <input
                           type="number"
@@ -1234,7 +1233,7 @@ const Content = () => {
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <button
+                          {/* <button
                             onClick={() => {
                               const currentValue = votoForm["Nulo"] || 0;
                               if (currentValue > 0) {
@@ -1263,7 +1262,7 @@ const Content = () => {
                             className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
                           >
                             +
-                          </button>
+                          </button> */}
                           <input
                             type="number"
                             min="0"
