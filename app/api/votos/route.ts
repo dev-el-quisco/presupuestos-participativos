@@ -83,6 +83,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // NUEVA VALIDACIÓN: Verificar que la mesa esté abierta
+    const mesaStatusQuery = `
+      SELECT estado_mesa
+      FROM mesas 
+      WHERE id = @param1 AND periodo = @param2
+    `;
+
+    const mesaStatusResult = await executeQuery<{ estado_mesa: boolean }>(
+      mesaStatusQuery,
+      [
+        { name: "param1", type: TYPES.UniqueIdentifier, value: id_mesa },
+        { name: "param2", type: TYPES.Int, value: periodo },
+      ]
+    );
+
+    if (mesaStatusResult.length === 0) {
+      return NextResponse.json(
+        { error: "Mesa no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    if (!mesaStatusResult[0].estado_mesa) {
+      return NextResponse.json(
+        { error: "La mesa está cerrada" },
+        { status: 400 }
+      );
+    }
+
     // Obtener cantidad de votantes registrados en la base de datos
     const votantesQuery = `
       SELECT COUNT(*) as total_votantes
@@ -185,11 +214,15 @@ export async function POST(request: NextRequest) {
         } else if (voto.cantidad < 0) {
           // Eliminar votos existentes
           const cantidadAEliminar = Math.abs(voto.cantidad);
-          
+
           const deleteQuery = `
             DELETE TOP (${cantidadAEliminar}) FROM votos 
             WHERE id_mesa = @param1 AND periodo = @param2 AND tipo_voto = @param3
-            ${projectDbId ? 'AND id_proyecto = @param4' : 'AND id_proyecto IS NULL'}
+            ${
+              projectDbId
+                ? "AND id_proyecto = @param4"
+                : "AND id_proyecto IS NULL"
+            }
           `;
 
           const deleteParams = [

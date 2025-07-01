@@ -91,6 +91,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // NUEVA VALIDACIÓN: Verificar que la mesa esté abierta
+    const mesaStatusQuery = `
+      SELECT estado_mesa
+      FROM mesas 
+      WHERE id = @param1 AND periodo = @param2
+    `;
+
+    const mesaStatusResult = await executeQuery<{ estado_mesa: boolean }>(
+      mesaStatusQuery,
+      [
+        { name: "param1", type: TYPES.UniqueIdentifier, value: id_mesa },
+        { name: "param2", type: TYPES.Int, value: parseInt(periodo) },
+      ]
+    );
+
+    if (mesaStatusResult.length === 0) {
+      return NextResponse.json(
+        { error: "Mesa no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    if (!mesaStatusResult[0].estado_mesa) {
+      return NextResponse.json(
+        { error: "La mesa está cerrada" },
+        { status: 400 }
+      );
+    }
+
     // Función para validar RUT chileno
     const validarRUT = (rut: string): boolean => {
       // Limpiar el RUT
