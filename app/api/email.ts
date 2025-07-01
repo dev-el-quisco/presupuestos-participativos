@@ -220,7 +220,7 @@ export const sendUserEmailChanged = async (email: string, name: string) => {
         <p>Hola ${name},</p>
         <p>Te informamos que tu email en la plataforma ha sido actualizado por un administrador.</p>
         <p>
-          <strong>Nuevo rol:</strong> ${email}
+          <strong>Nuevo email:</strong> ${email}
         </p>
         <p>Este cambio puede afectar el acceso que tienes a ciertas funcionalidades de la plataforma.</p>
         <p>Si no reconoces este cambio o tienes dudas al respecto, contacta al administrador del sistema.</p>
