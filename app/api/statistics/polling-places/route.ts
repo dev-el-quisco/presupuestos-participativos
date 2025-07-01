@@ -1,6 +1,7 @@
 import { executeQuery } from "@/app/lib/database";
 import { TYPES } from "tedious";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/app/lib/auth";
 
 interface SedeStatistics {
   sede_id: string;
@@ -22,6 +23,20 @@ interface FormattedSedeData {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Token de autorización requerido" },
+        { status: 401 }
+      );
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
 
@@ -32,20 +47,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Primero obtener todas las sedes
-    const sedesQuery = `
+    // Obtener sedes con mesas cerradas y asignadas al usuario
+    let sedesQuery = `
       SELECT DISTINCT s.id as sede_id, s.nombre as sede_nombre
       FROM sedes s
       INNER JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
-      ORDER BY s.nombre
+      WHERE m.estado_mesa = 0
     `;
+
+    const sedesParams: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) }
+    ];
+
+    // Filtrar por permisos según el rol
+    if (user.rol === "Digitador") {
+      sedesQuery += ` AND EXISTS (
+        SELECT 1 FROM permisos p 
+        WHERE p.id_mesa = m.id 
+        AND p.id_usuario = @param2 
+        AND p.periodo = @param3
+      )`;
+      sedesParams.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    }
+
+    sedesQuery += ` ORDER BY s.nombre`;
 
     const sedes = await executeQuery<{ sede_id: string; sede_nombre: string }>(
       sedesQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      sedesParams
     );
 
-    // Obtener todos los proyectos del período (incluso sin votos)
+    // Obtener proyectos del período
     const proyectosQuery = `
       SELECT 
         p.id_proyecto as proyecto_id,
@@ -65,8 +100,8 @@ export async function GET(request: NextRequest) {
       { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
     ]);
 
-    // Obtener estadísticas de votos por sede y proyecto
-    const votosQuery = `
+    // Obtener estadísticas de votos solo de mesas cerradas y asignadas
+    let votosQuery = `
       SELECT 
         s.id as sede_id,
         s.nombre as sede_nombre,
@@ -79,14 +114,31 @@ export async function GET(request: NextRequest) {
       LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
       LEFT JOIN proyectos p ON v.id_proyecto = p.id AND p.periodo = @param1
       LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
-      WHERE p.id IS NOT NULL AND tp.id IS NOT NULL
-      GROUP BY s.id, s.nombre, p.id_proyecto, p.nombre, tp.nombre
-      ORDER BY s.nombre, tp.nombre, p.id_proyecto
+      WHERE m.estado_mesa = 0 AND p.id IS NOT NULL AND tp.id IS NOT NULL
     `;
 
-    const statistics = await executeQuery<SedeStatistics>(votosQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const votosParams: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) }
+    ];
+
+    // Filtrar por permisos según el rol
+    if (user.rol === "Digitador") {
+      votosQuery += ` AND EXISTS (
+        SELECT 1 FROM permisos pe 
+        WHERE pe.id_mesa = m.id 
+        AND pe.id_usuario = @param2 
+        AND pe.periodo = @param3
+      )`;
+      votosParams.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    }
+
+    votosQuery += ` GROUP BY s.id, s.nombre, p.id_proyecto, p.nombre, tp.nombre
+      ORDER BY s.nombre, tp.nombre, p.id_proyecto`;
+
+    const statistics = await executeQuery<SedeStatistics>(votosQuery, votosParams);
 
     // Formatear datos para el frontend
     const sedesMap = new Map<string, FormattedSedeData>();
@@ -202,7 +254,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error al obtener estadísticas por sede:", error);
+    console.error("Error al obtener estadísticas de sedes:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

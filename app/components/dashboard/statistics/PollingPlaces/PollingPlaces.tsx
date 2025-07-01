@@ -1,6 +1,7 @@
 "use client";
 
 import { useYear } from "@/app/context/YearContext";
+import { useAuth } from "@/app/hooks/useAuth";
 import { useState, useEffect } from "react";
 
 interface SedeData {
@@ -22,6 +23,7 @@ interface TotalesData {
 
 const PollingPlaces = () => {
   const { selectedYear, isYearReady } = useYear();
+  const { user } = useAuth();
   const [sedesData, setSedesData] = useState<SedeData[]>([]);
   const [totales, setTotales] = useState<TotalesData>({
     proyectosComunales: {},
@@ -34,14 +36,20 @@ const PollingPlaces = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPollingPlacesData = async () => {
-    if (!isYearReady || !selectedYear) return;
+    if (!isYearReady || !selectedYear || !user?.id) return;
 
     try {
       setLoading(true);
       setError(null);
 
+      const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/statistics/polling-places?periodo=${selectedYear}`
+        `/api/statistics/polling-places?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (!response.ok) {
@@ -66,7 +74,7 @@ const PollingPlaces = () => {
 
   useEffect(() => {
     fetchPollingPlacesData();
-  }, [isYearReady, selectedYear]);
+  }, [isYearReady, selectedYear, user?.id]);
 
   if (loading) {
     return (

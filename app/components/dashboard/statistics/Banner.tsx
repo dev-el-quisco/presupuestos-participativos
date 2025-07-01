@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { IconFileExport } from "@tabler/icons-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
+import { useAuth } from "@/app/hooks/useAuth";
 
 interface BannerProps {
   totalVotos: number;
@@ -43,6 +44,13 @@ interface WinnersData {
   sectorWinners: Record<string, SectorWinner[]>;
 }
 
+interface MesaStatusData {
+  totalMesas: number;
+  mesasCerradas: number;
+  todasCerradas: boolean;
+  mesasAbiertas: number;
+}
+
 const Banner: React.FC<BannerProps> = ({
   totalVotos,
   years,
@@ -51,10 +59,52 @@ const Banner: React.FC<BannerProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
   const [winnersData, setWinnersData] = useState<WinnersData>({
     communalWinner: null,
     sectorWinners: {},
   });
+  const [mesaStatus, setMesaStatus] = useState<MesaStatusData>({
+    totalMesas: 0,
+    mesasCerradas: 0,
+    todasCerradas: false,
+    mesasAbiertas: 0
+  });
+
+  // Función para obtener el estado de las mesas
+  const fetchMesaStatus = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(
+        `/api/statistics/mesa-status?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al obtener estado de mesas");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMesaStatus(data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching mesa status:", err);
+      setMesaStatus({
+        totalMesas: 0,
+        mesasCerradas: 0,
+        todasCerradas: false,
+        mesasAbiertas: 0
+      });
+    }
+  };
 
   // Función para obtener datos de ganadores
   const fetchWinners = async () => {
@@ -81,12 +131,13 @@ const Banner: React.FC<BannerProps> = ({
     }
   };
 
-  // Efecto para cargar ganadores cuando cambia el año
+  // Efecto para cargar datos cuando cambia el año
   useEffect(() => {
-    if (selectedYear) {
+    if (selectedYear && user?.id) {
       fetchWinners();
+      fetchMesaStatus();
     }
-  }, [selectedYear]);
+  }, [selectedYear, user?.id]);
 
   const exportPollingPlacesData = async () => {
     try {
@@ -652,7 +703,10 @@ const Banner: React.FC<BannerProps> = ({
   };
 
   const handleExport = () => {
-    // Verificar si estamos en la página de sedes
+    if (!mesaStatus.todasCerradas) {
+      toast.error("No se puede exportar hasta que todas las mesas asignadas estén cerradas");
+      return;
+    }
     exportPollingPlacesData();
     // if (pathname.includes("/sedes")) {
     //   exportPollingPlacesData();
@@ -704,6 +758,21 @@ const Banner: React.FC<BannerProps> = ({
         </div>
       </div>
 
+      {/* Nuevo indicador de estado de mesas */}
+      <div className="bg-gray-100 rounded-lg px-4 py-2 w-fit">
+        <div className="flex flex-row items-center justify-start space-x-1">
+          <span className="text-sm text-gray-600 hidden md:block">
+            Mesas cerradas:{" "}
+          </span>
+          <span className="text-sm text-gray-600 block md:hidden">Mesas: </span>
+          <span className={`text-xl font-bold ${
+            mesaStatus.todasCerradas ? 'text-green-600' : 'text-orange-600'
+          }`}>
+            {mesaStatus.mesasCerradas}/{mesaStatus.totalMesas}
+          </span>
+        </div>
+      </div>
+
       <div className="flex flex-row justify-between space-x-2">
         {years.length > 0 && (
           <div className="relative">
@@ -732,7 +801,12 @@ const Banner: React.FC<BannerProps> = ({
 
         <button
           onClick={handleExport}
-          className="flex items-center space-x-2 bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none"
+          disabled={!mesaStatus.todasCerradas}
+          className={`flex items-center space-x-2 border border-gray-300 rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none ${
+            mesaStatus.todasCerradas
+              ? 'bg-white hover:bg-[#30c56c] hover:text-[#e3ecea] cursor-pointer'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          }`}
         >
           <IconFileExport size={20} />
           <span>Exportar</span>
