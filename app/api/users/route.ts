@@ -6,6 +6,7 @@ import {
   sendUserRegister,
   sendAccountStatusChange,
   sendUserRoleChanged,
+  sendUserEmailChanged,
 } from "@/app/api/email";
 
 interface CreateUserRequest {
@@ -277,6 +278,10 @@ export async function PUT(request: NextRequest) {
 
       if (currentUser.rol !== rol) {
         await sendUserRoleChanged(email, nombre, rol);
+      }
+
+      if (currentUser.email !== email) {
+        await sendUserEmailChanged(email, nombre);
       }
     } catch (emailError) {
       console.error("Error al enviar email de notificación:", emailError);

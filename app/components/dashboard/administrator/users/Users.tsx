@@ -395,7 +395,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <p className="text-sm text-blue-800">
                     <strong>Nota:</strong> Se enviará una notificación por email
-                    si se cambia el rol o estado de la cuenta.
+                    si se cambia el email, rol y/o estado de la cuenta.
                   </p>
                 </div>
 

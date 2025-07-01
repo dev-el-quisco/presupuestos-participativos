@@ -208,3 +208,26 @@ export const sendUserRoleChanged = async (
 
   return transporter.sendMail(message);
 };
+
+export const sendUserEmailChanged = async (email: string, name: string) => {
+  const message = {
+    from: `Presupuestos Participativos El Quisco <${process.env.EMAIL_FROM}>`,
+    to: email,
+    subject: `Cambio de Email de Usuario - Presupuesto Participativo`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+        <h2 style="color: #2c3e50;">Actualización de Rol de Usuario</h2>
+        <p>Hola ${name},</p>
+        <p>Te informamos que tu email en la plataforma ha sido actualizado por un administrador.</p>
+        <p>
+          <strong>Nuevo rol:</strong> ${email}
+        </p>
+        <p>Este cambio puede afectar el acceso que tienes a ciertas funcionalidades de la plataforma.</p>
+        <p>Si no reconoces este cambio o tienes dudas al respecto, contacta al administrador del sistema.</p>
+        <p>Saludos,<br>Equipo Presupuestos Participativos El Quisco</p>
+      </div>
+    `,
+  };
+
+  return transporter.sendMail(message);
+};
