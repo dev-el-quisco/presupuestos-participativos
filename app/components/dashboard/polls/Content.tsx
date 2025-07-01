@@ -79,6 +79,42 @@ const Content = () => {
   const [selectedMesa, setSelectedMesa] = useState<any>(null);
   const [rutError, setRutError] = useState<string>("");
 
+  // Función para cerrar mesa
+  const cerrarMesa = async (mesa: any) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/mesas?id=${mesa.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nombre: mesa.nombre,
+          estado_mesa: false, // Cerramos la mesa
+          sede_id: mesa.sede_id,
+          periodo: mesa.periodo,
+        }),
+      });
+
+      if (response.ok) {
+        setMesas((prevMesas) =>
+          prevMesas.map((m) =>
+            m.id === mesa.id ? { ...m, estado_mesa: false } : m
+          )
+        );
+        return true;
+      } else {
+        toast.error("Error al cerrar la mesa");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al cerrar la mesa");
+      return false;
+    }
+  };
+
   // Función para validar RUT chileno
   const validarRUT = (rut: string): boolean => {
     const rutLimpio = rut.replace(/[^0-9kK]/g, "").toUpperCase();
@@ -170,20 +206,33 @@ const Content = () => {
     }
   };
 
-  // Función para ordenar proyectos por categoría y nombre
+  // Función para ordenar proyectos por categoría y ID
   const getOrderedProjects = () => {
-    return [...proyectos].sort((a, b) => {
-      // Primero ordenar por categoría
-      const categoriaA = a.tipo_proyecto_nombre || "";
-      const categoriaB = b.tipo_proyecto_nombre || "";
+    // Primero agrupar por categoría
+    const proyectosPorCategoria: { [key: string]: any[] } = {};
 
-      if (categoriaA !== categoriaB) {
-        return categoriaA.localeCompare(categoriaB);
+    proyectos.forEach((proyecto) => {
+      const categoria = proyecto.tipo_proyecto_nombre || "Sin Categoría";
+      if (!proyectosPorCategoria[categoria]) {
+        proyectosPorCategoria[categoria] = [];
       }
-
-      // Si la categoría es la misma, ordenar por nombre
-      return a.nombre.localeCompare(b.nombre);
+      proyectosPorCategoria[categoria].push(proyecto);
     });
+
+    // Ordenar categorías alfabéticamente
+    const categoriasOrdenadas = Object.keys(proyectosPorCategoria).sort();
+
+    // Ordenar proyectos dentro de cada categoría por ID
+    const proyectosOrdenados: any[] = [];
+    categoriasOrdenadas.forEach((categoria) => {
+      const proyectosCategoria = proyectosPorCategoria[categoria];
+      proyectosCategoria.sort((a, b) =>
+        a.id_proyecto.localeCompare(b.id_proyecto)
+      );
+      proyectosOrdenados.push(...proyectosCategoria);
+    });
+
+    return proyectosOrdenados;
   };
 
   // Formularios
@@ -243,7 +292,7 @@ const Content = () => {
           )
         );
         toast.success(
-          `Mesa ${!mesa.estado_mesa ? "cerrada" : "abierta"} exitosamente`
+          `Mesa ${mesa.estado_mesa ? "cerrada" : "abierta"} exitosamente`
         );
       } else {
         toast.error("Error al cambiar el estado de la mesa");
@@ -299,7 +348,6 @@ const Content = () => {
         });
 
         setVotosExistentes(votosCount);
-        console.log("Votos existentes cargados:", votosCount); // Para debug
       } else {
         console.error("Error al cargar votos:", response.status);
       }
@@ -412,15 +460,20 @@ const Content = () => {
     }
   };
 
-  // Guardar votos
+  // Guardar votos (con cierre automático de mesa)
   const handleSaveVotos = async () => {
     try {
       const votos = [];
+      const totalNuevosVotos = Object.values(votoForm).reduce(
+        (sum, val) => sum + (val || 0),
+        0
+      );
 
-      // Procesar votos de proyectos
+      // Procesar votos de proyectos - INCLUIR TAMBIÉN CANTIDAD 0 Y NEGATIVA
       proyectos.forEach((proyecto) => {
         const cantidad = votoForm[proyecto.id_proyecto] || 0;
-        if (cantidad > 0) {
+        // Cambiar esta condición para incluir también cantidad 0 y negativa
+        if (cantidad !== 0) {
           votos.push({
             id_proyecto: proyecto.id_proyecto,
             tipo_voto: "Normal",
@@ -429,19 +482,27 @@ const Content = () => {
         }
       });
 
-      // Procesar votos en blanco y nulos
-      if (votoForm["Blanco"] > 0) {
+      // Procesar votos en blanco y nulos - INCLUIR TAMBIÉN CANTIDAD 0 Y NEGATIVA
+      const cantidadBlanco = votoForm["Blanco"] || 0;
+      if (cantidadBlanco !== 0) {
         votos.push({
           tipo_voto: "Blanco",
-          cantidad: votoForm["Blanco"],
+          cantidad: cantidadBlanco,
         });
       }
 
-      if (votoForm["Nulo"] > 0) {
+      const cantidadNulo = votoForm["Nulo"] || 0;
+      if (cantidadNulo !== 0) {
         votos.push({
           tipo_voto: "Nulo",
-          cantidad: votoForm["Nulo"],
+          cantidad: cantidadNulo,
         });
+      }
+
+      // Si no hay cambios reales, mostrar mensaje apropiado
+      if (votos.length === 0) {
+        toast.error("No hay cambios que guardar");
+        return;
       }
 
       const token = localStorage.getItem("auth_token");
@@ -462,6 +523,11 @@ const Content = () => {
         toast.success("Votos registrados exitosamente");
         setShowVotosModal(false);
         refetchMesas(); // Recargar para actualizar conteo
+        
+        // Cerrar automáticamente la mesa después de guardar los votos
+        if (selectedMesa) {
+          await handleCambiarEstado(selectedMesa);
+        }
       } else {
         const error = await response.json();
         toast.error(error.error || "Error al registrar votos");
@@ -719,10 +785,10 @@ const Content = () => {
       {/* Modal de Votos */}
       {showVotosModal && (
         <Portal>
-          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-2 sm:p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-3 sm:p-6 w-full max-w-[95vw] sm:max-w-7xl max-h-[95vh] overflow-y-auto shadow-xl border border-slate-200">
+          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[95vh] overflow-y-auto shadow-xl border border-slate-200">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-medium text-slate-800">
+                <h3 className="text-lg font-medium text-slate-800">
                   Votos - Mesa {selectedMesa?.nombre}
                 </h3>
                 <button
@@ -733,294 +799,88 @@ const Content = () => {
                 </button>
               </div>
 
-              {/* Header de la tabla - Responsive */}
-              <div className="bg-slate-100 rounded-lg p-2 sm:p-3 mb-2">
-                <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center text-xs font-medium text-slate-600 uppercase">
-                  <div className="col-span-1">ID</div>
-                  <div className="col-span-4">Proyecto</div>
-                  <div className="col-span-1 text-center">Actual</div>
-                  <div className="col-span-1 text-center">Total</div>
-                  <div className="col-span-2 text-center">Total Manual</div>
-                </div>
-                <div className="sm:hidden text-xs font-medium text-slate-600 uppercase text-center">
-                  Proyectos por Categoría
-                </div>
-              </div>
+              {/* Proyectos en grid responsivo */}
+              <div className="max-h-[50vh] sm:max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {getOrderedProjects().map((proyecto, index) => {
+                    const votosActuales =
+                      votosExistentes[proyecto.id_proyecto] || 0;
+                    const votosNuevos = votoForm[proyecto.id_proyecto] || 0;
+                    const totalVotos = votosActuales + votosNuevos;
+                    const categoryColors = getCategoryColors(
+                      proyecto.tipo_proyecto_nombre || ""
+                    );
 
-              {/* Lista de proyectos - Responsive */}
-              <div className="space-y-1 max-h-[50vh] sm:max-h-96 overflow-y-auto">
-                {getOrderedProjects().map((proyecto, index) => {
-                  const votosActuales =
-                    votosExistentes[proyecto.id_proyecto] || 0;
-                  const votosNuevos = votoForm[proyecto.id_proyecto] || 0;
-                  const totalVotos = votosActuales + votosNuevos;
-                  const categoryColors = getCategoryColors(
-                    proyecto.tipo_proyecto_nombre || ""
-                  );
-
-                  return (
-                    <div
-                      key={proyecto.id_proyecto}
-                      className={`border ${categoryColors.border} rounded-lg p-2 sm:p-3 ${categoryColors.bg} ${categoryColors.hover} transition-colors`}
-                    >
-                      {/* Layout Desktop */}
-                      <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
-                        {/* ID Visual */}
-                        <div className="col-span-1">
+                    return (
+                      <div
+                        key={proyecto.id_proyecto}
+                        className={`flex justify-between items-center p-3 rounded-lg border ${categoryColors.border} ${categoryColors.bg} ${categoryColors.hover}`}
+                      >
+                        <div className="flex items-center">
                           <span
                             className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${categoryColors.icon} text-xs font-bold`}
                           >
                             {proyecto.id_proyecto}
                           </span>
-                        </div>
-
-                        {/* Nombre del proyecto */}
-                        <div className="col-span-4">
-                          <div>
-                            <span
-                              className="text-sm font-medium text-slate-800 block"
-                              title={proyecto.nombre}
-                            >
-                              {proyecto.nombre.length > 40
-                                ? `${proyecto.nombre.substring(0, 40)}...`
-                                : proyecto.nombre}
-                            </span>
-                            <span className="text-xs text-slate-500">
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-slate-800">
+                              {proyecto.nombre}
+                            </div>
+                            <div className="text-xs text-slate-500">
                               {proyecto.tipo_proyecto_nombre}
-                            </span>
+                            </div>
+                            <div className="text-xs text-blue-600 font-medium">
+                              Votos actuales: {votosActuales}
+                            </div>
                           </div>
                         </div>
-
-                        {/* Votos actuales */}
-                        <div className="col-span-1 text-center">
-                          <span className="text-sm text-slate-600">
-                            {votosActuales}
-                          </span>
-                        </div>
-
-                        {/* Total calculado */}
-                        <div className="col-span-1 text-center">
-                          <span className="text-sm font-medium text-slate-800">
-                            {totalVotos}
-                          </span>
-                        </div>
-
-                        {/* Controles para votos nuevos */}
-                        {/* <div className="col-span-3">
-                          <div className="flex items-center justify-center space-x-2">
-                            <button
-                              onClick={() => {
-                                const currentValue = votosNuevos;
-                                if (currentValue > 0) {
-                                  setVotoForm((prev) => ({
-                                    ...prev,
-                                    [proyecto.id_proyecto]: currentValue - 1,
-                                  }));
-                                }
-                              }}
-                              disabled={votosNuevos <= 0}
-                              className="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
-                            >
-                              −
-                            </button>
-                            <span className="w-12 text-center text-sm font-medium text-slate-700">
-                              {votosNuevos}
-                            </span>
-                            <button
-                              onClick={() => {
-                                const currentValue = votosNuevos;
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  [proyecto.id_proyecto]: currentValue + 1,
-                                }));
-                              }}
-                              className="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div> */}
-
-                        {/* Input manual para total */}
-                        <div className="col-span-2">
+                        <div className="flex flex-col items-end">
                           <input
                             type="number"
                             min="0"
                             value={totalVotos}
                             onChange={(e) => {
                               const nuevoTotal = parseInt(e.target.value) || 0;
-                              const nuevosVotosCalculados = Math.max(
-                                0,
-                                nuevoTotal - votosActuales
-                              );
+                              const totalAjustado = Math.max(0, nuevoTotal);
+                              const nuevosVotosCalculados =
+                                totalAjustado - votosActuales;
                               setVotoForm((prev) => ({
                                 ...prev,
                                 [proyecto.id_proyecto]: nuevosVotosCalculados,
                               }));
                             }}
-                            className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Total"
+                            className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                           />
-                        </div>
-                      </div>
-
-                      {/* Layout Mobile */}
-                      <div className="sm:hidden space-y-2">
-                        {/* Header móvil */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span
-                              className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${categoryColors.icon} text-xs font-bold`}
-                            >
-                              {proyecto.id_proyecto}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <span
-                                className="text-sm font-medium text-slate-800 block truncate"
-                                title={proyecto.nombre}
-                              >
-                                {proyecto.nombre.length > 25
-                                  ? `${proyecto.nombre.substring(0, 25)}...`
-                                  : proyecto.nombre}
-                              </span>
-                              <span className="text-xs text-slate-500">
-                                {proyecto.tipo_proyecto_nombre}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Controles móvil */}
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-slate-600">
-                            Actual:{" "}
-                            <span className="font-medium">{votosActuales}</span>{" "}
-                            | Total:{" "}
-                            <span className="font-medium">{totalVotos}</span>
-                          </div>
-
-                          <div className="flex items-center space-x-1">
-                            {/* <button
-                              onClick={() => {
-                                const currentValue = votosNuevos;
-                                if (currentValue > 0) {
-                                  setVotoForm((prev) => ({
-                                    ...prev,
-                                    [proyecto.id_proyecto]: currentValue - 1,
-                                  }));
-                                }
-                              }}
-                              disabled={votosNuevos <= 0}
-                              className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
-                            >
-                              −
-                            </button>
-                            <span className="w-6 text-center text-xs font-medium text-slate-700">
-                              {votosNuevos}
-                            </span>
-                            <button
-                              onClick={() => {
-                                const currentValue = votosNuevos;
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  [proyecto.id_proyecto]: currentValue + 1,
-                                }));
-                              }}
-                              className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
-                            >
-                              +
-                            </button> */}
-                            <input
-                              type="number"
-                              min="0"
-                              value={totalVotos}
-                              onChange={(e) => {
-                                const nuevoTotal =
-                                  parseInt(e.target.value) || 0;
-                                const nuevosVotosCalculados = Math.max(
-                                  0,
-                                  nuevoTotal - votosActuales
-                                );
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  [proyecto.id_proyecto]: nuevosVotosCalculados,
-                                }));
-                              }}
-                              className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
+                          <div className="text-xs text-slate-500 mt-1">
+                            {votosNuevos >= 0 ? `+${votosNuevos}` : votosNuevos} nuevos
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
 
-              {/* Votos especiales (Blanco y Nulo) - Responsive */}
-              <div className="border-t border-slate-200 pt-4 mt-4">
-                <h4 className="text-sm font-medium text-slate-700 mb-3">
-                  Votos Especiales
-                </h4>
-                <div className="space-y-2">
-                  {/* Votos en Blanco */}
-                  <div className="border border-slate-200 rounded-lg p-2 sm:p-3 bg-blue-50">
-                    <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
-                      <div className="col-span-1">
+                {/* Votos especiales */}
+                <div className="mt-6">
+                  <h3 className="font-semibold text-lg mb-2">
+                    Votos Especiales
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex justify-between items-center p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100">
+                      <div className="flex items-center">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">
                           B
                         </span>
-                      </div>
-                      <div className="col-span-4">
-                        <span className="text-sm font-medium text-slate-800">
-                          Votos en Blanco
-                        </span>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm text-slate-600">
-                          {votosExistentes["Blanco"] || 0}
-                        </span>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm font-medium text-slate-800">
-                          {(votosExistentes["Blanco"] || 0) +
-                            (votoForm["Blanco"] || 0)}
-                        </span>
-                      </div>
-                      {/* <div className="col-span-3">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Blanco: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Blanco"] || 0) <= 0}
-                            className="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-12 text-center text-sm font-medium text-slate-700">
-                            {votoForm["Blanco"] || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Blanco: currentValue + 1,
-                              }));
-                            }}
-                            className="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            +
-                          </button>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-slate-800">
+                            Votos en Blanco
+                          </div>
+                          <div className="text-xs text-blue-600 font-medium">
+                            Actuales: {votosExistentes["Blanco"] || 0}
+                          </div>
                         </div>
-                      </div> */}
-                      <div className="col-span-2">
+                      </div>
+                      <div className="flex flex-col items-end">
                         <input
                           type="number"
                           min="0"
@@ -1030,160 +890,36 @@ const Content = () => {
                           }
                           onChange={(e) => {
                             const nuevoTotal = parseInt(e.target.value) || 0;
-                            const nuevosVotosCalculados = Math.max(
-                              0,
-                              nuevoTotal - (votosExistentes["Blanco"] || 0)
-                            );
+                            const totalAjustado = Math.max(0, nuevoTotal);
+                            const nuevosVotosCalculados =
+                              totalAjustado - (votosExistentes["Blanco"] || 0);
                             setVotoForm((prev) => ({
                               ...prev,
                               Blanco: nuevosVotosCalculados,
                             }));
                           }}
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Total"
+                          className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         />
-                      </div>
-                    </div>
-
-                    {/* Layout móvil para votos en blanco */}
-                    <div className="sm:hidden">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">
-                            B
-                          </span>
-                          <span className="text-sm font-medium text-slate-800">
-                            Votos en Blanco
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-slate-600">
-                          Actual:{" "}
-                          <span className="font-medium">
-                            {votosExistentes["Blanco"] || 0}
-                          </span>{" "}
-                          | Total:{" "}
-                          <span className="font-medium">
-                            {(votosExistentes["Blanco"] || 0) +
-                              (votoForm["Blanco"] || 0)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          {/* <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Blanco: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Blanco"] || 0) <= 0}
-                            className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center text-xs font-medium text-slate-700">
-                            {votoForm["Blanco"] || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Blanco"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Blanco: currentValue + 1,
-                              }));
-                            }}
-                            className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            +
-                          </button> */}
-                          <input
-                            type="number"
-                            min="0"
-                            value={
-                              (votosExistentes["Blanco"] || 0) +
-                              (votoForm["Blanco"] || 0)
-                            }
-                            onChange={(e) => {
-                              const nuevoTotal = parseInt(e.target.value) || 0;
-                              const nuevosVotosCalculados = Math.max(
-                                0,
-                                nuevoTotal - (votosExistentes["Blanco"] || 0)
-                              );
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Blanco: nuevosVotosCalculados,
-                              }));
-                            }}
-                            className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                        <div className="text-xs text-slate-500 mt-1">
+                          {(votoForm["Blanco"] || 0) >= 0 ? `+${votoForm["Blanco"] || 0}` : (votoForm["Blanco"] || 0)} nuevos
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Votos Nulos */}
-                  <div className="border border-slate-200 rounded-lg p-2 sm:p-3 bg-yellow-50">
-                    <div className="hidden sm:grid sm:grid-cols-12 gap-2 items-center">
-                      <div className="col-span-1">
+                    <div className="flex justify-between items-center p-3 rounded-lg border border-yellow-200 bg-yellow-50 hover:bg-yellow-100">
+                      <div className="flex items-center">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-200 text-yellow-800 text-xs font-bold">
                           N
                         </span>
-                      </div>
-                      <div className="col-span-4">
-                        <span className="text-sm font-medium text-slate-800">
-                          Votos Nulos
-                        </span>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm text-slate-600">
-                          {votosExistentes["Nulo"] || 0}
-                        </span>
-                      </div>
-                      <div className="col-span-1 text-center">
-                        <span className="text-sm font-medium text-slate-800">
-                          {(votosExistentes["Nulo"] || 0) +
-                            (votoForm["Nulo"] || 0)}
-                        </span>
-                      </div>
-                      {/* <div className="col-span-3">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Nulo: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Nulo"] || 0) <= 0}
-                            className="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-12 text-center text-sm font-medium text-slate-700">
-                            {votoForm["Nulo"] || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Nulo: currentValue + 1,
-                              }));
-                            }}
-                            className="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-sm font-bold transition-colors"
-                          >
-                            +
-                          </button>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-slate-800">
+                            Votos Nulos
+                          </div>
+                          <div className="text-xs text-blue-600 font-medium">
+                            Actuales: {votosExistentes["Nulo"] || 0}
+                          </div>
                         </div>
-                      </div> */}
-                      <div className="col-span-2">
+                      </div>
+                      <div className="flex flex-col items-end">
                         <input
                           type="number"
                           min="0"
@@ -1193,96 +929,18 @@ const Content = () => {
                           }
                           onChange={(e) => {
                             const nuevoTotal = parseInt(e.target.value) || 0;
-                            const nuevosVotosCalculados = Math.max(
-                              0,
-                              nuevoTotal - (votosExistentes["Nulo"] || 0)
-                            );
+                            const totalAjustado = Math.max(0, nuevoTotal);
+                            const nuevosVotosCalculados =
+                              totalAjustado - (votosExistentes["Nulo"] || 0);
                             setVotoForm((prev) => ({
                               ...prev,
                               Nulo: nuevosVotosCalculados,
                             }));
                           }}
-                          className="w-full border border-slate-300 rounded px-2 py-1 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Total"
+                          className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         />
-                      </div>
-                    </div>
-
-                    {/* Layout móvil para votos nulos */}
-                    <div className="sm:hidden">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-200 text-yellow-800 text-xs font-bold">
-                            N
-                          </span>
-                          <span className="text-sm font-medium text-slate-800">
-                            Votos Nulos
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-slate-600">
-                          Actual:{" "}
-                          <span className="font-medium">
-                            {votosExistentes["Nulo"] || 0}
-                          </span>{" "}
-                          | Total:{" "}
-                          <span className="font-medium">
-                            {(votosExistentes["Nulo"] || 0) +
-                              (votoForm["Nulo"] || 0)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          {/* <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              if (currentValue > 0) {
-                                setVotoForm((prev) => ({
-                                  ...prev,
-                                  Nulo: currentValue - 1,
-                                }));
-                              }
-                            }}
-                            disabled={(votoForm["Nulo"] || 0) <= 0}
-                            className="w-6 h-6 rounded-full bg-red-100 text-red-600 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            −
-                          </button>
-                          <span className="w-6 text-center text-xs font-medium text-slate-700">
-                            {votoForm["Nulo"] || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const currentValue = votoForm["Nulo"] || 0;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Nulo: currentValue + 1,
-                              }));
-                            }}
-                            className="w-6 h-6 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold transition-colors"
-                          >
-                            +
-                          </button> */}
-                          <input
-                            type="number"
-                            min="0"
-                            value={
-                              (votosExistentes["Nulo"] || 0) +
-                              (votoForm["Nulo"] || 0)
-                            }
-                            onChange={(e) => {
-                              const nuevoTotal = parseInt(e.target.value) || 0;
-                              const nuevosVotosCalculados = Math.max(
-                                0,
-                                nuevoTotal - (votosExistentes["Nulo"] || 0)
-                              );
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                Nulo: nuevosVotosCalculados,
-                              }));
-                            }}
-                            className="w-12 border border-slate-300 rounded px-1 py-1 text-xs text-center focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
+                        <div className="text-xs text-slate-500 mt-1">
+                          {(votoForm["Nulo"] || 0) >= 0 ? `+${votoForm["Nulo"] || 0}` : (votoForm["Nulo"] || 0)} nuevos
                         </div>
                       </div>
                     </div>
@@ -1308,15 +966,6 @@ const Content = () => {
                       {selectedMesa?.votos_count || 0}
                     </span>
                   </div>
-                  <div className="flex flex-row- items-start gap-1">
-                    <span>Nuevos votos:</span>
-                    <span className="font-medium text-blue-600">
-                      {Object.values(votoForm).reduce(
-                        (sum, val) => sum + (val || 0),
-                        0
-                      )}
-                    </span>
-                  </div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-slate-200">
                   <div className="flex flex-row- items-start gap-1 text-xs">
@@ -1332,18 +981,6 @@ const Content = () => {
                     </span>
                   </div>
                 </div>
-                {/* Advertencia si los votos no coinciden con votantes */}
-                {(selectedMesa?.votos_count || 0) +
-                  Object.values(votoForm).reduce(
-                    (sum, val) => sum + (val || 0),
-                    0
-                  ) !==
-                  (selectedMesa?.votantes_count || 0) && (
-                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                    ⚠️ Los votos totales no coinciden con los votantes
-                    registrados
-                  </div>
-                )}
               </div>
 
               <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">

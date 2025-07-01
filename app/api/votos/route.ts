@@ -78,14 +78,66 @@ export async function POST(request: NextRequest) {
 
     if (!periodo || !id_mesa || !votos || votos.length === 0) {
       return NextResponse.json(
-        { error: "Todos los campos son requeridos" },
+        { error: "No hay cambios que guardar" },
         { status: 400 }
       );
     }
 
-    // Insertar cada voto individualmente según la cantidad
+    // Obtener cantidad de votantes registrados en la base de datos
+    const votantesQuery = `
+      SELECT COUNT(*) as total_votantes
+      FROM votantes 
+      WHERE id_mesa = @param1 AND periodo = @param2
+    `;
+
+    const votantesResult = await executeQuery<{ total_votantes: number }>(
+      votantesQuery,
+      [
+        { name: "param1", type: TYPES.UniqueIdentifier, value: id_mesa },
+        { name: "param2", type: TYPES.Int, value: periodo },
+      ]
+    );
+
+    const totalVotantes = votantesResult[0]?.total_votantes || 0;
+
+    // Obtener votos existentes en la base de datos
+    const votosExistentesQuery = `
+      SELECT COUNT(*) as total_votos_existentes
+      FROM votos 
+      WHERE id_mesa = @param1 AND periodo = @param2
+    `;
+
+    const votosExistentesResult = await executeQuery<{
+      total_votos_existentes: number;
+    }>(votosExistentesQuery, [
+      { name: "param1", type: TYPES.UniqueIdentifier, value: id_mesa },
+      { name: "param2", type: TYPES.Int, value: periodo },
+    ]);
+
+    const totalVotosExistentes =
+      votosExistentesResult[0]?.total_votos_existentes || 0;
+
+    // Calcular total de votos nuevos que se van a agregar
+    const totalVotosNuevos = votos.reduce(
+      (sum, voto) => sum + (voto.cantidad || 0),
+      0
+    );
+
+    // Validar que el total de votos (existentes + nuevos) no exceda el total de votantes
+    const totalVotosFinales = totalVotosExistentes + totalVotosNuevos;
+
+    if (totalVotosFinales !== totalVotantes) {
+      return NextResponse.json(
+        {
+          error: `El total de votos (${totalVotosFinales}) debe ser exactamente igual al total de votantes registrados (${totalVotantes})`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Insertar o eliminar votos según la cantidad
     for (const voto of votos) {
-      if (voto.cantidad > 0) {
+      if (voto.cantidad !== 0) {
         let projectDbId = null;
 
         // Si es un voto normal (no blanco ni nulo), obtener el ID interno del proyecto
@@ -106,28 +158,56 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const insertQuery = `
-          INSERT INTO votos (periodo, tipo_voto, id_proyecto, id_mesa) 
-          VALUES ${Array(voto.cantidad)
-            .fill("(@param1, @param2, @param3, @param4)")
-            .join(", ")}
-        `;
+        if (voto.cantidad > 0) {
+          // Insertar votos nuevos
+          const insertQuery = `
+            INSERT INTO votos (periodo, tipo_voto, id_proyecto, id_mesa) 
+            VALUES ${Array(voto.cantidad)
+              .fill("(@param1, @param2, @param3, @param4)")
+              .join(", ")}
+          `;
 
-        const params = [];
-        for (let i = 0; i < voto.cantidad; i++) {
-          params.push(
-            { name: "param1", type: TYPES.Int, value: periodo },
-            { name: "param2", type: TYPES.VarChar, value: voto.tipo_voto },
-            {
-              name: "param3",
+          const params = [];
+          for (let i = 0; i < voto.cantidad; i++) {
+            params.push(
+              { name: "param1", type: TYPES.Int, value: periodo },
+              { name: "param2", type: TYPES.VarChar, value: voto.tipo_voto },
+              {
+                name: "param3",
+                type: TYPES.UniqueIdentifier,
+                value: projectDbId,
+              },
+              { name: "param4", type: TYPES.UniqueIdentifier, value: id_mesa }
+            );
+          }
+
+          await executeQuery(insertQuery, params);
+        } else if (voto.cantidad < 0) {
+          // Eliminar votos existentes
+          const cantidadAEliminar = Math.abs(voto.cantidad);
+          
+          const deleteQuery = `
+            DELETE TOP (${cantidadAEliminar}) FROM votos 
+            WHERE id_mesa = @param1 AND periodo = @param2 AND tipo_voto = @param3
+            ${projectDbId ? 'AND id_proyecto = @param4' : 'AND id_proyecto IS NULL'}
+          `;
+
+          const deleteParams = [
+            { name: "param1", type: TYPES.UniqueIdentifier, value: id_mesa },
+            { name: "param2", type: TYPES.Int, value: periodo },
+            { name: "param3", type: TYPES.VarChar, value: voto.tipo_voto },
+          ];
+
+          if (projectDbId) {
+            deleteParams.push({
+              name: "param4",
               type: TYPES.UniqueIdentifier,
               value: projectDbId,
-            },
-            { name: "param4", type: TYPES.UniqueIdentifier, value: id_mesa }
-          );
-        }
+            });
+          }
 
-        await executeQuery(insertQuery, params);
+          await executeQuery(deleteQuery, deleteParams);
+        }
       }
     }
 
