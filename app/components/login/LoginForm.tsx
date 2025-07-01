@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
-import { IconMail } from "@tabler/icons-react";
+import { IconId } from "@tabler/icons-react";
 import { IconLockPassword } from "@tabler/icons-react";
 import { IconEye } from "@tabler/icons-react";
 import { IconEyeX } from "@tabler/icons-react";
@@ -58,7 +58,7 @@ const LoginForm = ({ onResetPasswordClick }: LoginFormProps) => {
           </label>
           <div className="mt-1 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IconMail className="h-4 w-4 text-gray-400" />
+              <IconId className="h-4 w-4 text-gray-400" />
             </div>
             <input
               id="username"
