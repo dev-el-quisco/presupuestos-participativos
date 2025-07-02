@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     `;
 
     const sedesParams: any[] = [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) }
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
     ];
 
     // Filtrar por permisos según el rol
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     `;
 
     const votosParams: any[] = [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) }
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
     ];
 
     // Filtrar por permisos según el rol
@@ -138,7 +138,10 @@ export async function GET(request: NextRequest) {
     votosQuery += ` GROUP BY s.id, s.nombre, p.id_proyecto, p.nombre, tp.nombre
       ORDER BY s.nombre, tp.nombre, p.id_proyecto`;
 
-    const statistics = await executeQuery<SedeStatistics>(votosQuery, votosParams);
+    const statistics = await executeQuery<SedeStatistics>(
+      votosQuery,
+      votosParams
+    );
 
     // Formatear datos para el frontend
     const sedesMap = new Map<string, FormattedSedeData>();

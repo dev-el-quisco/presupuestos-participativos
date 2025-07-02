@@ -51,7 +51,11 @@ export async function GET(request: NextRequest) {
     params.push({ name: "param1", type: TYPES.Int, value: parseInt(periodo) });
 
     // Filtrar por permisos según el rol
-    if (user.rol === "Digitador" || user.rol === "Ministro de Fe" || user.rol === "Encargado de Local") {
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
       query += ` INNER JOIN permisos p ON m.id = p.id_mesa AND p.id_usuario = @param2 AND p.periodo = @param3`;
       params.push(
         { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
     const mesas = await executeQuery<MesaStatus>(query, params);
 
     const totalMesas = mesas.length;
-    const mesasCerradas = mesas.filter(mesa => !mesa.estado_mesa).length;
+    const mesasCerradas = mesas.filter((mesa) => !mesa.estado_mesa).length;
     const todasCerradas = totalMesas > 0 && mesasCerradas === totalMesas;
 
     return NextResponse.json({
@@ -75,8 +79,8 @@ export async function GET(request: NextRequest) {
         totalMesas,
         mesasCerradas,
         todasCerradas,
-        mesasAbiertas: totalMesas - mesasCerradas
-      }
+        mesasAbiertas: totalMesas - mesasCerradas,
+      },
     });
   } catch (error) {
     console.error("Error al obtener estado de mesas:", error);

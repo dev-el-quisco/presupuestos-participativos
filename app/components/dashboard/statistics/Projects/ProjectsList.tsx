@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface ProjectWithVotes {
   id: string;
@@ -34,6 +35,7 @@ type Project = {
 const ProjectsList = () => {
   const { selectedYear, isYearReady } = useYear();
   const { selectedCategory } = useFilter();
+  const { user } = useAuth();
   const [windowWidth, setWindowWidth] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
@@ -71,11 +73,19 @@ const ProjectsList = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
-      if (!isYearReady || !selectedYear) return;
+      if (!isYearReady || !selectedYear || !user?.id) return;
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(
+          `/api/statistics?periodo=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -90,7 +100,7 @@ const ProjectsList = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear, isYearReady]);
+  }, [selectedYear, isYearReady, user?.id]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);

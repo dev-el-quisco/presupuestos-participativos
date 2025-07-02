@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeQuery } from "@/app/lib/database";
 import { TYPES } from "tedious";
+import { verifyToken } from "@/app/lib/auth";
 
 interface VoteStatistics {
   tipo_proyecto_id: string;
@@ -19,6 +20,20 @@ interface ProjectWithVotes {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Token de autorización requerido" },
+        { status: 401 }
+      );
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
 
@@ -29,35 +44,86 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Construir condiciones de filtro para mesas
+    let mesaJoinCondition = "";
+    let mesaWhereCondition = "";
+    const params: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
+    ];
+
+    // Filtrar por mesas cerradas y permisos según el rol
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
+      mesaJoinCondition = `
+        INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id 
+        INNER JOIN permisos perm ON mesa_filter.id = perm.id_mesa AND perm.id_usuario = @param2 AND perm.periodo = @param3
+      `;
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+      params.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    } else {
+      // Para Administrador: solo mesas cerradas
+      mesaJoinCondition =
+        "INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id";
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+    }
+
     // Obtener estadísticas por tipo de proyecto
     const statisticsQuery = `
       SELECT 
         tp.id as tipo_proyecto_id,
         tp.nombre as tipo_proyecto_nombre,
-        COUNT(v.id) as total_votos,
-        COUNT(DISTINCT p.id) as total_proyectos
+        COALESCE(vote_counts.total_votos, 0) as total_votos,
+        COALESCE(project_counts.total_proyectos, 0) as total_proyectos
       FROM tipo_proyectos tp
-      LEFT JOIN proyectos p ON tp.id = p.id_tipo_proyecto AND p.periodo = @param1
-      LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
-      GROUP BY tp.id, tp.nombre
+      LEFT JOIN (
+        SELECT 
+          p.id_tipo_proyecto,
+          COUNT(DISTINCT p.id) as total_proyectos
+        FROM proyectos p
+        WHERE p.periodo = @param1
+        GROUP BY p.id_tipo_proyecto
+      ) project_counts ON tp.id = project_counts.id_tipo_proyecto
+      LEFT JOIN (
+        SELECT 
+          p.id_tipo_proyecto,
+          COUNT(v.id) as total_votos
+        FROM proyectos p
+        LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        ${mesaJoinCondition}
+        WHERE p.periodo = @param1 ${mesaWhereCondition}
+        GROUP BY p.id_tipo_proyecto
+      ) vote_counts ON tp.id = vote_counts.id_tipo_proyecto
       ORDER BY tp.nombre
     `;
 
-    const statistics = await executeQuery<VoteStatistics>(statisticsQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const statistics = await executeQuery<VoteStatistics>(
+      statisticsQuery,
+      params
+    );
 
     // Calcular totales
-    const totalVotes = statistics.reduce((sum, stat) => sum + stat.total_votos, 0);
-    const totalProjects = statistics.reduce((sum, stat) => sum + stat.total_proyectos, 0);
+    const totalVotes = statistics.reduce(
+      (sum, stat) => sum + stat.total_votos,
+      0
+    );
+    const totalProjects = statistics.reduce(
+      (sum, stat) => sum + stat.total_proyectos,
+      0
+    );
 
     // Formatear datos para el frontend
-    const formattedStats = statistics.map(stat => ({
+    const formattedStats = statistics.map((stat) => ({
       id: stat.tipo_proyecto_id,
       name: stat.tipo_proyecto_nombre,
       count: stat.total_votos,
       projects: stat.total_proyectos,
-      percentage: totalVotes > 0 ? ((stat.total_votos / totalVotes) * 100) : 0
+      percentage: totalVotes > 0 ? (stat.total_votos / totalVotes) * 100 : 0,
     }));
 
     // Obtener proyectos con votos para el ranking
@@ -71,15 +137,17 @@ export async function GET(request: NextRequest) {
       FROM proyectos p
       LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
       LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = p.periodo AND v.tipo_voto = 'Normal'
-      WHERE p.periodo = @param1
+      ${mesaJoinCondition}
+      WHERE p.periodo = @param1 ${mesaWhereCondition}
       GROUP BY p.id, p.id_proyecto, p.nombre, tp.nombre
       HAVING COUNT(v.id) > 0
       ORDER BY COUNT(v.id) DESC
     `;
 
-    const projects = await executeQuery<ProjectWithVotes>(projectsQuery, [
-      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
-    ]);
+    const projects = await executeQuery<ProjectWithVotes>(
+      projectsQuery,
+      params
+    );
 
     return NextResponse.json({
       success: true,
@@ -87,8 +155,8 @@ export async function GET(request: NextRequest) {
         categories: formattedStats,
         totalVotes,
         totalProjects,
-        projects
-      }
+        projects,
+      },
     });
   } catch (error) {
     console.error("Error al obtener estadísticas:", error);

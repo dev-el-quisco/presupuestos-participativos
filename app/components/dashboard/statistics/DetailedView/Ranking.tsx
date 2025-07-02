@@ -1,6 +1,7 @@
 "use client";
 
 import { useYear } from "@/app/context/YearContext";
+import { useAuth } from "@/app/context/AuthContext";
 import { useState, useEffect } from "react";
 
 interface ProjectRanking {
@@ -16,19 +17,26 @@ interface ProjectRanking {
 
 const Ranking = () => {
   const { selectedYear, isYearReady } = useYear();
+  const { user } = useAuth();
   const [projectsRanking, setProjectsRanking] = useState<ProjectRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRanking = async () => {
-    if (!isYearReady || !selectedYear) return;
+    if (!isYearReady || !selectedYear || !user?.id) return;
 
     try {
       setLoading(true);
       setError(null);
 
+      const token = localStorage.getItem("auth_token");
       const response = await fetch(
-        `/api/statistics/detailed?periodo=${selectedYear}`
+        `/api/statistics/detailed?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       if (!response.ok) {
@@ -52,7 +60,7 @@ const Ranking = () => {
 
   useEffect(() => {
     fetchRanking();
-  }, [isYearReady, selectedYear]);
+  }, [isYearReady, selectedYear, user?.id]);
 
   // Definir tipo para las claves de categorías
   type CategoryKey = "comunales" | "infantiles" | "juveniles" | "sectoriales";

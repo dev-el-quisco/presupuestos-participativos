@@ -1,6 +1,7 @@
 import { executeQuery } from "@/app/lib/database";
 import { TYPES } from "tedious";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/app/lib/auth";
 
 interface ProjectRanking {
   id: string;
@@ -26,6 +27,20 @@ interface CategoryLeader {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Token de autorización requerido" },
+        { status: 401 }
+      );
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
 
@@ -36,7 +51,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 1. Obtener ranking completo de proyectos
+    // Construir condiciones de filtro para mesas
+    let mesaJoinCondition = "";
+    let mesaWhereCondition = "";
+    let sedeJoinCondition = "";
+    let sedeWhereCondition = "";
+    const params: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
+    ];
+
+    // Filtrar por mesas cerradas y permisos según el rol
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
+      mesaJoinCondition = `
+        INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id 
+        INNER JOIN permisos perm ON mesa_filter.id = perm.id_mesa AND perm.id_usuario = @param2 AND perm.periodo = @param3
+      `;
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+
+      // Para la consulta de sede, usar un JOIN diferente
+      sedeJoinCondition = `
+        INNER JOIN permisos perm_sede ON m.id = perm_sede.id_mesa AND perm_sede.id_usuario = @param2 AND perm_sede.periodo = @param3
+      `;
+      sedeWhereCondition = "AND m.estado_mesa = 0";
+
+      params.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    } else {
+      // Para Administrador: solo mesas cerradas
+      mesaJoinCondition =
+        "INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id";
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+      sedeJoinCondition = "";
+      sedeWhereCondition = "AND m.estado_mesa = 0";
+    }
+
+    // Aplicar el mismo filtro a todas las consultas SQL existentes...
+    // 1. Consulta de ranking de proyectos - CORREGIDA
     const projectsRankingQuery = `
       WITH ProjectVotes AS (
         SELECT 
@@ -48,7 +104,8 @@ export async function GET(request: NextRequest) {
         FROM proyectos p
         LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
         LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = p.periodo AND v.tipo_voto = 'Normal'
-        WHERE p.periodo = @param1
+        ${mesaJoinCondition}
+        WHERE p.periodo = @param1 ${mesaWhereCondition}
         GROUP BY p.id, p.id_proyecto, p.nombre, tp.nombre
       ),
       TotalVotes AS (
@@ -85,10 +142,10 @@ export async function GET(request: NextRequest) {
 
     const projectsRanking = await executeQuery<ProjectRanking>(
       projectsRankingQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      params
     );
 
-    // 2. Obtener sede con mayor participación
+    // 2. Consulta de participación por sede - CORREGIDA
     const sedeParticipationQuery = `
       WITH SedeVotes AS (
         SELECT 
@@ -97,6 +154,8 @@ export async function GET(request: NextRequest) {
         FROM sedes s
         LEFT JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
         LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        ${sedeJoinCondition}
+        WHERE 1=1 ${sedeWhereCondition}
         GROUP BY s.id, s.nombre
       ),
       TotalVotes AS (
@@ -118,10 +177,10 @@ export async function GET(request: NextRequest) {
 
     const sedeParticipation = await executeQuery<SedeParticipation>(
       sedeParticipationQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      params
     );
 
-    // 3. Obtener categoría líder
+    // 3. Consulta de categoría líder - CORREGIDA
     const categoryLeaderQuery = `
       WITH CategoryVotes AS (
         SELECT 
@@ -130,6 +189,8 @@ export async function GET(request: NextRequest) {
         FROM tipo_proyectos tp
         LEFT JOIN proyectos p ON tp.id = p.id_tipo_proyecto AND p.periodo = @param1
         LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        ${mesaJoinCondition}
+        WHERE 1=1 ${mesaWhereCondition}
         GROUP BY tp.id, tp.nombre
       ),
       TotalVotes AS (
@@ -151,7 +212,7 @@ export async function GET(request: NextRequest) {
 
     const categoryLeader = await executeQuery<CategoryLeader>(
       categoryLeaderQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      params
     );
 
     // Obtener proyecto más votado

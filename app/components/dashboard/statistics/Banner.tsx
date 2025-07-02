@@ -68,13 +68,13 @@ const Banner: React.FC<BannerProps> = ({
     totalMesas: 0,
     mesasCerradas: 0,
     todasCerradas: false,
-    mesasAbiertas: 0
+    mesasAbiertas: 0,
   });
 
   // Función para obtener el estado de las mesas
   const fetchMesaStatus = async () => {
     if (!user?.id) return;
-    
+
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
@@ -101,7 +101,7 @@ const Banner: React.FC<BannerProps> = ({
         totalMesas: 0,
         mesasCerradas: 0,
         todasCerradas: false,
-        mesasAbiertas: 0
+        mesasAbiertas: 0,
       });
     }
   };
@@ -704,7 +704,9 @@ const Banner: React.FC<BannerProps> = ({
 
   const handleExport = () => {
     if (!mesaStatus.todasCerradas) {
-      toast.error("No se puede exportar hasta que todas las mesas asignadas estén cerradas");
+      toast.error(
+        "No se puede exportar hasta que todas las mesas asignadas estén cerradas"
+      );
       return;
     }
     exportPollingPlacesData();
@@ -765,9 +767,11 @@ const Banner: React.FC<BannerProps> = ({
             Mesas cerradas:{" "}
           </span>
           <span className="text-sm text-gray-600 block md:hidden">Mesas: </span>
-          <span className={`text-xl font-bold ${
-            mesaStatus.todasCerradas ? 'text-green-600' : 'text-orange-600'
-          }`}>
+          <span
+            className={`text-xl font-bold ${
+              mesaStatus.todasCerradas ? "text-green-600" : "text-orange-600"
+            }`}
+          >
             {mesaStatus.mesasCerradas}/{mesaStatus.totalMesas}
           </span>
         </div>
@@ -804,8 +808,8 @@ const Banner: React.FC<BannerProps> = ({
           disabled={!mesaStatus.todasCerradas}
           className={`flex items-center space-x-2 border border-gray-300 rounded-lg px-4 py-2 transition-colors focus:ring-2 focus:ring-[#30c56c] focus:border-[#30c56c] outline-none ${
             mesaStatus.todasCerradas
-              ? 'bg-white hover:bg-[#30c56c] hover:text-[#e3ecea] cursor-pointer'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? "bg-white hover:bg-[#30c56c] hover:text-[#e3ecea] cursor-pointer"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
           <IconFileExport size={20} />

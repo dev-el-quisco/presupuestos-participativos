@@ -1,6 +1,7 @@
 import { executeQuery } from "@/app/lib/database";
 import { TYPES } from "tedious";
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/app/lib/auth";
 
 interface WinnerProject {
   id_proyecto: string;
@@ -32,6 +33,20 @@ interface SectorWinner {
 
 export async function GET(request: NextRequest) {
   try {
+    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Token de autorización requerido" },
+        { status: 401 }
+      );
+    }
+
+    const user = verifyToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const periodo = searchParams.get("periodo");
 
@@ -42,7 +57,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 1. Obtener ganador de proyectos comunales (el más votado)
+    // Construir condiciones de filtro para mesas
+    let mesaJoinCondition = "";
+    let mesaWhereCondition = "";
+    const params: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
+    ];
+
+    // Filtrar por mesas cerradas y permisos según el rol
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
+      mesaJoinCondition = `
+        INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id 
+        INNER JOIN permisos perm ON mesa_filter.id = perm.id_mesa AND perm.id_usuario = @param2 AND perm.periodo = @param3
+      `;
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+      params.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    } else {
+      // Para Administrador: solo mesas cerradas
+      mesaJoinCondition =
+        "INNER JOIN mesas mesa_filter ON v.id_mesa = mesa_filter.id";
+      mesaWhereCondition = "AND mesa_filter.estado_mesa = 0";
+    }
+
+    // 1. Obtener ganador de proyectos comunales (el más votado) - CORREGIDO
     const communalWinnerQuery = `
       WITH CommunalVotes AS (
         SELECT 
@@ -52,7 +96,8 @@ export async function GET(request: NextRequest) {
         FROM proyectos p
         INNER JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
         LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
-        WHERE p.periodo = @param1 AND LOWER(tp.nombre) LIKE '%comunal%'
+        ${mesaJoinCondition}
+        WHERE p.periodo = @param1 AND LOWER(tp.nombre) LIKE '%comunal%' ${mesaWhereCondition}
         GROUP BY p.id_proyecto, p.nombre
       ),
       TotalVotes AS (
@@ -75,10 +120,10 @@ export async function GET(request: NextRequest) {
 
     const communalWinner = await executeQuery<CommunalWinner>(
       communalWinnerQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      params
     );
 
-    // 2. Obtener ganadores por sector para otras categorías
+    // 2. Obtener ganadores por sector para otras categorías - CORREGIDO
     const sectorWinnersQuery = `
       WITH ProjectVotes AS (
         SELECT 
@@ -91,9 +136,10 @@ export async function GET(request: NextRequest) {
         INNER JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
         LEFT JOIN sectores s ON p.id_sector = s.id
         LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        ${mesaJoinCondition}
         WHERE p.periodo = @param1 
           AND LOWER(tp.nombre) NOT LIKE '%comunal%'
-          AND s.id IS NOT NULL
+          AND s.id IS NOT NULL ${mesaWhereCondition}
         GROUP BY p.id_proyecto, p.nombre, tp.nombre, s.nombre
       ),
       CategoryTotals AS (
@@ -128,7 +174,7 @@ export async function GET(request: NextRequest) {
 
     const sectorWinners = await executeQuery<WinnerProject>(
       sectorWinnersQuery,
-      [{ name: "param1", type: TYPES.Int, value: parseInt(periodo) }]
+      params
     );
 
     // Formatear datos para el frontend

@@ -2,6 +2,7 @@
 
 import { useYear } from "@/app/context/YearContext";
 import { useFilter } from "@/app/context/FilterContext";
+import { useAuth } from "@/app/context/AuthContext";
 import { useState, useEffect } from "react";
 
 interface ProjectWithVotes {
@@ -20,8 +21,9 @@ interface StatisticsData {
 }
 
 const MostVoted = () => {
-  const { selectedYear, isYearReady } = useYear(); // Agregar isYearReady
+  const { selectedYear, isYearReady } = useYear();
   const { selectedCategory } = useFilter();
+  const { user } = useAuth();
   const [windowWidth, setWindowWidth] = useState(0);
   const [statisticsData, setStatisticsData] = useState<StatisticsData | null>(
     null
@@ -42,11 +44,19 @@ const MostVoted = () => {
 
   useEffect(() => {
     const fetchStatistics = async () => {
-      if (!isYearReady || !selectedYear) return; // Verificar isYearReady
+      if (!isYearReady || !selectedYear || !user?.id) return;
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(
+          `/api/statistics?periodo=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -61,7 +71,7 @@ const MostVoted = () => {
     };
 
     fetchStatistics();
-  }, [selectedYear, isYearReady]); // Agregar isYearReady a dependencias
+  }, [selectedYear, isYearReady, user?.id]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);

@@ -7,6 +7,7 @@ import Banner from "@/app/components/dashboard/statistics/Banner";
 import TabCategoryFilter from "@/app/components/dashboard/TabCategoryFilter";
 import RoleProtectedRoute from "@/app/components/auth/RoleProtectedRoute";
 import { useYear } from "@/app/context/YearContext";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface StatisticsLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ interface StatisticsLayoutProps {
 export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   const [totalVotos, setTotalVotos] = useState<number>(0);
   const [years, setYears] = useState<number[]>([]);
+  const { user } = useAuth();
 
   // Usar el contexto global de año en lugar del estado local
   const { selectedYear, setSelectedYear, isYearReady } = useYear();
@@ -35,13 +37,31 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
   // Obtener total de votos usando la API existente /api/statistics
   useEffect(() => {
     const fetchTotalVotes = async () => {
-      if (!selectedYear || !isYearReady) return;
+      if (!selectedYear || !isYearReady || !user?.id) return;
 
       try {
-        const response = await fetch(`/api/statistics?periodo=${selectedYear}`);
-        const data = await response.json();
-        if (data.success) {
-          setTotalVotos(data.statistics.totalVotes || 0);
+        const token = localStorage.getItem("auth_token");
+        
+        if (!token) {
+          console.warn("No auth token found for statistics");
+          return;
+        }
+
+        const response = await fetch(`/api/statistics?periodo=${selectedYear}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setTotalVotos(data.statistics.totalVotes || 0);
+          }
+        } else {
+          console.warn(`Statistics API returned ${response.status}`);
+          setTotalVotos(0);
         }
       } catch (error) {
         console.error("Error fetching total votes:", error);
@@ -49,8 +69,13 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
       }
     };
 
-    fetchTotalVotes();
-  }, [selectedYear, isYearReady]);
+    // Agregar un pequeño delay para evitar condiciones de carrera
+    const timeoutId = setTimeout(() => {
+      fetchTotalVotes();
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedYear, isYearReady, user?.id]);
 
   const statisticsTabs = [
     { name: "Proyectos", path: "/proyectos" },
