@@ -126,20 +126,24 @@ const DistributionByCategory = () => {
   const centerY = radius;
 
   // Preparar datos para el gráfico
-  const categoryData = statisticsData.categories
-    .filter((cat) => cat.percentage > 0)
-    .map((category) => {
-      const colorConfig = getColorConfig(category.name);
-      return {
-        name: category.name,
-        value: category.percentage,
-        ...colorConfig,
-      };
-    });
+  const allCategories = ['Comunales', 'Infantiles', 'Juveniles', 'Sectoriales'];
+  
+  const categoryData = allCategories.map(categoryName => {
+    const existingCategory = statisticsData.categories.find(cat => cat.name === categoryName);
+    const colorConfig = getColorConfig(categoryName);
+    
+    return {
+      name: categoryName,
+      value: existingCategory ? existingCategory.percentage : 0,
+      ...colorConfig,
+    };
+  });
 
-  // Generar el gráfico circular
+  // Generar el gráfico circular solo para categorías con votos
+  const categoriesWithVotes = categoryData.filter(cat => cat.value > 0);
+  
   let startAngle = 0;
-  const paths = categoryData.map((category) => {
+  const paths = categoriesWithVotes.map((category) => {
     const angle = (category.value / 100) * 360;
     const endAngle = startAngle + angle;
 

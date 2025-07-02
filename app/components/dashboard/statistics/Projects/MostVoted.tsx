@@ -125,18 +125,14 @@ const MostVoted = () => {
 
   // Determinar el título según la categoría seleccionada
   const getCategoryTitle = () => {
-    if (selectedCategory === "todos" || selectedCategory === null) {
-      return "Proyectos Más Votados";
-    }
+    return "Proyectos Más Votados";
+  };
 
-    const categoryMap: { [key: string]: string } = {
-      comunales: "Proyectos Comunales",
-      infantiles: "Proyectos Infantiles",
-      juveniles: "Proyectos Juveniles",
-      sectoriales: "Proyectos Sectoriales",
-    };
-
-    return `${categoryMap[selectedCategory] || "Proyectos"} Más Votados`;
+  const categoryMap: { [key: string]: string } = {
+    comunales: "Proyectos Comunales",
+    infantiles: "Proyectos Infantiles",
+    juveniles: "Proyectos Juveniles",
+    sectoriales: "Proyectos Sectoriales",
   };
 
   return (
