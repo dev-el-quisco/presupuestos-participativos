@@ -41,19 +41,22 @@ export default function StatisticsLayout({ children }: StatisticsLayoutProps) {
 
       try {
         const token = localStorage.getItem("auth_token");
-        
+
         if (!token) {
           console.warn("No auth token found for statistics");
           return;
         }
 
-        const response = await fetch(`/api/statistics?periodo=${selectedYear}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
+        const response = await fetch(
+          `/api/statistics?periodo=${selectedYear}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
         if (response.ok) {
           const data = await response.json();
           if (data.success) {

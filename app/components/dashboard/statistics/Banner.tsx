@@ -127,18 +127,11 @@ const Banner: React.FC<BannerProps> = ({
     }
   };
 
-  // Efecto para cargar datos cuando cambia el año - SOLO si estamos en vista detallada
+  // Efecto para cargar datos cuando cambia el año
   useEffect(() => {
     if (selectedYear && user?.id) {
-      // Solo llamar a estas APIs si estamos en la vista detallada
-      const pathname = window.location.pathname;
-      if (pathname.includes('/vista-detallada')) {
-        fetchWinners();
-        fetchMesaStatus();
-      } else {
-        // Solo llamar a mesa-status para mostrar el estado general
-        fetchMesaStatus();
-      }
+      // Solo llamar a mesa-status, no a winners (lo maneja Winners.tsx)
+      fetchMesaStatus();
     }
   }, [selectedYear, user?.id]);
 
@@ -148,7 +141,7 @@ const Banner: React.FC<BannerProps> = ({
 
       // Obtener el token de autorización
       const token = localStorage.getItem("auth_token");
-      
+
       if (!token) {
         throw new Error("No se encontró token de autorización");
       }
@@ -159,15 +152,15 @@ const Banner: React.FC<BannerProps> = ({
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
 
       if (!data.success) {
@@ -216,7 +209,7 @@ const Banner: React.FC<BannerProps> = ({
           ...Array(sectorialesKeys.length).fill("PROYECTOS SECTORIALES"),
           "TOTAL VOTOS",
         ],
-        // Segunda fila de encabezado: Solo los nombres de proyectos
+        // Segunda fila de encabezado: Solo los nombres de los proyectos
         [
           "", // Celda vacía debajo de SEDE
           ...comunalesKeys,

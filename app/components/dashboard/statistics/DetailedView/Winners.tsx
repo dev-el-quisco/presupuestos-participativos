@@ -39,7 +39,8 @@ const Winners = () => {
   const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
   const fetchWinners = async (retryCount = 0) => {
-    if (!isYearReady || !selectedYear || !user?.id || isRequestInProgress) return;
+    if (!isYearReady || !selectedYear || !user?.id || isRequestInProgress)
+      return;
 
     try {
       setIsRequestInProgress(true);
@@ -47,40 +48,44 @@ const Winners = () => {
       setError(null);
 
       const token = localStorage.getItem("auth_token");
-      
+
       if (!token) {
         setError("Token de autenticación no encontrado");
         return;
       }
-  
+
       // Verificar si el token está próximo a expirar
       try {
-        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        const tokenPayload = JSON.parse(atob(token.split(".")[1]));
         const currentTime = Math.floor(Date.now() / 1000);
         const timeUntilExpiry = tokenPayload.exp - currentTime;
-        
+
         // Si el token expira en menos de 5 minutos, intentar refrescar
         if (timeUntilExpiry < 300) {
-          console.warn('Token próximo a expirar, considera refrescar la sesión');
+          console.warn(
+            "Token próximo a expirar, considera refrescar la sesión"
+          );
         }
       } catch (tokenError) {
-        console.warn('Error al verificar token:', tokenError);
+        console.warn("Error al verificar token:", tokenError);
       }
-  
+
       const response = await fetch(
         `/api/statistics/winners?periodo=${selectedYear}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
-  
+
       if (!response.ok) {
         if (response.status === 401) {
           if (retryCount < 2) {
-            console.warn(`Token inválido, reintentando (intento ${retryCount + 1})...`);
+            console.warn(
+              `Token inválido, reintentando (intento ${retryCount + 1})...`
+            );
             // Esperar un poco más entre reintentos para tokens inválidos
             setIsRequestInProgress(false);
             setTimeout(() => fetchWinners(retryCount + 1), 2000);
@@ -93,9 +98,9 @@ const Winners = () => {
         }
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-  
+
       const data = await response.json();
-  
+
       if (data.success) {
         setWinnersData(data.data);
       } else {
@@ -104,7 +109,9 @@ const Winners = () => {
     } catch (err) {
       console.error("Error fetching winners:", err);
       if (retryCount < 2) {
-        console.warn(`Reintentando después de error (intento ${retryCount + 1})...`);
+        console.warn(
+          `Reintentando después de error (intento ${retryCount + 1})...`
+        );
         setIsRequestInProgress(false);
         setTimeout(() => fetchWinners(retryCount + 1), 3000);
       } else {
