@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     params.push({ name: "param1", type: TYPES.Int, value: parseInt(periodo) });
 
     // Filtrar por permisos según el rol
-    if (user.rol === "Digitador") {
+    if (user.rol === "Digitador" || user.rol === "Ministro de Fe" || user.rol === "Encargado de Local") {
       query += ` INNER JOIN permisos p ON m.id = p.id_mesa AND p.id_usuario = @param2 AND p.periodo = @param3`;
       params.push(
         { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
