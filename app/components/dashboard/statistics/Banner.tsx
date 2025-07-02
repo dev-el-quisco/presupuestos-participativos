@@ -124,18 +124,21 @@ const Banner: React.FC<BannerProps> = ({
       }
     } catch (err) {
       console.error("Error fetching winners:", err);
-      setWinnersData({
-        communalWinner: null,
-        sectorWinners: {},
-      });
     }
   };
 
-  // Efecto para cargar datos cuando cambia el año
+  // Efecto para cargar datos cuando cambia el año - SOLO si estamos en vista detallada
   useEffect(() => {
     if (selectedYear && user?.id) {
-      fetchWinners();
-      fetchMesaStatus();
+      // Solo llamar a estas APIs si estamos en la vista detallada
+      const pathname = window.location.pathname;
+      if (pathname.includes('/vista-detallada')) {
+        fetchWinners();
+        fetchMesaStatus();
+      } else {
+        // Solo llamar a mesa-status para mostrar el estado general
+        fetchMesaStatus();
+      }
     }
   }, [selectedYear, user?.id]);
 
