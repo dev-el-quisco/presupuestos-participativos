@@ -206,9 +206,8 @@ const Content = () => {
     }
   };
 
-  // Función para ordenar proyectos por categoría y ID
-  const getOrderedProjects = () => {
-    // Primero agrupar por categoría
+  // Función para agrupar proyectos por categoría
+  const getProjectsByCategory = () => {
     const proyectosPorCategoria: { [key: string]: any[] } = {};
 
     proyectos.forEach((proyecto) => {
@@ -223,16 +222,13 @@ const Content = () => {
     const categoriasOrdenadas = Object.keys(proyectosPorCategoria).sort();
 
     // Ordenar proyectos dentro de cada categoría por ID
-    const proyectosOrdenados: any[] = [];
     categoriasOrdenadas.forEach((categoria) => {
-      const proyectosCategoria = proyectosPorCategoria[categoria];
-      proyectosCategoria.sort((a, b) =>
+      proyectosPorCategoria[categoria].sort((a, b) =>
         a.id_proyecto.localeCompare(b.id_proyecto)
       );
-      proyectosOrdenados.push(...proyectosCategoria);
     });
 
-    return proyectosOrdenados;
+    return { proyectosPorCategoria, categoriasOrdenadas };
   };
 
   // Formularios
@@ -523,7 +519,7 @@ const Content = () => {
         toast.success("Votos registrados exitosamente");
         setShowVotosModal(false);
         refetchMesas(); // Recargar para actualizar conteo
-        
+
         // Cerrar automáticamente la mesa después de guardar los votos
         if (selectedMesa) {
           await handleCambiarEstado(selectedMesa);
@@ -799,73 +795,115 @@ const Content = () => {
                 </button>
               </div>
 
-              {/* Proyectos en grid responsivo */}
+              {/* Proyectos agrupados por categoría */}
               <div className="max-h-[50vh] sm:max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {getOrderedProjects().map((proyecto, index) => {
-                    const votosActuales =
-                      votosExistentes[proyecto.id_proyecto] || 0;
-                    const votosNuevos = votoForm[proyecto.id_proyecto] || 0;
-                    const totalVotos = votosActuales + votosNuevos;
-                    const categoryColors = getCategoryColors(
-                      proyecto.tipo_proyecto_nombre || ""
-                    );
+                {(() => {
+                  const { proyectosPorCategoria, categoriasOrdenadas } =
+                    getProjectsByCategory();
+
+                  return categoriasOrdenadas.map((categoria) => {
+                    const categoryColors = getCategoryColors(categoria);
 
                     return (
-                      <div
-                        key={proyecto.id_proyecto}
-                        className={`flex justify-between items-center p-3 rounded-lg border ${categoryColors.border} ${categoryColors.bg} ${categoryColors.hover}`}
-                      >
-                        <div className="flex items-center">
-                          <span
-                            className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${categoryColors.icon} text-xs font-bold`}
-                          >
-                            {proyecto.id_proyecto}
+                      <div key={categoria} className="mb-6">
+                        {/* Encabezado de categoría */}
+                        <div
+                          className={`flex items-center mb-3 p-2 rounded-lg ${categoryColors.bg} ${categoryColors.border} border`}
+                        >
+                          <div
+                            className={`w-3 h-3 rounded-full ${categoryColors.icon
+                              .replace("bg-", "bg-")
+                              .replace(" text-", " ")}`}
+                          ></div>
+                          <h3 className="ml-2 font-semibold text-lg text-slate-800">
+                            {categoria}
+                          </h3>
+                          <span className="ml-auto text-sm text-slate-600">
+                            ({proyectosPorCategoria[categoria].length}{" "}
+                            proyectos)
                           </span>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-slate-800">
-                              {proyecto.nombre}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {proyecto.tipo_proyecto_nombre}
-                            </div>
-                            <div className="text-xs text-blue-600 font-medium">
-                              Votos actuales: {votosActuales}
-                            </div>
-                          </div>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <input
-                            type="number"
-                            min="0"
-                            value={totalVotos}
-                            onChange={(e) => {
-                              const nuevoTotal = parseInt(e.target.value) || 0;
-                              const totalAjustado = Math.max(0, nuevoTotal);
-                              const nuevosVotosCalculados =
-                                totalAjustado - votosActuales;
-                              setVotoForm((prev) => ({
-                                ...prev,
-                                [proyecto.id_proyecto]: nuevosVotosCalculados,
-                              }));
-                            }}
-                            className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                          <div className="text-xs text-slate-500 mt-1">
-                            {votosNuevos >= 0 ? `+${votosNuevos}` : votosNuevos} nuevos
-                          </div>
+
+                        {/* Proyectos de la categoría */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-4">
+                          {proyectosPorCategoria[categoria].map((proyecto) => {
+                            const votosActuales =
+                              votosExistentes[proyecto.id_proyecto] || 0;
+                            const votosNuevos =
+                              votoForm[proyecto.id_proyecto] || 0;
+                            const totalVotos = votosActuales + votosNuevos;
+                            const projectCategoryColors = getCategoryColors(
+                              proyecto.tipo_proyecto_nombre || ""
+                            );
+
+                            return (
+                              <div
+                                key={proyecto.id_proyecto}
+                                className={`flex justify-between items-center p-3 rounded-lg border ${projectCategoryColors.border} ${projectCategoryColors.bg} ${projectCategoryColors.hover}`}
+                              >
+                                <div className="flex items-center">
+                                  <span
+                                    className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${projectCategoryColors.icon} text-xs font-bold`}
+                                  >
+                                    {proyecto.id_proyecto}
+                                  </span>
+                                  <div className="ml-3">
+                                    <div className="text-sm font-medium text-slate-800">
+                                      {proyecto.nombre}
+                                    </div>
+                                    <div className="text-xs text-blue-600 font-medium">
+                                      Votos actuales: {votosActuales}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={totalVotos}
+                                    onChange={(e) => {
+                                      const nuevoTotal =
+                                        parseInt(e.target.value) || 0;
+                                      const totalAjustado = Math.max(
+                                        0,
+                                        nuevoTotal
+                                      );
+                                      const nuevosVotosCalculados =
+                                        totalAjustado - votosActuales;
+                                      setVotoForm((prev) => ({
+                                        ...prev,
+                                        [proyecto.id_proyecto]:
+                                          nuevosVotosCalculados,
+                                      }));
+                                    }}
+                                    className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                  <div className="text-xs text-slate-500 mt-1">
+                                    {votosNuevos >= 0
+                                      ? `+${votosNuevos}`
+                                      : votosNuevos}{" "}
+                                    nuevos
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  });
+                })()}
 
                 {/* Votos especiales */}
                 <div className="mt-6">
-                  <h3 className="font-semibold text-lg mb-2">
-                    Votos Especiales
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center mb-3 p-2 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                    <h3 className="ml-2 font-semibold text-lg text-slate-800">
+                      Votos Especiales
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-4">
                     <div className="flex justify-between items-center p-3 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100">
                       <div className="flex items-center">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">
@@ -901,7 +939,10 @@ const Content = () => {
                           className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         />
                         <div className="text-xs text-slate-500 mt-1">
-                          {(votoForm["Blanco"] || 0) >= 0 ? `+${votoForm["Blanco"] || 0}` : (votoForm["Blanco"] || 0)} nuevos
+                          {(votoForm["Blanco"] || 0) >= 0
+                            ? `+${votoForm["Blanco"] || 0}`
+                            : votoForm["Blanco"] || 0}{" "}
+                          nuevos
                         </div>
                       </div>
                     </div>
@@ -940,7 +981,10 @@ const Content = () => {
                           className="w-20 border border-slate-300 rounded px-2 py-1 text-sm text-right focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                         />
                         <div className="text-xs text-slate-500 mt-1">
-                          {(votoForm["Nulo"] || 0) >= 0 ? `+${votoForm["Nulo"] || 0}` : (votoForm["Nulo"] || 0)} nuevos
+                          {(votoForm["Nulo"] || 0) >= 0
+                            ? `+${votoForm["Nulo"] || 0}`
+                            : votoForm["Nulo"] || 0}{" "}
+                          nuevos
                         </div>
                       </div>
                     </div>
@@ -955,24 +999,24 @@ const Content = () => {
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
                   <div className="flex flex-row- items-start gap-1">
-                    <span>Votantes registrados:</span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-bold">Votantes registrados:</span>
+                    <span className="font-bold text-slate-800">
                       {selectedMesa?.votantes_count || 0}
                     </span>
                   </div>
                   <div className="flex flex-row- items-start gap-1">
-                    <span>Votos actuales:</span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-bold">Votos actuales:</span>
+                    <span className="font-bold text-slate-800">
                       {selectedMesa?.votos_count || 0}
                     </span>
                   </div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-slate-200">
                   <div className="flex flex-row- items-start gap-1 text-xs">
-                    <span className="text-slate-600">
+                    <span className="text-slate-600 font-bold">
                       Total votos después de guardar:
                     </span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-bold text-slate-800">
                       {(selectedMesa?.votos_count || 0) +
                         Object.values(votoForm).reduce(
                           (sum, val) => sum + (val || 0),
