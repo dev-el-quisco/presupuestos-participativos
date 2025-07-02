@@ -143,10 +143,28 @@ const Banner: React.FC<BannerProps> = ({
     try {
       toast.loading("Exportando datos...", { id: "export" });
 
+      // Obtener el token de autorización
+      const token = localStorage.getItem("auth_token");
+      
+      if (!token) {
+        throw new Error("No se encontró token de autorización");
+      }
+
       // Cambiar la URL de /api/polling-places a /api/statistics/polling-places
       const response = await fetch(
-        `/api/statistics/polling-places?periodo=${selectedYear}`
+        `/api/statistics/polling-places?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
 
       if (!data.success) {
