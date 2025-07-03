@@ -253,7 +253,29 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Eliminar sede (las mesas se eliminan automáticamente por CASCADE)
+    // Primero eliminar permisos asociados a las mesas de esta sede
+    const deletePermisosFromMesasQuery = `
+      DELETE FROM permisos 
+      WHERE id_mesa IN (
+        SELECT id FROM mesas WHERE sede_id = @param1
+      )
+    `;
+
+    await executeQuery(deletePermisosFromMesasQuery, [
+      { name: "param1", type: TYPES.UniqueIdentifier, value: id },
+    ]);
+
+    // Luego eliminar permisos asociados directamente a la sede
+    const deletePermisosFromSedeQuery = `
+      DELETE FROM permisos 
+      WHERE id_sede = @param1
+    `;
+
+    await executeQuery(deletePermisosFromSedeQuery, [
+      { name: "param1", type: TYPES.UniqueIdentifier, value: id },
+    ]);
+
+    // Finalmente eliminar la sede (las mesas se eliminan automáticamente por CASCADE)
     const deleteQuery = `
       DELETE FROM sedes 
       WHERE id = @param1

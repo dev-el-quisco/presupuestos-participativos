@@ -392,7 +392,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Eliminar mesa
+    // Primero eliminar permisos asociados a esta mesa
+    const deletePermisosQuery = `
+      DELETE FROM permisos 
+      WHERE id_mesa = @param1
+    `;
+
+    await executeQuery(deletePermisosQuery, [
+      { name: "param1", type: TYPES.UniqueIdentifier, value: id },
+    ]);
+
+    // Luego eliminar la mesa
     const deleteQuery = `
       DELETE FROM mesas 
       WHERE id = @param1
