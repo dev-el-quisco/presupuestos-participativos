@@ -20,45 +20,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Obtener tipos de proyecto desde la base de datos
-    const typesQuery = `
-      SELECT id, nombre
-      FROM tipo_proyectos
-      ORDER BY nombre
+    // Consulta directa para obtener tipos de proyecto con conteo de proyectos
+    const categoriesQuery = `
+      SELECT 
+        tp.id,
+        tp.nombre as name,
+        COUNT(p.id) as count
+      FROM tipo_proyectos tp
+      LEFT JOIN proyectos p ON tp.id = p.id_tipo_proyecto AND p.periodo = @param1
+      GROUP BY tp.id, tp.nombre
+      ORDER BY tp.nombre
     `;
 
-    const projectTypes = await executeQuery<{ id: string; nombre: string }>(
-      typesQuery,
-      []
-    );
-
-    // Obtener conteo de proyectos por categoría
-    const projectsResponse = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-      }/api/projects?periodo=${periodo}`,
-      { cache: "no-store" }
-    );
-
-    let projectCounts: Record<string, number> = {};
-
-    if (projectsResponse.ok) {
-      const projectsData = await projectsResponse.json();
-      if (projectsData.success) {
-        // Contar proyectos por tipo
-        projectsData.projects.forEach((project: any) => {
-          const tipo = project.id_tipo_proyecto;
-          projectCounts[tipo] = (projectCounts[tipo] || 0) + 1;
-        });
-      }
-    }
-
-    // Combinar tipos de proyecto con conteos dinámicos
-    const categories: CategoryData[] = projectTypes.map((type) => ({
-      id: type.id,
-      name: type.nombre,
-      count: projectCounts[type.id] || 0,
-    }));
+    const categories = await executeQuery<CategoryData>(categoriesQuery, [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) },
+    ]);
 
     return NextResponse.json({
       success: true,
