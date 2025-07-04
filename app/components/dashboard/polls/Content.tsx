@@ -1079,13 +1079,13 @@ const Content = () => {
                     htmlFor="extranjero"
                     className="text-sm text-slate-700"
                   >
-                    Es extranjero
+                    ¿Es extranjero?
                   </label>
                 </div>
 
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    RUT/Identificación
+                    RUT/Identificación (pasaporte, nombre+apellido, etc)
                   </label>
                   <input
                     type="text"
@@ -1097,7 +1097,7 @@ const Content = () => {
                     placeholder={
                       votanteForm.extranjero
                         ? "Identificación"
-                        : "12.345.678-9 o identificador"
+                        : "12.345.678-9 o identificador (pasaporte, nombre+apellido, etc)"
                     }
                     disabled={false}
                   />
