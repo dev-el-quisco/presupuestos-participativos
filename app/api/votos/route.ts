@@ -152,17 +152,16 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // Validar que el total de votos (existentes + nuevos) no exceda el total de votantes
-    const totalVotosFinales = totalVotosExistentes + totalVotosNuevos;
-
-    if (totalVotosFinales !== totalVotantes) {
-      return NextResponse.json(
-        {
-          error: `El total de votos (${totalVotosFinales}) debe ser exactamente igual al total de votantes registrados (${totalVotantes})`,
-        },
-        { status: 400 }
-      );
-    }
+    // Remover esta validación:
+    // const totalVotosFinales = totalVotosExistentes + totalVotosNuevos;
+    // if (totalVotosFinales !== totalVotantes) {
+    //   return NextResponse.json(
+    //     {
+    //       error: `El total de votos (${totalVotosFinales}) debe ser exactamente igual al total de votantes registrados (${totalVotantes})`,
+    //     },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Insertar o eliminar votos según la cantidad
     for (const voto of votos) {

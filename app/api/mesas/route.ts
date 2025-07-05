@@ -205,47 +205,46 @@ export async function PUT(request: NextRequest) {
 
     // Si se está intentando cerrar la mesa (estado_mesa = false), validar votos vs votantes
     if (estado_mesa === false && mesaActual.estado_mesa === true) {
-      // Obtener cantidad de votantes registrados
-      const votantesQuery = `
-        SELECT COUNT(*) as total_votantes
-        FROM votantes 
-        WHERE id_mesa = @param1 AND periodo = @param2
-      `;
-
-      const votantesResult = await executeQuery<{ total_votantes: number }>(
-        votantesQuery,
-        [
-          { name: "param1", type: TYPES.UniqueIdentifier, value: id },
-          { name: "param2", type: TYPES.Int, value: mesaActual.periodo },
-        ]
-      );
-
-      // Obtener cantidad de votos registrados
-      const votosQuery = `
-        SELECT COUNT(*) as total_votos
-        FROM votos 
-        WHERE id_mesa = @param1 AND periodo = @param2
-      `;
-
-      const votosResult = await executeQuery<{ total_votos: number }>(
-        votosQuery,
-        [
-          { name: "param1", type: TYPES.UniqueIdentifier, value: id },
-          { name: "param2", type: TYPES.Int, value: mesaActual.periodo },
-        ]
-      );
-
-      const totalVotantes = votantesResult[0]?.total_votantes || 0;
-      const totalVotos = votosResult[0]?.total_votos || 0;
-
-      if (totalVotos !== totalVotantes) {
-        return NextResponse.json(
-          {
-            error: `No se puede cerrar la mesa. Votos registrados: ${totalVotos}, Votantes registrados: ${totalVotantes}`,
-          },
-          { status: 400 }
-        );
-      }
+      // Remover toda esta sección de validación:
+      // const votantesQuery = `
+      //   SELECT COUNT(*) as total_votantes
+      //   FROM votantes 
+      //   WHERE id_mesa = @param1 AND periodo = @param2
+      // `;
+      
+      // const votantesResult = await executeQuery<{ total_votantes: number }>(
+      //   votantesQuery,
+      //   [
+      //     { name: "param1", type: TYPES.UniqueIdentifier, value: id },
+      //     { name: "param2", type: TYPES.Int, value: mesaActual.periodo },
+      //   ]
+      // );
+      
+      // const votosQuery = `
+      //   SELECT COUNT(*) as total_votos
+      //   FROM votos 
+      //   WHERE id_mesa = @param1 AND periodo = @param2
+      // `;
+      
+      // const votosResult = await executeQuery<{ total_votos: number }>(
+      //   votosQuery,
+      //   [
+      //     { name: "param1", type: TYPES.UniqueIdentifier, value: id },
+      //     { name: "param2", type: TYPES.Int, value: mesaActual.periodo },
+      //   ]
+      // );
+      
+      // const totalVotantes = votantesResult[0]?.total_votantes || 0;
+      // const totalVotos = votosResult[0]?.total_votos || 0;
+      
+      // if (totalVotos !== totalVotantes) {
+      //   return NextResponse.json(
+      //     {
+      //       error: `No se puede cerrar la mesa. Votos registrados: ${totalVotos}, Votantes registrados: ${totalVotantes}`,
+      //     },
+      //     { status: 400 }
+      //   );
+      // }
     }
 
     // Si se proporciona un nombre, validar duplicados

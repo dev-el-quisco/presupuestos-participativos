@@ -27,7 +27,7 @@ interface VotoForm {
 
 // Función para validar si se puede cerrar la mesa
 const canCloseMesa = (mesa: any) => {
-  return mesa.votos_count === mesa.votantes_count;
+  return true; // Siempre permitir cerrar la mesa
 };
 
 // Función para obtener colores por categoría
@@ -257,13 +257,13 @@ const Content = () => {
 
   // Cambiar estado de mesa (solo Encargado de Local y Administrador)
   const handleCambiarEstado = async (mesa: any): Promise<void> => {
-    // Si se intenta cerrar la mesa, validar que votos coincidan con votantes
-    if (!mesa.estado_mesa && !canCloseMesa(mesa)) {
-      toast.error(
-        `No se puede cerrar la mesa. Votos registrados: ${mesa.votos_count}, Votantes registrados: ${mesa.votantes_count}`
-      );
-      return;
-    }
+    // Remover la validación de votos vs votantes
+    // if (!mesa.estado_mesa && !canCloseMesa(mesa)) {
+    //   toast.error(
+    //     `No se puede cerrar la mesa. Votos registrados: ${mesa.votos_count}, Votantes registrados: ${mesa.votantes_count}`
+    //   );
+    //   return;
+    // }
 
     try {
       const token = localStorage.getItem("auth_token");
@@ -522,7 +522,7 @@ const Content = () => {
 
         // Cerrar automáticamente la mesa después de guardar los votos
         if (selectedMesa) {
-          await handleCambiarEstado(selectedMesa);
+          await cerrarMesa(selectedMesa);
         }
       } else {
         const error = await response.json();
@@ -641,20 +641,13 @@ const Content = () => {
                         user?.rol === "Administrador") && (
                         <button
                           onClick={() => handleCambiarEstado(mesa)}
-                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
                           className={`flex items-center px-2 py-1 text-xs rounded-md transition-colors ${
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : mesa.estado_mesa
+                            mesa.estado_mesa
                               ? "bg-red-100 text-red-700 hover:bg-red-200"
                               : "bg-green-100 text-green-700 hover:bg-green-200"
                           }`}
                           title={
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
-                              : mesa.estado_mesa
-                              ? "Cerrar Mesa"
-                              : "Abrir Mesa"
+                            mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"
                           }
                         >
                           {mesa.estado_mesa ? (
@@ -691,20 +684,13 @@ const Content = () => {
                         user?.rol === "Administrador") && (
                         <button
                           onClick={() => handleCambiarEstado(mesa)}
-                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
                           className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : mesa.estado_mesa
+                            mesa.estado_mesa
                               ? "bg-red-100 text-red-700 hover:bg-red-200"
                               : "bg-orange-100 text-orange-700 hover:bg-orange-200"
                           }`}
                           title={
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
-                              : mesa.estado_mesa
-                              ? "Cerrar Mesa"
-                              : "Abrir Mesa"
+                            mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"
                           }
                         >
                           {mesa.estado_mesa ? (
@@ -740,20 +726,13 @@ const Content = () => {
                         user?.rol === "Administrador") && (
                         <button
                           onClick={() => handleCambiarEstado(mesa)}
-                          disabled={mesa.estado_mesa && !canCloseMesa(mesa)}
                           className={`flex items-center justify-center w-7 h-7 rounded transition-colors ${
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : mesa.estado_mesa
+                            mesa.estado_mesa
                               ? "bg-red-100 text-red-700 hover:bg-red-200"
                               : "bg-orange-100 text-orange-700 hover:bg-orange-200"
                           }`}
                           title={
-                            mesa.estado_mesa && !canCloseMesa(mesa)
-                              ? `No se puede cerrar: ${mesa.votos_count} votos ≠ ${mesa.votantes_count} votantes`
-                              : mesa.estado_mesa
-                              ? "Cerrar Mesa"
-                              : "Abrir Mesa"
+                            mesa.estado_mesa ? "Cerrar Mesa" : "Abrir Mesa"
                           }
                         >
                           {mesa.estado_mesa ? (
