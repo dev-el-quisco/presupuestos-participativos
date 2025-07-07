@@ -147,32 +147,32 @@ export async function GET(request: NextRequest) {
 
     // 2. Consulta de participación por sede - CORREGIDA
     const sedeParticipationQuery = `
-      WITH SedeVotes AS (
+      WITH SedeVotantes AS (
         SELECT 
           s.nombre as sede_nombre,
-          COUNT(v.id) as total_votos
+          COUNT(DISTINCT vt.id) as total_votantes
         FROM sedes s
         LEFT JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
-        LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        LEFT JOIN votantes vt ON m.id = vt.id_mesa AND vt.periodo = @param1
         ${sedeJoinCondition}
         WHERE 1=1 ${sedeWhereCondition}
         GROUP BY s.id, s.nombre
       ),
-      TotalVotes AS (
-        SELECT SUM(total_votos) as grand_total
-        FROM SedeVotes
+      TotalVotantes AS (
+        SELECT SUM(total_votantes) as grand_total
+        FROM SedeVotantes
       )
       SELECT TOP 1
         sv.sede_nombre,
-        sv.total_votos,
+        sv.total_votantes as total_votos,
         CASE 
-          WHEN tv.grand_total > 0 THEN ROUND((CAST(sv.total_votos AS FLOAT) / tv.grand_total) * 100, 1)
+          WHEN tv.grand_total > 0 THEN ROUND((CAST(sv.total_votantes AS FLOAT) / tv.grand_total) * 100, 1)
           ELSE 0
         END as percent_total
-      FROM SedeVotes sv
-      CROSS JOIN TotalVotes tv
-      WHERE sv.total_votos > 0
-      ORDER BY sv.total_votos DESC
+      FROM SedeVotantes sv
+      CROSS JOIN TotalVotantes tv
+      WHERE sv.total_votantes > 0
+      ORDER BY sv.total_votantes DESC
     `;
 
     const sedeParticipation = await executeQuery<SedeParticipation>(

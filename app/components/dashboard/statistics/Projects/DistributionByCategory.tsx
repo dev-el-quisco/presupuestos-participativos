@@ -121,9 +121,9 @@ const DistributionByCategory = () => {
 
   // Calcular dimensiones del gráfico
   const size = Math.min(windowWidth > 768 ? 300 : 200, 300);
-  const radius = size / 2;
-  const centerX = radius;
-  const centerY = radius;
+  const radius = size / 2 - 10;
+  const centerX = size / 2;
+  const centerY = size / 2;
 
   // Preparar datos para el gráfico
   const allCategories = ["Comunales", "Infantiles", "Juveniles", "Sectoriales"];
@@ -141,34 +141,86 @@ const DistributionByCategory = () => {
     };
   });
 
-  // Generar el gráfico circular solo para categorías con votos
-  const categoriesWithVotes = categoryData.filter((cat) => cat.value > 0);
+  // Calcular votos especiales (nulos y blancos)
+  const totalCategoryVotes = statisticsData.categories.reduce(
+    (sum, cat) => sum + cat.count,
+    0
+  );
+  const specialVotes = statisticsData.totalVotes - totalCategoryVotes;
+  const specialVotesPercentage = statisticsData.totalVotes > 0 
+    ? (specialVotes / statisticsData.totalVotes) * 100 
+    : 0;
 
-  let startAngle = 0;
+  // Agregar votos especiales si existen
+  if (specialVotes > 0) {
+    categoryData.push({
+      name: "Votos Especiales",
+      value: specialVotesPercentage,
+      color: "#6B7280", // Gris
+      colorClass: "bg-gray-500",
+      key: "especiales",
+    });
+  }
+
+  // Filtrar solo categorías con votos para el gráfico
+  const categoriesWithVotes = categoryData.filter((cat) => cat.value > 0);
+  
+  // Función para crear un path de arco SVG
+  const createArcPath = (
+    startAngle: number,
+    endAngle: number,
+    radius: number,
+    centerX: number,
+    centerY: number
+  ) => {
+    const start = polarToCartesian(centerX, centerY, radius, endAngle);
+    const end = polarToCartesian(centerX, centerY, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+    return [
+      "M",
+      centerX,
+      centerY,
+      "L",
+      start.x,
+      start.y,
+      "A",
+      radius,
+      radius,
+      0,
+      largeArcFlag,
+      0,
+      end.x,
+      end.y,
+      "Z",
+    ].join(" ");
+  };
+
+  // Función auxiliar para convertir coordenadas polares a cartesianas
+  const polarToCartesian = (
+    centerX: number,
+    centerY: number,
+    radius: number,
+    angleInDegrees: number
+  ) => {
+    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    return {
+      x: centerX + radius * Math.cos(angleInRadians),
+      y: centerY + radius * Math.sin(angleInRadians),
+    };
+  };
+
+  // Generar los paths para cada categoría
+  let cumulativeAngle = 0;
   const paths = categoriesWithVotes.map((category) => {
     const angle = (category.value / 100) * 360;
-    const endAngle = startAngle + angle;
+    const startAngle = cumulativeAngle;
+    const endAngle = cumulativeAngle + angle;
 
-    // Convertir ángulos a radianes
-    const startRad = (startAngle * Math.PI) / 180;
-    const endRad = (endAngle * Math.PI) / 180;
+    const path = createArcPath(startAngle, endAngle, radius, centerX, centerY);
 
-    // Calcular puntos del arco
-    const x1 = centerX + radius * Math.sin(startRad);
-    const y1 = centerY - radius * Math.cos(startRad);
-    const x2 = centerX + radius * Math.sin(endRad);
-    const y2 = centerY - radius * Math.cos(endRad);
+    cumulativeAngle += angle;
 
-    // Determinar si el arco es mayor a 180 grados
-    const largeArcFlag = angle > 180 ? 1 : 0;
-
-    // Crear el path SVG
-    const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-
-    // Actualizar el ángulo de inicio para el siguiente sector
-    startAngle = endAngle;
-
-    // Determinar si esta categoría está seleccionada
     const isSelected =
       selectedCategory === category.key ||
       selectedCategory === "todos" ||
@@ -187,7 +239,7 @@ const DistributionByCategory = () => {
         <div className="flex flex-col md:flex-row items-center justify-center">
           {/* Gráfico circular */}
           <div className="relative" style={{ width: size, height: size }}>
-            <svg width={size} height={size}>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
               {paths.map((item, index) => (
                 <path
                   key={index}
@@ -199,8 +251,13 @@ const DistributionByCategory = () => {
                   className="transition-opacity duration-300"
                 />
               ))}
-              {/* Círculo central para efecto de dona */}
-              <circle cx={centerX} cy={centerY} r={radius * 0.6} fill="white" />
+              {/* SOLUCIÓN 2: Reducir el tamaño del círculo central */}
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r={radius * 0.4} // Reducido de 0.6 a 0.4
+                fill="white"
+              />
               <text
                 x={centerX}
                 y={centerY}
