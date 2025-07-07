@@ -304,9 +304,9 @@ export async function GET(request: NextRequest) {
     votosEspeciales.forEach((voto) => {
       const sedeData = sedesMap.get(voto.sede_nombre);
       if (sedeData) {
-        if (voto.tipo_voto === 'Blanco') {
+        if (voto.tipo_voto === "Blanco") {
           sedeData.votosBlancos = voto.total_votos;
-        } else if (voto.tipo_voto === 'Nulo') {
+        } else if (voto.tipo_voto === "Nulo") {
           sedeData.votosNulos = voto.total_votos;
         }
         sedeData.total += voto.total_votos;
@@ -315,11 +315,11 @@ export async function GET(request: NextRequest) {
 
     // Calcular totales de votos especiales
     const totalVotosBlancos = votosEspeciales
-      .filter(v => v.tipo_voto === 'Blanco')
+      .filter((v) => v.tipo_voto === "Blanco")
       .reduce((sum, voto) => sum + voto.total_votos, 0);
-    
+
     const totalVotosNulos = votosEspeciales
-      .filter(v => v.tipo_voto === 'Nulo')
+      .filter((v) => v.tipo_voto === "Nulo")
       .reduce((sum, voto) => sum + voto.total_votos, 0);
 
     totales.votosBlancos = totalVotosBlancos;
