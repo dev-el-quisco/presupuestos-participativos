@@ -72,6 +72,40 @@ export async function GET(request: NextRequest) {
     const mesasCerradas = mesas.filter((mesa) => !mesa.estado_mesa).length;
     const todasCerradas = totalMesas > 0 && mesasCerradas === totalMesas;
 
+    // Agregar consulta para obtener el total de votantes
+    let votantesQuery = `
+      SELECT COUNT(DISTINCT v.id) as total_votantes
+      FROM votantes v
+      INNER JOIN mesas m ON v.id_mesa = m.id
+    `;
+
+    const votantesParams: any[] = [
+      { name: "param1", type: TYPES.Int, value: parseInt(periodo) }
+    ];
+    const votantesConditions = ["v.periodo = @param1"];
+
+    // Aplicar los mismos filtros de permisos para votantes
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
+      votantesQuery += ` INNER JOIN permisos p ON m.id = p.id_mesa AND p.id_usuario = @param2 AND p.periodo = @param3`;
+      votantesParams.push(
+        { name: "param2", type: TYPES.UniqueIdentifier, value: user.id },
+        { name: "param3", type: TYPES.Int, value: parseInt(periodo) }
+      );
+    }
+
+    votantesQuery += ` WHERE ` + votantesConditions.join(" AND ");
+
+    const votantesResult = await executeQuery<{ total_votantes: number }>(
+      votantesQuery,
+      votantesParams
+    );
+
+    const totalVotantes = votantesResult[0]?.total_votantes || 0;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -80,6 +114,7 @@ export async function GET(request: NextRequest) {
         mesasCerradas,
         todasCerradas,
         mesasAbiertas: totalMesas - mesasCerradas,
+        totalVotantes, // Agregar el total de votantes
       },
     });
   } catch (error) {

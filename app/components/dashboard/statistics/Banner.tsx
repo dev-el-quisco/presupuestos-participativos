@@ -49,6 +49,7 @@ interface MesaStatusData {
   mesasCerradas: number;
   todasCerradas: boolean;
   mesasAbiertas: number;
+  totalVotantes: number; // Agregar esta línea
 }
 
 const Banner: React.FC<BannerProps> = ({
@@ -69,6 +70,7 @@ const Banner: React.FC<BannerProps> = ({
     mesasCerradas: 0,
     todasCerradas: false,
     mesasAbiertas: 0,
+    totalVotantes: 0, // Agregar esta línea
   });
 
   // Función para obtener el estado de las mesas
@@ -102,6 +104,7 @@ const Banner: React.FC<BannerProps> = ({
         mesasCerradas: 0,
         todasCerradas: false,
         mesasAbiertas: 0,
+        totalVotantes: 0, // Agregar esta línea
       });
     }
   };
@@ -774,7 +777,18 @@ const Banner: React.FC<BannerProps> = ({
         </div>
       </div>
 
-      {/* Nuevo indicador de estado de mesas */}
+      {/* Nuevo contador de votantes */}
+      <div className="bg-gray-100 rounded-lg px-4 py-2 w-fit">
+        <div className="flex flex-row items-center justify-start space-x-1">
+          <span className="text-sm text-gray-600 hidden md:block">
+            Total de votantes:{" "}
+          </span>
+          <span className="text-sm text-gray-600 block md:hidden">Votantes: </span>
+          <span className="text-xl font-bold">{mesaStatus.totalVotantes}</span>
+        </div>
+      </div>
+
+      {/* Indicador de estado de mesas */}
       <div className="bg-gray-100 rounded-lg px-4 py-2 w-fit">
         <div className="flex flex-row items-center justify-start space-x-1">
           <span className="text-sm text-gray-600 hidden md:block">

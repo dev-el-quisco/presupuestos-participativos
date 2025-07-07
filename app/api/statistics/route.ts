@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
           p.id_tipo_proyecto,
           COUNT(v.id) as total_votos
         FROM proyectos p
-        LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+        LEFT JOIN votos v ON p.id = v.id_proyecto AND v.periodo = @param1
         ${mesaJoinCondition}
         WHERE p.periodo = @param1 ${mesaWhereCondition}
         GROUP BY p.id_tipo_proyecto
@@ -107,11 +107,26 @@ export async function GET(request: NextRequest) {
       params
     );
 
-    // Calcular totales
+    // Obtener votos nulos y blancos por separado
+    const specialVotesQuery = `
+      SELECT COUNT(v.id) as votos_especiales
+      FROM votos v
+      ${mesaJoinCondition}
+      WHERE v.periodo = @param1 AND v.tipo_voto IN ('Nulo', 'Blanco') ${mesaWhereCondition}
+    `;
+
+    const specialVotesResult = await executeQuery<{ votos_especiales: number }>(
+      specialVotesQuery,
+      params
+    );
+
+    const votosEspeciales = specialVotesResult[0]?.votos_especiales || 0;
+
+    // Calcular totales incluyendo votos especiales
     const totalVotes = statistics.reduce(
       (sum, stat) => sum + stat.total_votos,
       0
-    );
+    ) + votosEspeciales;
     const totalProjects = statistics.reduce(
       (sum, stat) => sum + stat.total_proyectos,
       0
@@ -126,7 +141,7 @@ export async function GET(request: NextRequest) {
       percentage: totalVotes > 0 ? (stat.total_votos / totalVotes) * 100 : 0,
     }));
 
-    // Obtener proyectos con votos para el ranking
+    // Obtener proyectos con votos para el ranking (mantener solo votos normales para el ranking)
     const projectsQuery = `
       SELECT 
         p.id,
