@@ -19,6 +19,8 @@ interface FormattedSedeData {
   proyectosJuveniles: Record<string, number>;
   proyectosSectoriales: Record<string, number>;
   total: number;
+  votosBlancos: number;
+  votosNulos: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -111,10 +113,10 @@ export async function GET(request: NextRequest) {
         COUNT(v.id) as total_votos
       FROM sedes s
       INNER JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
-      LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1 AND v.tipo_voto = 'Normal'
+      LEFT JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1
       LEFT JOIN proyectos p ON v.id_proyecto = p.id AND p.periodo = @param1
       LEFT JOIN tipo_proyectos tp ON p.id_tipo_proyecto = tp.id
-      WHERE m.estado_mesa = 0 AND p.id IS NOT NULL AND tp.id IS NOT NULL
+      WHERE m.estado_mesa = 0 AND p.id IS NOT NULL AND tp.id IS NOT NULL AND v.tipo_voto = 'Normal'
     `;
 
     const votosParams: any[] = [
@@ -143,6 +145,39 @@ export async function GET(request: NextRequest) {
       votosParams
     );
 
+    // Obtener votos nulos y blancos por sede
+    let votosEspecialesQuery = `
+      SELECT 
+        s.id as sede_id,
+        s.nombre as sede_nombre,
+        v.tipo_voto,
+        COUNT(v.id) as total_votos
+      FROM sedes s
+      INNER JOIN mesas m ON s.id = m.sede_id AND m.periodo = @param1
+      INNER JOIN votos v ON m.id = v.id_mesa AND v.periodo = @param1
+      WHERE m.estado_mesa = 0 AND v.tipo_voto IN ('Nulo', 'Blanco')
+    `;
+
+    // Aplicar los mismos filtros de permisos
+    if (user.rol === "Digitador") {
+      votosEspecialesQuery += ` AND EXISTS (
+        SELECT 1 FROM permisos pe 
+        WHERE pe.id_mesa = m.id 
+        AND pe.id_usuario = @param2 
+        AND pe.periodo = @param3
+      )`;
+    }
+
+    votosEspecialesQuery += ` GROUP BY s.id, s.nombre, v.tipo_voto
+      ORDER BY s.nombre, v.tipo_voto`;
+
+    const votosEspeciales = await executeQuery<{
+      sede_id: string;
+      sede_nombre: string;
+      tipo_voto: string;
+      total_votos: number;
+    }>(votosEspecialesQuery, votosParams);
+
     // Formatear datos para el frontend
     const sedesMap = new Map<string, FormattedSedeData>();
 
@@ -155,6 +190,8 @@ export async function GET(request: NextRequest) {
         proyectosJuveniles: {},
         proyectosSectoriales: {},
         total: 0,
+        votosBlancos: 0,
+        votosNulos: 0,
       });
     });
 
@@ -210,6 +247,8 @@ export async function GET(request: NextRequest) {
       proyectosJuveniles: {} as Record<string, number>,
       proyectosSectoriales: {} as Record<string, number>,
       total: 0,
+      votosBlancos: 0,
+      votosNulos: 0,
     };
 
     // Inicializar totales con todos los proyectos
@@ -248,6 +287,32 @@ export async function GET(request: NextRequest) {
       });
       totales.total += sede.total;
     });
+
+    // Agregar votos especiales al total de cada sede
+    votosEspeciales.forEach((voto) => {
+      const sedeData = sedesMap.get(voto.sede_nombre);
+      if (sedeData) {
+        if (voto.tipo_voto === 'Blanco') {
+          sedeData.votosBlancos = voto.total_votos;
+        } else if (voto.tipo_voto === 'Nulo') {
+          sedeData.votosNulos = voto.total_votos;
+        }
+        sedeData.total += voto.total_votos;
+      }
+    });
+
+    // Calcular totales de votos especiales
+    const totalVotosBlancos = votosEspeciales
+      .filter(v => v.tipo_voto === 'Blanco')
+      .reduce((sum, voto) => sum + voto.total_votos, 0);
+    
+    const totalVotosNulos = votosEspeciales
+      .filter(v => v.tipo_voto === 'Nulo')
+      .reduce((sum, voto) => sum + voto.total_votos, 0);
+
+    totales.votosBlancos = totalVotosBlancos;
+    totales.votosNulos = totalVotosNulos;
+    totales.total += totalVotosBlancos + totalVotosNulos;
 
     return NextResponse.json({
       success: true,

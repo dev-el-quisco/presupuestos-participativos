@@ -24,7 +24,7 @@ interface TotalesData {
 interface CommunalWinner {
   id_proyecto: string;
   nombre: string;
-  total_votos: string; // Cambiado de number a string
+  total_votos: number;
   percent_total: number;
 }
 
@@ -34,7 +34,7 @@ interface SectorWinner {
   proyecto: {
     id_proyecto: string;
     nombre: string;
-    total_votos: string; // Cambiado de number a string
+    total_votos: number;
     percent_category: number;
   };
 }
@@ -149,7 +149,7 @@ const Banner: React.FC<BannerProps> = ({
         throw new Error("No se encontró token de autorización");
       }
 
-      // Cambiar la URL de /api/polling-places a /api/statistics/polling-places
+      // Obtener datos de sedes y totales
       const response = await fetch(
         `/api/statistics/polling-places?periodo=${selectedYear}`,
         {
@@ -171,6 +171,29 @@ const Banner: React.FC<BannerProps> = ({
       }
 
       const { sedes, totales } = data.data;
+
+      // Obtener datos de ganadores
+      const winnersResponse = await fetch(
+        `/api/statistics/winners?periodo=${selectedYear}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      let winnersData = {
+        communalWinner: null,
+        sectorWinners: {},
+      };
+
+      if (winnersResponse.ok) {
+        const winnersResult = await winnersResponse.json();
+        if (winnersResult.success) {
+          winnersData = winnersResult.data;
+        }
+      }
 
       // Validar que los datos existan
       if (!sedes || !totales) {
@@ -210,6 +233,8 @@ const Banner: React.FC<BannerProps> = ({
           ...Array(infantilesKeys.length).fill("PROYECTOS INFANTILES"),
           ...Array(juvenilesKeys.length).fill("PROYECTOS JUVENILES"),
           ...Array(sectorialesKeys.length).fill("PROYECTOS SECTORIALES"),
+          "VOTOS BLANCOS",
+          "VOTOS NULOS",
           "TOTAL VOTOS",
         ],
         // Segunda fila de encabezado: Solo los nombres de los proyectos
@@ -219,6 +244,8 @@ const Banner: React.FC<BannerProps> = ({
           ...infantilesKeys,
           ...juvenilesKeys,
           ...sectorialesKeys,
+          "", // Celda vacía debajo de VOTOS BLANCOS
+          "", // Celda vacía debajo de VOTOS NULOS
           "", // Celda vacía debajo de TOTAL VOTOS
         ],
         ...sedes.map((sede: any) => [
@@ -227,7 +254,9 @@ const Banner: React.FC<BannerProps> = ({
           ...infantilesKeys.map((key) => sede.proyectosInfantiles[key] || 0),
           ...juvenilesKeys.map((key) => sede.proyectosJuveniles[key] || 0),
           ...sectorialesKeys.map((key) => sede.proyectosSectoriales[key] || 0),
-          sede.totalVotos || 0,
+          sede.votosBlancos || 0,
+          sede.votosNulos || 0,
+          sede.total || 0,
         ]),
         [""],
         [
@@ -238,10 +267,9 @@ const Banner: React.FC<BannerProps> = ({
           ...sectorialesKeys.map(
             (key) => totales.proyectosSectoriales[key] || 0
           ),
-          Object.values(totales.total as Record<string, number>).reduce(
-            (a: number, b: number) => a + b,
-            0
-          ),
+          totales.votosBlancos || 0,
+          totales.votosNulos || 0,
+          totales.total || 0,
         ],
       ];
 
@@ -249,16 +277,19 @@ const Banner: React.FC<BannerProps> = ({
 
       // Configurar anchos de columna dinámicamente
       const totalColumns =
-        1 +
+        1 + // SEDE
         comunalesKeys.length +
         infantilesKeys.length +
         juvenilesKeys.length +
         sectorialesKeys.length +
-        1;
+        3; // VOTOS BLANCOS + VOTOS NULOS + TOTAL VOTOS
+
       wsMain["!cols"] = [
         { wch: 25 }, // Columna SEDE
-        ...Array(totalColumns - 2).fill({ wch: 18 }), // Columnas de proyectos más anchas
-        { wch: 15 }, // Columna TOTAL
+        ...Array(totalColumns - 4).fill({ wch: 18 }), // Columnas de proyectos
+        { wch: 15 }, // Columna VOTOS BLANCOS
+        { wch: 15 }, // Columna VOTOS NULOS
+        { wch: 15 }, // Columna TOTAL VOTOS
       ];
 
       // Estilos mejorados con colores
@@ -484,32 +515,32 @@ const Banner: React.FC<BannerProps> = ({
       ];
 
       // Agregar ganador comunal
-      if (winnersData.communalWinner) {
-        ganadoresData.push([
-          "Proyectos Comunales",
-          "General",
-          winnersData.communalWinner.id_proyecto,
-          winnersData.communalWinner.nombre,
-          winnersData.communalWinner.total_votos,
-          winnersData.communalWinner.percent_total + "%",
-        ]);
-      }
+if (winnersData.communalWinner) {
+  ganadoresData.push([
+    "Proyectos Comunales",
+    "General",
+    winnersData.communalWinner.id_proyecto,
+    winnersData.communalWinner.nombre,
+    winnersData.communalWinner.total_votos,
+    winnersData.communalWinner.percent_total + "%",
+  ]);
+}
 
-      // Agregar ganadores por sector
-      Object.entries(winnersData.sectorWinners).forEach(
-        ([categoria, winners]) => {
-          winners.forEach((winner) => {
-            ganadoresData.push([
-              categoria,
-              winner.sector,
-              winner.proyecto.id_proyecto,
-              winner.proyecto.nombre,
-              winner.proyecto.total_votos,
-              winner.proyecto.percent_category + "%",
-            ]);
-          });
-        }
-      );
+// Agregar ganadores por sector
+Object.entries(winnersData.sectorWinners).forEach(
+  ([categoria, winners]) => {
+    winners.forEach((winner) => {
+      ganadoresData.push([
+        categoria,
+        winner.sector,
+        winner.proyecto.id_proyecto,
+        winner.proyecto.nombre,
+        winner.proyecto.total_votos,
+        winner.proyecto.percent_category + "%",
+      ]);
+    });
+  }
+);
 
       const wsGanadores = XLSX.utils.aoa_to_sheet(ganadoresData);
       wsGanadores["!cols"] = [
@@ -783,7 +814,9 @@ const Banner: React.FC<BannerProps> = ({
           <span className="text-sm text-gray-600 hidden md:block">
             Total de votantes:{" "}
           </span>
-          <span className="text-sm text-gray-600 block md:hidden">Votantes: </span>
+          <span className="text-sm text-gray-600 block md:hidden">
+            Votantes:{" "}
+          </span>
           <span className="text-xl font-bold">{mesaStatus.totalVotantes}</span>
         </div>
       </div>
@@ -849,3 +882,23 @@ const Banner: React.FC<BannerProps> = ({
 };
 
 export default Banner;
+
+// Combinar celdas VOTOS BLANCOS, VOTOS NULOS y TOTAL VOTOS verticalmente (filas 3 y 4)
+// const votosBlancoCol = totalColumns - 3;
+// const votosNulosCol = totalColumns - 2;
+// const totalVotosCol = totalColumns - 1;
+
+// wsMain["!merges"].push(
+//   {
+//     s: { r: 2, c: votosBlancoCol },
+//     e: { r: 3, c: votosBlancoCol },
+//   },
+//   {
+//     s: { r: 2, c: votosNulosCol },
+//     e: { r: 3, c: votosNulosCol },
+//   },
+//   {
+//     s: { r: 2, c: totalVotosCol },
+//     e: { r: 3, c: totalVotosCol },
+//   }
+// );
