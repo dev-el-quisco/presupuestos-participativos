@@ -10,6 +10,8 @@ interface SedeData {
   proyectosInfantiles: Record<string, number>;
   proyectosJuveniles: Record<string, number>;
   proyectosSectoriales: Record<string, number>;
+  votosBlancos: number;
+  votosNulos: number;
   total: number;
 }
 
@@ -18,6 +20,8 @@ interface TotalesData {
   proyectosInfantiles: Record<string, number>;
   proyectosJuveniles: Record<string, number>;
   proyectosSectoriales: Record<string, number>;
+  votosBlancos: number;
+  votosNulos: number;
   total: number;
 }
 
@@ -30,6 +34,8 @@ const PollingPlaces = () => {
     proyectosInfantiles: {},
     proyectosJuveniles: {},
     proyectosSectoriales: {},
+    votosBlancos: 0,
+    votosNulos: 0,
     total: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -148,6 +154,9 @@ const PollingPlaces = () => {
                 Proyectos Sectoriales
               </th>
             )}
+            <th className="px-4 py-3 text-center whitespace-nowrap min-w-[200px]" colSpan={2}>
+              Votos Especiales
+            </th>
             <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">
               Total
             </th>
@@ -186,6 +195,8 @@ const PollingPlaces = () => {
                 {key}
               </th>
             ))}
+            <th className="px-2 py-2 text-center whitespace-nowrap min-w-[100px]">Blancos</th>
+            <th className="px-2 py-2 text-center whitespace-nowrap min-w-[100px]">Nulos</th>
             <th className="px-2 py-2 text-center whitespace-nowrap">Votos</th>
           </tr>
         </thead>
@@ -230,6 +241,12 @@ const PollingPlaces = () => {
                   {sede.proyectosSectoriales[key] || 0}
                 </td>
               ))}
+              <td className="px-2 py-2 text-center whitespace-nowrap">
+                {sede.votosBlancos}
+              </td>
+              <td className="px-2 py-2 text-center whitespace-nowrap">
+                {sede.votosNulos}
+              </td>
               <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
                 {sede.total}
               </td>
@@ -258,6 +275,12 @@ const PollingPlaces = () => {
                 {totales.proyectosSectoriales[key] || 0}
               </td>
             ))}
+            <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
+              {totales.votosBlancos}
+            </td>
+            <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
+              {totales.votosNulos}
+            </td>
             <td className="px-2 py-2 text-center font-bold whitespace-nowrap">
               {totales.total}
             </td>
