@@ -183,7 +183,7 @@ const Banner: React.FC<BannerProps> = ({
         }
       );
 
-      let winnersData = {
+      let winnersData: WinnersData = {
         communalWinner: null,
         sectorWinners: {},
       };
@@ -191,7 +191,9 @@ const Banner: React.FC<BannerProps> = ({
       if (winnersResponse.ok) {
         const winnersResult = await winnersResponse.json();
         if (winnersResult.success) {
+          // Actualiza la variable local, no solo el estado
           winnersData = winnersResult.data;
+          setWinnersData(winnersResult.data);
         }
       }
 
@@ -514,33 +516,47 @@ const Banner: React.FC<BannerProps> = ({
         ],
       ];
 
-      // Agregar ganador comunal
-if (winnersData.communalWinner) {
-  ganadoresData.push([
-    "Proyectos Comunales",
-    "General",
-    winnersData.communalWinner.id_proyecto,
-    winnersData.communalWinner.nombre,
-    winnersData.communalWinner.total_votos,
-    winnersData.communalWinner.percent_total + "%",
-  ]);
-}
+      // Agregar ganador comunal (verificación mejorada)
+      if (
+        winnersData.communalWinner &&
+        winnersData.communalWinner.id_proyecto
+      ) {
+        ganadoresData.push([
+          "Proyectos Comunales",
+          "General",
+          winnersData.communalWinner.id_proyecto,
+          winnersData.communalWinner.nombre,
+          winnersData.communalWinner.total_votos.toString(),
+          winnersData.communalWinner.percent_total + "%",
+        ]);
+      }
 
-// Agregar ganadores por sector
-Object.entries(winnersData.sectorWinners).forEach(
-  ([categoria, winners]) => {
-    winners.forEach((winner) => {
-      ganadoresData.push([
-        categoria,
-        winner.sector,
-        winner.proyecto.id_proyecto,
-        winner.proyecto.nombre,
-        winner.proyecto.total_votos,
-        winner.proyecto.percent_category + "%",
-      ]);
-    });
-  }
-);
+      // Agregar ganadores por sector (sintaxis corregida)
+      if (
+        winnersData.sectorWinners &&
+        Object.keys(winnersData.sectorWinners).length > 0
+      ) {
+        Object.entries(winnersData.sectorWinners).forEach(
+          ([categoria, winners]) => {
+            // Verificar que winners sea un array válido
+            if (Array.isArray(winners)) {
+              winners.forEach((winner) => {
+                // Verificar estructura del ganador
+                if (winner?.proyecto?.id_proyecto) {
+                  ganadoresData.push([
+                    categoria,
+                    winner.sector || "", // Manejar posible undefined
+                    winner.proyecto.id_proyecto,
+                    winner.proyecto.nombre || "",
+                    winner.proyecto.total_votos?.toString() || "0",
+                    (winner.proyecto.percent_category || 0) + "%",
+                  ]);
+                }
+              });
+            }
+          }
+        );
+      }
 
       const wsGanadores = XLSX.utils.aoa_to_sheet(ganadoresData);
       wsGanadores["!cols"] = [
@@ -758,15 +774,6 @@ Object.entries(winnersData.sectorWinners).forEach(
       return;
     }
     exportPollingPlacesData();
-    // if (pathname.includes("/sedes")) {
-    //   exportPollingPlacesData();
-    //   console.log("uwu");
-    // } else {
-    //   console.log("Exportando datos para el año:", selectedYear);
-    //   toast.error(
-    //     "Funcionalidad de exportación en desarrollo para esta sección"
-    //   );
-    // }
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -882,23 +889,3 @@ Object.entries(winnersData.sectorWinners).forEach(
 };
 
 export default Banner;
-
-// Combinar celdas VOTOS BLANCOS, VOTOS NULOS y TOTAL VOTOS verticalmente (filas 3 y 4)
-// const votosBlancoCol = totalColumns - 3;
-// const votosNulosCol = totalColumns - 2;
-// const totalVotosCol = totalColumns - 1;
-
-// wsMain["!merges"].push(
-//   {
-//     s: { r: 2, c: votosBlancoCol },
-//     e: { r: 3, c: votosBlancoCol },
-//   },
-//   {
-//     s: { r: 2, c: votosNulosCol },
-//     e: { r: 3, c: votosNulosCol },
-//   },
-//   {
-//     s: { r: 2, c: totalVotosCol },
-//     e: { r: 3, c: totalVotosCol },
-//   }
-// );
