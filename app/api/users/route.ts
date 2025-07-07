@@ -7,6 +7,7 @@ import {
   sendAccountStatusChange,
   sendUserRoleChanged,
   sendUserEmailChanged,
+  sendPasswordChangedByAdmin,
 } from "@/app/api/email";
 
 interface CreateUserRequest {

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconKey } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import Portal from "@/app/components/ui/Portal";
@@ -25,9 +25,11 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [editFormData, setEditFormData] = useState({
     nombre: "",
     email: "",
@@ -71,7 +73,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
 
   // Controlar el overflow del body cuando los modales están abiertos
   useEffect(() => {
-    if (showEditModal || showDeleteModal) {
+    if (showEditModal || showDeleteModal || showPasswordModal) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -80,7 +82,7 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [showEditModal, showDeleteModal]);
+  }, [showEditModal, showDeleteModal, showPasswordModal]);
 
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
@@ -172,6 +174,44 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
     }
   };
 
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setShowPasswordModal(true);
+  };
+
+  const handleConfirmPasswordChange = async () => {
+    if (!selectedUser) return;
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await fetch("/api/users/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message);
+        setShowPasswordModal(false);
+        setSelectedUser(null);
+      } else {
+        toast.error(data.error || "Error al cambiar contraseña");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error de conexión");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setSelectedUser(null);
@@ -185,6 +225,11 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
 
   const handleCloseDeleteModal = () => {
     setShowDeleteModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
     setSelectedUser(null);
   };
 
@@ -289,6 +334,13 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                           title="Editar"
                         >
                           <IconEdit className="w-5 h-5 text-blue-600" />
+                        </button>
+                        <button
+                          onClick={() => handleChangePassword(user)}
+                          className="p-1.5 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+                          title="Cambiar Contraseña"
+                        >
+                          <IconKey className="w-5 h-5 text-yellow-600" />
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user)}
@@ -469,6 +521,69 @@ const Users = ({ searchTerm, refreshTrigger }: UsersProps) => {
                   disabled={isDeleting}
                 >
                   {isDeleting ? "Eliminando..." : "Eliminar Usuario"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Modal de cambio de contraseña */}
+      {showPasswordModal && selectedUser && (
+        <Portal>
+          <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md shadow-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-slate-800">
+                  Cambiar Contraseña
+                </h3>
+                <button
+                  onClick={handleClosePasswordModal}
+                  className="text-slate-500 hover:text-slate-700 h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm text-slate-600 mb-4">
+                  ¿Estás seguro de que deseas cambiar la contraseña del usuario{" "}
+                  <strong>{selectedUser.nombre}</strong>?
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Información:</strong>
+                  </p>
+                  <ul className="text-sm text-yellow-800 mt-2 list-disc list-inside">
+                    <li>Se generará una nueva contraseña temporal automáticamente</li>
+                    <li>La contraseña será encriptada y almacenada de forma segura</li>
+                    <li>Se enviará un email al usuario con la nueva contraseña</li>
+                    <li>Se le recomendará al usuario cambiar la contraseña manualmente</li>
+                  </ul>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Email del usuario:</strong> {selectedUser.email}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                  onClick={handleClosePasswordModal}
+                  disabled={isChangingPassword}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleConfirmPasswordChange}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? "Cambiando..." : "Cambiar Contraseña"}
                 </button>
               </div>
             </div>

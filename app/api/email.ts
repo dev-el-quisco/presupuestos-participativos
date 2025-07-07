@@ -231,3 +231,46 @@ export const sendUserEmailChanged = async (email: string, name: string) => {
 
   return transporter.sendMail(message);
 };
+
+export const sendPasswordChangedByAdmin = async (
+  email: string,
+  name: string,
+  username: string,
+  newPassword: string
+) => {
+  const message = {
+    from: `Presupuestos Participativos El Quisco <${process.env.EMAIL_FROM}>`,
+    to: email,
+    subject:
+      "Contraseña Modificada por Administrador - Presupuesto Participativo",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+        <h2 style="color: #2c3e50;">Contraseña Modificada por Administrador</h2>
+        <p>Hola ${name},</p>
+        <p>Te informamos que un administrador ha modificado tu contraseña en la plataforma de Presupuestos Participativos El Quisco.</p>
+        
+        <div style="background: #f1f1f1; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0; font-weight: bold;">Tus nuevas credenciales:</p>
+          <p><strong>Usuario:</strong> ${username}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Nueva contraseña:</strong> ${newPassword}</p>
+        </div>
+
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0; color: #856404;"><strong>Importante:</strong></p>
+          <ul style="margin: 10px 0; color: #856404;">
+            <li>Por motivos de seguridad, te recomendamos cambiar esta contraseña inmediatamente.</li>
+            <li>Puedes cambiar tu contraseña en la ventana de inicio de sesión usando la opción "¿Olvidaste tu contraseña?"</li>
+            <li>Si no solicitaste este cambio, contacta al administrador del sistema inmediatamente.</li>
+          </ul>
+        </div>
+
+        <p>Puedes acceder a la plataforma en: <a href="https://pparticipativos.elquisco.cl">pparticipativos.elquisco.cl</a></p>
+
+        <p>Saludos,<br>Equipo Presupuestos Participativos El Quisco</p>
+      </div>
+    `,
+  };
+
+  return transporter.sendMail(message);
+};
