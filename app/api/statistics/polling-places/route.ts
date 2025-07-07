@@ -62,7 +62,11 @@ export async function GET(request: NextRequest) {
     ];
 
     // Filtrar por permisos según el rol
-    if (user.rol === "Digitador") {
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
       sedesQuery += ` AND EXISTS (
         SELECT 1 FROM permisos p 
         WHERE p.id_mesa = m.id 
@@ -124,7 +128,11 @@ export async function GET(request: NextRequest) {
     ];
 
     // Filtrar por permisos según el rol
-    if (user.rol === "Digitador") {
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
       votosQuery += ` AND EXISTS (
         SELECT 1 FROM permisos pe 
         WHERE pe.id_mesa = m.id 
@@ -159,7 +167,11 @@ export async function GET(request: NextRequest) {
     `;
 
     // Aplicar los mismos filtros de permisos
-    if (user.rol === "Digitador") {
+    if (
+      user.rol === "Digitador" ||
+      user.rol === "Ministro de Fe" ||
+      user.rol === "Encargado de Local"
+    ) {
       votosEspecialesQuery += ` AND EXISTS (
         SELECT 1 FROM permisos pe 
         WHERE pe.id_mesa = m.id 
