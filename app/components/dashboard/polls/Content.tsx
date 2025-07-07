@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   IconUserPlus,
   IconClipboardText,
@@ -78,6 +78,12 @@ const Content = () => {
   const [showVotanteModal, setShowVotanteModal] = useState<boolean>(false);
   const [selectedMesa, setSelectedMesa] = useState<any>(null);
   const [rutError, setRutError] = useState<string>("");
+  
+  // Agregar estado para prevenir duplicados
+  const [isSavingVotante, setIsSavingVotante] = useState<boolean>(false);
+  const [isSavingVotos, setIsSavingVotos] = useState<boolean>(false);
+  const saveVotanteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveVotosTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Función para cerrar mesa
   const cerrarMesa = async (mesa: any) => {
@@ -255,6 +261,26 @@ const Content = () => {
     };
   }, [showVotosModal, showVotanteModal]);
 
+  // Limpiar timeouts al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (saveVotanteTimeoutRef.current) {
+        clearTimeout(saveVotanteTimeoutRef.current);
+      }
+      if (saveVotosTimeoutRef.current) {
+        clearTimeout(saveVotosTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Manejar tecla Enter en el modal de votante
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isSavingVotante) {
+      e.preventDefault();
+      handleSaveVotante();
+    }
+  };
+
   // Cambiar estado de mesa (solo Encargado de Local y Administrador)
   const handleCambiarEstado = async (mesa: any): Promise<void> => {
     // Remover la validación de votos vs votantes
@@ -404,13 +430,25 @@ const Content = () => {
     }
   };
 
-  // Guardar votante
+  // Guardar votante con debounce
   const handleSaveVotante = async () => {
+    // Prevenir múltiples envíos
+    if (isSavingVotante) {
+      return;
+    }
+
     // Validar RUT antes de enviar si no es extranjero
     if (!votanteForm.extranjero && !validarRUT(votanteForm.rut)) {
       setRutError("RUT inválido");
       return;
     }
+
+    // Limpiar timeout anterior si existe
+    if (saveVotanteTimeoutRef.current) {
+      clearTimeout(saveVotanteTimeoutRef.current);
+    }
+
+    setIsSavingVotante(true);
 
     try {
       const token = localStorage.getItem("auth_token");
@@ -453,11 +491,28 @@ const Content = () => {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al registrar votante");
+    } finally {
+      // Usar timeout para prevenir clics muy rápidos
+      saveVotanteTimeoutRef.current = setTimeout(() => {
+        setIsSavingVotante(false);
+      }, 1000); // 1 segundo de debounce
     }
   };
 
-  // Guardar votos (con cierre automático de mesa)
+  // Guardar votos con debounce (con cierre automático de mesa)
   const handleSaveVotos = async () => {
+    // Prevenir múltiples envíos
+    if (isSavingVotos) {
+      return;
+    }
+
+    // Limpiar timeout anterior si existe
+    if (saveVotosTimeoutRef.current) {
+      clearTimeout(saveVotosTimeoutRef.current);
+    }
+
+    setIsSavingVotos(true);
+
     try {
       const votos = [];
       const totalNuevosVotos = Object.values(votoForm).reduce(
@@ -498,6 +553,7 @@ const Content = () => {
       // Si no hay cambios reales, mostrar mensaje apropiado
       if (votos.length === 0) {
         toast.error("No hay cambios que guardar");
+        setIsSavingVotos(false);
         return;
       }
 
@@ -531,6 +587,11 @@ const Content = () => {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al registrar votos");
+    } finally {
+      // Usar timeout para prevenir clics muy rápidos
+      saveVotosTimeoutRef.current = setTimeout(() => {
+        setIsSavingVotos(false);
+      }, 1000); // 1 segundo de debounce
     }
   };
 
@@ -1010,14 +1071,27 @@ const Content = () => {
                 <button
                   className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors order-2 sm:order-1"
                   onClick={() => setShowVotosModal(false)}
+                  disabled={isSavingVotos}
                 >
                   Cancelar
                 </button>
                 <button
-                  className="bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-[#30c56c] hover:text-[#e3ecea] transition-colors order-1 sm:order-2"
+                  className={`py-2 px-4 rounded-md transition-colors order-1 sm:order-2 flex items-center gap-2 ${
+                    isSavingVotos
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-slate-800 text-white hover:bg-[#30c56c] hover:text-[#e3ecea]"
+                  }`}
                   onClick={handleSaveVotos}
+                  disabled={isSavingVotos}
                 >
-                  Guardar
+                  {isSavingVotos ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar"
+                  )}
                 </button>
               </div>
             </div>
@@ -1029,7 +1103,10 @@ const Content = () => {
       {showVotanteModal && (
         <Portal>
           <div className="fixed inset-0 bg-black/35 flex items-center justify-center z-[1000] p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200">
+            <div 
+              className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-slate-200"
+              onKeyDown={handleKeyDown}
+            >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-slate-800">
                   Registrar Votante - Mesa {selectedMesa?.nombre}
@@ -1146,19 +1223,27 @@ const Content = () => {
                 <button
                   className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
                   onClick={() => setShowVotanteModal(false)}
+                  disabled={isSavingVotante}
                 >
                   Cancelar
                 </button>
                 <button
-                  className={`py-2 px-4 rounded-md transition-colors ${
-                    rutError && !votanteForm.extranjero
+                  className={`py-2 px-4 rounded-md transition-colors flex items-center gap-2 ${
+                    (rutError && !votanteForm.extranjero) || isSavingVotante
                       ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                       : "bg-slate-800 text-white hover:bg-[#30c56c] hover:text-[#e3ecea]"
                   }`}
                   onClick={handleSaveVotante}
-                  disabled={!!(rutError && !votanteForm.extranjero)}
+                  disabled={!!(rutError && !votanteForm.extranjero) || isSavingVotante}
                 >
-                  Registrar
+                  {isSavingVotante ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Guardando...
+                    </>
+                  ) : (
+                    "Registrar"
+                  )}
                 </button>
               </div>
             </div>
