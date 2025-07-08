@@ -7,14 +7,11 @@ const LoginHeader = () => {
         <div className="mb-0 sm:mb-1">
           <Image
             src="/presupuestos-transparente.png"
-            alt="Escudo Municipal"
+            alt="Logo presupuestos participativos"
             width={120}
             height={100}
           />
         </div>
-        {/* <h1 className="text-lg font-medium text-gray-900 pl-1 sm:pl-2">
-          Presupuestos Participativos
-        </h1> */}
       </div>
     </div>
   );
